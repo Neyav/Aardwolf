@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml;
 
 // IDdecompression class --
 //
@@ -11,6 +12,31 @@ using System.Threading.Tasks;
 
 namespace Aardwolf
 {
+    internal class WORD16BIT
+    {
+        public byte lowByte;
+        public byte highByte;
+
+        public void setWORD16BIT(byte[] input, ref int inputIndex)
+        {
+            lowByte = input[inputIndex];
+            inputIndex++;
+            highByte = input[inputIndex];
+            inputIndex++;
+        }
+        public UInt16 getWORD16BIT()
+        {
+            UInt16 output = (UInt16)(lowByte | highByte << 8);
+
+            return output;
+        }
+
+        public WORD16BIT()
+        {
+            lowByte = 0;
+            highByte = 0;
+        }
+    }
 
     internal class IDdecompression
     {
@@ -22,43 +48,49 @@ namespace Aardwolf
             List<byte> result = new List<byte>();
 
             // Initialize the input index and read the first word
-            int inputIndex = 0;
-            byte highByte = input[inputIndex];
-            inputIndex++;
-            byte lowByte = input[inputIndex];
-            inputIndex++;
+            int inputIndex = 2;
+            byte highByte = 0;
+            byte lowByte = 0;
 
             do
             {
-                // Read the next word.
-                highByte = input[inputIndex];
+                byte inputByte = input[inputIndex];
                 inputIndex++;
-                lowByte = input[inputIndex];
-                inputIndex++;
-
-                if (highByte == highRWLEtag && lowByte == lowRWLEtag)
+                if (inputByte == highRWLEtag)
                 {
-                    // This is a compressed block.  Read the next word.
-                    highByte = input[inputIndex];
+                    inputByte = input[inputIndex];
                     inputIndex++;
-                    lowByte = input[inputIndex];
-                    inputIndex++;
-
-                    // The high byte is the count, the low byte is the value.
-                    for (int i = 0; i < highByte; i++)
+                    if (inputByte == lowRWLEtag)
                     {
-                        result.Add(lowByte);
+                        // This is a compressed word.  Grab the next byte and repeat it the number of times specified by the next byte.
+                        inputByte = input[inputIndex];
+                        inputIndex++;
+                        byte repeatCount = input[inputIndex];
+                        inputIndex++;
+                        for (int i = 0; i < repeatCount; i++)
+                        {
+                            result.Add(inputByte);
+                        }
+                    }
+                    else
+                    {
+                        // This is not a compressed word.  Add the two bytes to the output.
+                        result.Add(highRWLEtag);
+                        result.Add(inputByte);
                     }
                 }
                 else
                 {
-                    // This is an uncompressed block.  Add the bytes to the output.
-                    result.Add(highByte);
-                    result.Add(lowByte);
+                    // This is not a compressed word.  Add the byte to the output.
+                    result.Add(inputByte);
                 }
+
+
             } while (inputIndex < input.Length);
 
             byte[] output = new byte[result.Count];
+
+            output = result.ToArray();
 
             return output;
         }
@@ -71,33 +103,36 @@ namespace Aardwolf
 
             // Initialize the input index and read the first word
             int inputIndex = 0;
+            WORD16BIT lenWORD = new WORD16BIT();
+            lenWORD.setWORD16BIT(input, ref inputIndex);
+            UInt16 len = lenWORD.getWORD16BIT();
 
+            Debug.WriteLine("CarmackDecompress: len: {0}", len);
 
             // Loop until the end of the input is reached
             while (inputIndex < input.Length)
             {
-                byte lowByte = input[inputIndex];
-                inputIndex++;
-                byte highByte = input[inputIndex];
-                inputIndex++;
+                WORD16BIT word = new WORD16BIT();
+                
+                word.setWORD16BIT(input, ref inputIndex);
 
-                if (highByte == 0xa7)
+                if (word.highByte == 0xA7)
                 {   // This is the high byte trigger for a near pointer.
-                    if (lowByte == 0x00)
-                    {   // There is no value in the low byte, which means 0xa7 is part of the source.
-                        lowByte = input[inputIndex];
+                    if (word.lowByte == 0x00)
+                    {   // There is no value in the low byte, which means 0xA7 is part of the source.
+                        word.lowByte = input[inputIndex];
                         inputIndex++;
-                        result.Add(highByte);
-                        result.Add(lowByte);
+                        result.Add(word.highByte);
+                        result.Add(word.lowByte);
                     }
                     else
                     {
                         byte offset = input[inputIndex];
                         inputIndex++;
-                        int cpyptr = result.Count - offset - 1;
-                        while (lowByte > 0)
+                        int cpyptr = result.Count - 1 - (offset * 2); // We're moving in 16 bit words.
+                        while (word.lowByte > 0)
                         {
-                            lowByte--;
+                            word.lowByte--;
                             result.Add(result[cpyptr]);
                             cpyptr++;
                             result.Add(result[cpyptr]);
@@ -105,24 +140,25 @@ namespace Aardwolf
                         }
                     }
                 }
-                else if (highByte == 0xa8)
+                else if (word.highByte == 0xA8)
                 {   // This is the high byte trigger for a far pointer.
-                    if (lowByte == 0x00)
+                    if (word.lowByte == 0x00)
                     {   // There is no value in the low byte, which means 0xa7 is part of the source.
-                        lowByte = input[inputIndex];
+                        word.lowByte = input[inputIndex];
                         inputIndex++;
-                        result.Add(highByte);
-                        result.Add(lowByte);
+                        result.Add(word.highByte);
+                        result.Add(word.lowByte);
                     }
                     else
                     {
-                        UInt16 offset = (UInt16)(input[inputIndex] | input[inputIndex + 1] << 8);
-                        inputIndex += 2;
+                        WORD16BIT offsetWORD = new WORD16BIT();
+                        offsetWORD.setWORD16BIT(input, ref inputIndex);
+                        UInt16 offset = offsetWORD.getWORD16BIT();
 
-                        UInt16 cpyptr = offset;
-                        while (lowByte > 0)
+                        UInt16 cpyptr = (UInt16) (offset * 2); // We're moving in 16 bit words.
+                        while (word.lowByte > 0)
                         {
-                            lowByte--;
+                            word.lowByte--;
                             result.Add(result[cpyptr]);
                             cpyptr++;
                             result.Add(result[cpyptr]);
@@ -132,8 +168,8 @@ namespace Aardwolf
                 }
                 else
                 {   // There is no compression.  Just add the bytes to the output.
-                    result.Add(highByte);
-                    result.Add(lowByte);
+                    result.Add(word.highByte);
+                    result.Add(word.lowByte);
                 }
                 
             }
@@ -148,8 +184,8 @@ namespace Aardwolf
 
         public IDdecompression(ref byte[] aMapHead)
         {   // Grab the RWLEtag from the map header.
-            highRWLEtag = aMapHead[0];
-            lowRWLEtag = aMapHead[1];
+            lowRWLEtag = aMapHead[0];
+            highRWLEtag = aMapHead[1];
 
             Debug.WriteLine("RWLEtag: {0:X2}{1:X2}", lowRWLEtag, highRWLEtag);
         }

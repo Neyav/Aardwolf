@@ -110,7 +110,7 @@ namespace Aardwolf
 
                         while (count > 0)
                         {   // We copy the words, count times, from the offset.
-                            int outOffset = result.Count() - offset - 1;
+                            int outOffset = result.Count() - offset;
 
                             topend = result[outOffset];
                             bottomend = result[outOffset + 1];
@@ -134,8 +134,11 @@ namespace Aardwolf
                     else
                     {
                         byte count = topend;
-                        UInt16 offset = BitConverter.ToUInt16(input, inputIterator);
+                        byte offsettop = input[inputIterator];
+                        byte offsetbottom = input[inputIterator + 1];
                         inputIterator += 2;
+
+                        Int16 offset = (Int16)(offsetbottom * 256 + offsettop);
 
                         offset *= 2;
 
@@ -148,6 +151,7 @@ namespace Aardwolf
                             result.Add(topend);
                             result.Add(bottomend);
                         }
+                        continue;
                     }
                     
                 }

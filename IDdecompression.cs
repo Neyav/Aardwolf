@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.Eventing.Reader;
 using System.Linq;
+using System.Net.Http.Headers;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml;
@@ -12,182 +14,160 @@ using System.Xml;
 
 namespace Aardwolf
 {
-    internal class WORD16BIT
-    {
-        public byte lowByte;
-        public byte highByte;
-
-        public void setWORD16BIT(byte[] input, ref int inputIndex)
-        {
-            lowByte = input[inputIndex];
-            inputIndex++;
-            highByte = input[inputIndex];
-            inputIndex++;
-        }
-        public UInt16 getWORD16BIT()
-        {
-            UInt16 output = (UInt16)(lowByte | highByte << 8);
-
-            return output;
-        }
-
-        public WORD16BIT()
-        {
-            lowByte = 0;
-            highByte = 0;
-        }
-    }
-
+    // [Dash|RD] - This keeps being a problem so I'm just going to lay it out concisely here.
+    //              x86 machines of the present and past are little endian, which means the least significant byte is stored first.
+    //              x64 follows suit. Wolf3D was originally written for 16 bit systems, so a "WORD" is 16 bits, or 2 bytes.
+    //              or as we're going to reference here, topend, bottomend, as bytes.
+    //              This gets confusing rather fast because the original source is good old fashioned C with pointers and obtuse
+    //              variable names, iterators during conditionals, and other such fun making it difficult to follow.
+    //              We don't need to aim for performance here, so we're going to aim for readability and accuracy.
+    //              Unfortunately, because the data is double encoded without checksums, an error at any point breaks everything,
+    //              so this is... a bit of a pain for me. More than it should be.
     internal class IDdecompression
     {
-        private byte lowRWLEtag;
-        private byte highRWLEtag;
+        byte topRLEWtag;
+        byte bottomRLEWtag;
 
         public byte[] RLEWDecompress(byte[] input)
         {
             List<byte> result = new List<byte>();
 
-            // Initialize the input index and read the first word
-            int inputIndex = 2;
-            byte highByte = 0;
-            byte lowByte = 0;
+            // Same thing with Carmack compression, we're starting at byte 2 because the first two bytes are the uncompressed size of the data.
+            // Which, oddly enough isn't used in wolf3d either, as the map size is fixed at 64x64. So they do 64x64x2 to get the
+            // final uncompressed size. Since we're here in C# fancy pants land, we can just grab the length of the input array.
+            int inputIterator = 2;
 
-            do
+            while (inputIterator < input.Length)
             {
-                byte inputByte = input[inputIndex];
-                inputIndex++;
-                if (inputByte == highRWLEtag)
+                byte topinput = input[inputIterator];
+                byte bottominput = input[inputIterator + 1];
+                inputIterator += 2;
+
+                if (topinput == topRLEWtag && bottominput == bottomRLEWtag)
                 {
-                    inputByte = input[inputIndex];
-                    inputIndex++;
-                    if (inputByte == lowRWLEtag)
+                    byte topcount = input[inputIterator];
+                    byte bottomcount = input[inputIterator + 1];
+                    inputIterator += 2;
+
+                    int count = bottomcount * 256 + topcount;
+
+                    byte topvalue = input[inputIterator];
+                    byte bottomvalue = input[inputIterator + 1];
+                    inputIterator += 2;
+
+                    while (count > 0)
                     {
-                        // This is a compressed word.  Grab the next byte and repeat it the number of times specified by the next byte.
-                        inputByte = input[inputIndex];
-                        inputIndex++;
-                        byte repeatCount = input[inputIndex];
-                        inputIndex++;
-                        for (int i = 0; i < repeatCount; i++)
-                        {
-                            result.Add(inputByte);
-                        }
-                    }
-                    else
-                    {
-                        // This is not a compressed word.  Add the two bytes to the output.
-                        result.Add(highRWLEtag);
-                        result.Add(inputByte);
+                        result.Add(topvalue);
+                        result.Add(bottomvalue);
+                        count--;
                     }
                 }
                 else
                 {
-                    // This is not a compressed word.  Add the byte to the output.
-                    result.Add(inputByte);
+                    result.Add(topinput);
+                    result.Add(bottominput);
                 }
+            }
 
+            Byte[] output = result.ToArray();
 
-            } while (inputIndex < input.Length);
-
-            byte[] output = new byte[result.Count];
-
-            output = result.ToArray();
-
-            return output;
+            return output; 
         }
 
-        // A C# function that decompresses a byte array using Carmack compression algorithm
-        // Reference: https://moddingwiki.shikadi.net/wiki/Carmack_compression
         public byte[] CarmackDecompress(byte[] input)
         {
             List<byte> result = new List<byte>();
 
-            // Initialize the input index and read the first word
-            int inputIndex = 0;
-            WORD16BIT lenWORD = new WORD16BIT();
-            lenWORD.setWORD16BIT(input, ref inputIndex);
-            UInt16 len = lenWORD.getWORD16BIT();
+            // We're starting at byte 2 because the first two bytes are the uncompressed size of the data.
+            int inputIterator = 2;
 
-            Debug.WriteLine("CarmackDecompress: len: {0}", len);
-
-            // Loop until the end of the input is reached
-            while (inputIndex < input.Length)
+            // Original source uses length/2 to do this, as subtracts from length everytime a WORD (2 bytes)
+            // is passed. We're going to use the length of the input array instead.
+            while (inputIterator < input.Length)
             {
-                WORD16BIT word = new WORD16BIT();
-                
-                word.setWORD16BIT(input, ref inputIndex);
+                // Grab two bytes, topend and bottomend in sequence.
+                byte topend = input[inputIterator];
+                byte bottomend = input[inputIterator + 1];
+                inputIterator += 2;
 
-                if (word.highByte == 0xA7)
-                {   // This is the high byte trigger for a near pointer.
-                    if (word.lowByte == 0x00)
-                    {   // There is no value in the low byte, which means 0xA7 is part of the source.
-                        word.lowByte = input[inputIndex];
-                        inputIndex++;
-                        result.Add(word.highByte);
-                        result.Add(word.lowByte);
+                // The bottom end tags whether or not this section is compressed, and if so with which form.
+                if (bottomend == 0xA7) // One Byte "Near pointer"
+                {
+                    if (topend == 0x00) // Signals that the original trigger is actually part of the data.
+                    {                   // So we grab one more byte, as it is the true topend of this sequence.
+                        topend = input[inputIterator];
+                        inputIterator++;
+                        result.Add(topend);
+                        result.Add(bottomend);
+                        continue;
                     }
                     else
                     {
-                        byte offset = input[inputIndex];
-                        inputIndex++;
-                        int cpyptr = result.Count - 1 - (offset * 2); // We're moving in 16 bit words.
-                        while (word.lowByte > 0)
-                        {
-                            word.lowByte--;
-                            result.Add(result[cpyptr]);
-                            cpyptr++;
-                            result.Add(result[cpyptr]);
-                            cpyptr++;
+                        byte count = topend; // The number of words to copy.
+                        int offset = input[inputIterator]; // The offset (in words ) to copy from.
+                        inputIterator++;
+                        offset *= 2; // We multiply by two because we're dealing with bytes, not words.
+
+                        while (count > 0)
+                        {   // We copy the words, count times, from the offset.
+                            int outOffset = result.Count() - offset - 1;
+
+                            topend = result[outOffset];
+                            bottomend = result[outOffset + 1];
+                            result.Add(topend);
+                            result.Add(bottomend);
+                            count--;
                         }
+                        continue;
                     }
                 }
-                else if (word.highByte == 0xA8)
-                {   // This is the high byte trigger for a far pointer.
-                    if (word.lowByte == 0x00)
-                    {   // There is no value in the low byte, which means 0xa7 is part of the source.
-                        word.lowByte = input[inputIndex];
-                        inputIndex++;
-                        result.Add(word.highByte);
-                        result.Add(word.lowByte);
+                else if (bottomend == 0xA8) // One WORD "Far Pointer"
+                {
+                    if (topend == 0x00)
+                    {
+                        topend = input[inputIterator];
+                        inputIterator++;
+                        result.Add(topend);
+                        result.Add(bottomend);
+                        continue;
                     }
                     else
                     {
-                        WORD16BIT offsetWORD = new WORD16BIT();
-                        offsetWORD.setWORD16BIT(input, ref inputIndex);
-                        UInt16 offset = offsetWORD.getWORD16BIT();
+                        byte count = topend;
+                        UInt16 offset = BitConverter.ToUInt16(input, inputIterator);
+                        inputIterator += 2;
 
-                        UInt16 cpyptr = (UInt16) (offset * 2); // We're moving in 16 bit words.
-                        while (word.lowByte > 0)
+                        offset *= 2;
+
+                        while (count > 0)
                         {
-                            word.lowByte--;
-                            result.Add(result[cpyptr]);
-                            cpyptr++;
-                            result.Add(result[cpyptr]);
-                            cpyptr++;
+                            count--;
+                            topend = result[offset];
+                            bottomend = result[offset + 1];
+                            offset += 2;
+                            result.Add(topend);
+                            result.Add(bottomend);
                         }
                     }
+                    
                 }
                 else
-                {   // There is no compression.  Just add the bytes to the output.
-                    result.Add(word.highByte);
-                    result.Add(word.lowByte);
+                {   // There is no compression, just add these bytes to the output.
+                    result.Add(topend);
+                    result.Add(bottomend);
                 }
-                
+
             }
 
-            byte[] output = new byte[result.Count];
+            Byte[] output = result.ToArray();
 
-            output = result.ToArray();
-
-            // Return the output buffer
             return output;
         }
 
         public IDdecompression(ref byte[] aMapHead)
         {   // Grab the RWLEtag from the map header.
-            lowRWLEtag = aMapHead[0];
-            highRWLEtag = aMapHead[1];
-
-            Debug.WriteLine("RWLEtag: {0:X2}{1:X2}", lowRWLEtag, highRWLEtag);
+            topRLEWtag = aMapHead[0];
+            bottomRLEWtag = aMapHead[1];
         }
     }
 

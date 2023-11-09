@@ -6,7 +6,6 @@ using System.IO;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 using System.Diagnostics;
-using Microsoft.VisualBasic.ApplicationServices;
 
 namespace Aardwolf
 {
@@ -78,6 +77,17 @@ namespace Aardwolf
                 _VGAGRAPH = System.IO.File.ReadAllBytes("VGAGRAPH.WL6");
                 _VSWAP = System.IO.File.ReadAllBytes("VSWAP.WL6");
             }
+            else
+            {
+                _AUDIOHED = System.IO.File.ReadAllBytes("AUDIOHED.SOD");
+                _AUDIOT = System.IO.File.ReadAllBytes("AUDIOT.SOD");
+                _GAMEMAPS = System.IO.File.ReadAllBytes("GAMEMAPS.SOD");
+                _MAPHEAD = System.IO.File.ReadAllBytes("MAPHEAD.SOD");
+                _VGADICT = System.IO.File.ReadAllBytes("VGADICT.SOD");
+                _VGAHEAD = System.IO.File.ReadAllBytes("VGAHEAD.SOD");
+                _VGAGRAPH = System.IO.File.ReadAllBytes("VGAGRAPH.SOD");
+                _VSWAP = System.IO.File.ReadAllBytes("VSWAP.SOD");
+            }
             
             _isLoaded = true;
         }
@@ -95,12 +105,14 @@ namespace Aardwolf
         public void parseLevelData()
         {
             int iterator = 0;
+
             IDdecompression decompressor = new IDdecompression(ref _MAPHEAD);
             // Load all the _mapOffsets from the MAPHEAD file.
             // Grab the mapheader from _mapOffsets as we go, if it is valid, and dump it into
             // _mapDataHeaders. Use _MAPHEAD and _GAMEMAPS to do this.
 
-            for (int i = 2; i < 402; i = i + 4)
+            // SOD doesn't have the padding that Wolf3d does, so we need to do this differently.
+            for (int i = 2; i < _MAPHEAD.Length; i = i + 4)
             {
                 _mapOffsets[i / 4] = BitConverter.ToInt32(_MAPHEAD, i);
 

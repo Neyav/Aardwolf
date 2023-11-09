@@ -31,6 +31,8 @@
             button1 = new Button();
             pictureBox1 = new PictureBox();
             comboBox1 = new ComboBox();
+            radioButton1 = new RadioButton();
+            radioButton2 = new RadioButton();
             ((System.ComponentModel.ISupportInitialize)pictureBox1).BeginInit();
             SuspendLayout();
             // 
@@ -56,17 +58,41 @@
             // comboBox1
             // 
             comboBox1.FormattingEnabled = true;
-            comboBox1.Location = new Point(12, 55);
+            comboBox1.Location = new Point(12, 106);
             comboBox1.Name = "comboBox1";
             comboBox1.Size = new Size(151, 23);
             comboBox1.TabIndex = 2;
             comboBox1.SelectedIndexChanged += comboBox1_SelectedIndexChanged;
+            // 
+            // radioButton1
+            // 
+            radioButton1.AutoSize = true;
+            radioButton1.Checked = true;
+            radioButton1.Location = new Point(12, 55);
+            radioButton1.Name = "radioButton1";
+            radioButton1.Size = new Size(105, 19);
+            radioButton1.TabIndex = 3;
+            radioButton1.TabStop = true;
+            radioButton1.Text = "Wolfenstein 3D";
+            radioButton1.UseVisualStyleBackColor = true;
+            // 
+            // radioButton2
+            // 
+            radioButton2.AutoSize = true;
+            radioButton2.Location = new Point(12, 80);
+            radioButton2.Name = "radioButton2";
+            radioButton2.Size = new Size(110, 19);
+            radioButton2.TabIndex = 4;
+            radioButton2.Text = "Spear of Destiny";
+            radioButton2.UseVisualStyleBackColor = true;
             // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(857, 662);
+            Controls.Add(radioButton2);
+            Controls.Add(radioButton1);
             Controls.Add(comboBox1);
             Controls.Add(pictureBox1);
             Controls.Add(button1);
@@ -75,6 +101,7 @@
             Text = "Aardwolf Test Application";
             ((System.ComponentModel.ISupportInitialize)pictureBox1).EndInit();
             ResumeLayout(false);
+            PerformLayout();
         }
 
         #endregion
@@ -82,5 +109,7 @@
         private Button button1;
         private PictureBox pictureBox1;
         private ComboBox comboBox1;
+        private RadioButton radioButton1;
+        private RadioButton radioButton2;
     }
 }

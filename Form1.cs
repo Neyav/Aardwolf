@@ -1,3 +1,5 @@
+using System.DirectoryServices;
+
 namespace Aardwolf
 {
     public partial class Form1 : Form
@@ -10,7 +12,19 @@ namespace Aardwolf
 
         private void button1_Click(object sender, EventArgs e)
         {
-            dh.loadAllData(false);
+            comboBox1.Items.Clear();
+
+            dh = new dataHandler();
+
+            if (radioButton1.Checked)
+            {
+                dh.loadAllData(false);
+            }
+            else
+            {
+                dh.loadAllData(true);
+            }
+
             dh.parseLevelData();
 
             byte[] leveldata = dh.getLevelData(0);

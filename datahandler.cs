@@ -80,6 +80,16 @@ namespace Aardwolf
             _isLoaded = true;
         }
 
+        public byte[] getLevelData(int level)
+        {
+            if (!_isLoaded)
+                return null;
+
+            if (level > _levels)
+                return null;
+
+            return _mapData_offPlane0[level];
+        }
         public void parseLevelData()
         {
             int iterator = 0;
@@ -153,11 +163,28 @@ namespace Aardwolf
                 decarmackedPlane0 = decompressor.CarmackDecompress(localPlane0);
                 decompressedPlane0 = decompressor.RLEWDecompress(decarmackedPlane0);
 
+                _mapData_offPlane0.Add(decompressedPlane0);
+
                 Debug.WriteLine("Plane 0: {0} -> {1} -> {2}", localPlane0.Length, decarmackedPlane0.Length, decompressedPlane0.Length);
             }
 
 
             
+        }
+
+        public int getLevels()
+        {
+            return _levels;
+        }   
+
+        public string getLevelName(int level)
+        {
+            if (level > _levels)
+                return null;
+
+            string levelName = new string(_mapDataHeaders[level].name);
+
+            return levelName;
         }
 
         public dataHandler()

@@ -54,6 +54,8 @@ namespace Aardwolf
 
         List<mapDataHeader> _mapDataHeaders;
         List<byte[]> _mapData_offPlane0;
+        List<byte[]> _mapData_offPlane1;
+        List<byte[]> _mapData_offPlane2;
 
         bool _isLoaded = false;
         bool _isSOD = false;
@@ -168,8 +170,38 @@ namespace Aardwolf
                 Debug.WriteLine("Plane 0: {0} -> {1} -> {2}", localPlane0.Length, decarmackedPlane0.Length, decompressedPlane0.Length);
             }
 
+            for (int i = 0; i < _levels; i++)
+            {
+                byte[] localPlane1 = new byte[_mapDataHeaders[i].lenPlane1];
+                byte[] decarmackedPlane1;
+                byte[] decompressedPlane1;
 
-            
+
+                localPlane1 = _GAMEMAPS.Skip(_mapDataHeaders[i].offPlane1).Take((int)_mapDataHeaders[i].lenPlane1).ToArray();
+                decarmackedPlane1 = decompressor.CarmackDecompress(localPlane1);
+                decompressedPlane1 = decompressor.RLEWDecompress(decarmackedPlane1);
+
+                _mapData_offPlane1.Add(decompressedPlane1);
+
+                Debug.WriteLine("Plane 1: {0} -> {1} -> {2}", localPlane1.Length, decarmackedPlane1.Length, decompressedPlane1.Length);
+            }
+
+            for (int i = 0; i < _levels; i++)
+            {
+                byte[] localPlane2 = new byte[_mapDataHeaders[i].lenPlane2];
+                byte[] decarmackedPlane2;
+                byte[] decompressedPlane2;
+
+
+                localPlane2 = _GAMEMAPS.Skip(_mapDataHeaders[i].offPlane2).Take((int)_mapDataHeaders[i].lenPlane2).ToArray();
+                decarmackedPlane2 = decompressor.CarmackDecompress(localPlane2);
+                decompressedPlane2 = decompressor.RLEWDecompress(decarmackedPlane2);
+
+                _mapData_offPlane2.Add(decompressedPlane2);
+
+                Debug.WriteLine("Plane 2: {0} -> {1} -> {2}", localPlane2.Length, decarmackedPlane2.Length, decompressedPlane2.Length);
+            }
+
         }
 
         public int getLevels()
@@ -196,6 +228,8 @@ namespace Aardwolf
 
             _mapDataHeaders = new List<mapDataHeader>();
             _mapData_offPlane0 = new List<byte[]>();
+            _mapData_offPlane1 = new List<byte[]>();
+            _mapData_offPlane2 = new List<byte[]>();
 
             _levels = 0;
         }

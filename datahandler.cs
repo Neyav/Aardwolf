@@ -59,6 +59,26 @@ namespace Aardwolf
         bool _isLoaded = false;
         bool _isSOD = false;
 
+        private void prefetchAndDecompressPlanes()
+        {
+            IDdecompression decompressor = new IDdecompression(ref _MAPHEAD);
+
+            for (int i = 0; i < _levels; i++)
+            {
+                byte[] localPlane0 = new byte[_mapDataHeaders[i].lenPlane0];
+                byte[] localPlane1 = new byte[_mapDataHeaders[i].lenPlane1];
+                byte[] localPlane2 = new byte[_mapDataHeaders[i].lenPlane2];
+
+                localPlane0 = _GAMEMAPS.Skip(_mapDataHeaders[i].offPlane0).Take((int)_mapDataHeaders[i].lenPlane0).ToArray();
+                localPlane1 = _GAMEMAPS.Skip(_mapDataHeaders[i].offPlane1).Take((int)_mapDataHeaders[i].lenPlane1).ToArray();
+                localPlane2 = _GAMEMAPS.Skip(_mapDataHeaders[i].offPlane2).Take((int)_mapDataHeaders[i].lenPlane2).ToArray();
+
+                _mapData_offPlane0.Add(decompressor.RLEWDecompress(decompressor.CarmackDecompress(localPlane0)));
+                _mapData_offPlane1.Add(decompressor.RLEWDecompress(decompressor.CarmackDecompress(localPlane1)));
+                _mapData_offPlane2.Add(decompressor.RLEWDecompress(decompressor.CarmackDecompress(localPlane2)));
+            }
+        }
+
         public void loadAllData(bool isSOD)
         {
             if (_isLoaded)
@@ -106,7 +126,6 @@ namespace Aardwolf
         {
             int iterator = 0;
 
-            IDdecompression decompressor = new IDdecompression(ref _MAPHEAD);
             // Load all the _mapOffsets from the MAPHEAD file.
             // Grab the mapheader from _mapOffsets as we go, if it is valid, and dump it into
             // _mapDataHeaders. Use _MAPHEAD and _GAMEMAPS to do this.
@@ -165,55 +184,7 @@ namespace Aardwolf
             Debug.WriteLine("Levels detected: {0}", _levels);
 
             // Now that we have all the mapDataHeaders, we can decompress the data and put it into a byte array.
-            // Start with plane 0.
-            for (int i = 0; i < _levels; i++)
-            {
-                byte[] localPlane0 = new byte[_mapDataHeaders[i].lenPlane0];
-                byte[] decarmackedPlane0;
-                byte[] decompressedPlane0;
-                
-
-                localPlane0 = _GAMEMAPS.Skip(_mapDataHeaders[i].offPlane0).Take((int)_mapDataHeaders[i].lenPlane0).ToArray();
-                decarmackedPlane0 = decompressor.CarmackDecompress(localPlane0);
-                decompressedPlane0 = decompressor.RLEWDecompress(decarmackedPlane0);
-
-                _mapData_offPlane0.Add(decompressedPlane0);
-
-                Debug.WriteLine("Plane 0: {0} -> {1} -> {2}", localPlane0.Length, decarmackedPlane0.Length, decompressedPlane0.Length);
-            }
-
-            for (int i = 0; i < _levels; i++)
-            {
-                byte[] localPlane1 = new byte[_mapDataHeaders[i].lenPlane1];
-                byte[] decarmackedPlane1;
-                byte[] decompressedPlane1;
-
-
-                localPlane1 = _GAMEMAPS.Skip(_mapDataHeaders[i].offPlane1).Take((int)_mapDataHeaders[i].lenPlane1).ToArray();
-                decarmackedPlane1 = decompressor.CarmackDecompress(localPlane1);
-                decompressedPlane1 = decompressor.RLEWDecompress(decarmackedPlane1);
-
-                _mapData_offPlane1.Add(decompressedPlane1);
-
-                Debug.WriteLine("Plane 1: {0} -> {1} -> {2}", localPlane1.Length, decarmackedPlane1.Length, decompressedPlane1.Length);
-            }
-
-            for (int i = 0; i < _levels; i++)
-            {
-                byte[] localPlane2 = new byte[_mapDataHeaders[i].lenPlane2];
-                byte[] decarmackedPlane2;
-                byte[] decompressedPlane2;
-
-
-                localPlane2 = _GAMEMAPS.Skip(_mapDataHeaders[i].offPlane2).Take((int)_mapDataHeaders[i].lenPlane2).ToArray();
-                decarmackedPlane2 = decompressor.CarmackDecompress(localPlane2);
-                decompressedPlane2 = decompressor.RLEWDecompress(decarmackedPlane2);
-
-                _mapData_offPlane2.Add(decompressedPlane2);
-
-                Debug.WriteLine("Plane 2: {0} -> {1} -> {2}", localPlane2.Length, decarmackedPlane2.Length, decompressedPlane2.Length);
-            }
-
+            prefetchAndDecompressPlanes();
         }
 
         public int getLevels()

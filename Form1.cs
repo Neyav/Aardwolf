@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.DirectoryServices;
 
 namespace Aardwolf
@@ -5,6 +6,7 @@ namespace Aardwolf
     public partial class Form1 : Form
     {
         dataHandler dh = new dataHandler();
+        palettehandler ph = new palettehandler();
         public Form1()
         {
             InitializeComponent();
@@ -49,7 +51,6 @@ namespace Aardwolf
 
             pictureBox1.Image = bitmap;
             pictureBox1.SizeMode = PictureBoxSizeMode.StretchImage;
-            pictureBox1.Size = new Size(640, 640);
             pictureBox1.Refresh();
 
             int levels = dh.getLevels();
@@ -80,13 +81,14 @@ namespace Aardwolf
                     int b = texturedata[offset];
                     int a = 255;
 
+                    Debug.WriteLine("R: " + r.ToString() + " G: " + g.ToString() + " B: " + b.ToString() + " A: " + a.ToString());
+
                     bitmap.SetPixel(x, y, Color.FromArgb(a, r, g, b));
                 }
             }
-            
+
             pictureBox2.Image = bitmap;
             pictureBox2.SizeMode = PictureBoxSizeMode.StretchImage;
-            pictureBox2.Size = new Size(128, 128);
             pictureBox2.Refresh();
         }
 
@@ -118,7 +120,6 @@ namespace Aardwolf
 
             pictureBox1.Image = bitmap;
             pictureBox1.SizeMode = PictureBoxSizeMode.StretchImage;
-            pictureBox1.Size = new Size(640, 640);
             pictureBox1.Refresh();
         }
 
@@ -128,24 +129,23 @@ namespace Aardwolf
 
             Bitmap bitmap = new Bitmap(64, 64);
 
-            for (int y = 0; y < 64; y++)
+            for (int x = 0; x < 64; x++)
             {
-                for (int x = 0; x < 64; x++)
+                for (int y = 0; y < 64; y++)
                 {
-                    int offset = (y * 64 + x);
+                    RGBA RGBa = ph.getPaletteColor(texturedata[x * 64 + y]);
 
-                    int r = texturedata[offset];
-                    int g = texturedata[offset];
-                    int b = texturedata[offset];
-                    int a = 255;
+                    byte r = texturedata[RGBa.r];
+                    byte g = texturedata[RGBa.g];
+                    byte b = texturedata[RGBa.b];
+                    byte a = 255;
 
-                    bitmap.SetPixel(x, y, Color.FromArgb(a, r, g, b));
+                    bitmap.SetPixel(x, y, Color.FromArgb(r, g, b));
                 }
             }
 
             pictureBox2.Image = bitmap;
             pictureBox2.SizeMode = PictureBoxSizeMode.StretchImage;
-            pictureBox2.Size = new Size(128, 128);
             pictureBox2.Refresh();
         }
     }

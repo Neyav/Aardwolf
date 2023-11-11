@@ -27,7 +27,7 @@ namespace Aardwolf
         string Wolf3Dpalette;
         byte[] palette = new byte[256 * 3];
 
-        public RGBA getPaletteColor(int index)
+        public RGBA getPaletteColor(byte index)
         {
             RGBA result = new RGBA();
 
@@ -38,8 +38,6 @@ namespace Aardwolf
             result.r *= 4;
             result.g *= 4;
             result.b *= 4;
-
-            //Debug.WriteLine("Palette color " + index + " is " + result.r + ", " + result.g + ", " + result.b + ".");
 
             return result;
         }
@@ -116,7 +114,6 @@ RGB( 38,  0, 34)";
             foreach (string chunk in palettechunks)
             {
                 palette[paletteiterator] = Convert.ToByte(chunk);
-                Debug.WriteLine("Palette byte " + paletteiterator + " is " + palette[paletteiterator] + ".");
                 paletteiterator++;
             }
         }

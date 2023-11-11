@@ -81,8 +81,8 @@ namespace Aardwolf
             // We're starting at byte 2 because the first two bytes are the uncompressed size of the data.
             int inputIterator = 2;
 
-            // Original source uses length/2 to do this, as subtracts from length everytime a WORD (2 bytes)
-            // is passed. We're going to use the length of the input array instead.
+            // Original source uses length/2 to do this, and subtracts from length everytime a WORD (2 bytes)
+            // is passed. We're going to use the length of the input array instead as we easily have access to it.
             while (inputIterator < input.Length)
             {
                 // Grab two bytes, topend and bottomend in sequence.

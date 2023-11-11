@@ -15,6 +15,7 @@ namespace Aardwolf
         private void button1_Click(object sender, EventArgs e)
         {
             comboBox1.Items.Clear();
+            comboBox2.Items.Clear();
 
             dh = new dataHandler();
 
@@ -81,8 +82,6 @@ namespace Aardwolf
                     int b = texturedata[offset];
                     int a = 255;
 
-                    Debug.WriteLine("R: " + r.ToString() + " G: " + g.ToString() + " B: " + b.ToString() + " A: " + a.ToString());
-
                     bitmap.SetPixel(x, y, Color.FromArgb(a, r, g, b));
                 }
             }
@@ -113,6 +112,7 @@ namespace Aardwolf
                     int g = leveldata[offset];
                     int b = leveldata[offset];
                     int a = 255;
+                    Debug.WriteLine("Leveldata for x: {0}, y: {1} is {2}", x, y, r);
 
                     bitmap.SetPixel(x, y, Color.FromArgb(a, r, g, b));
                 }
@@ -135,12 +135,7 @@ namespace Aardwolf
                 {
                     RGBA RGBa = ph.getPaletteColor(texturedata[x * 64 + y]);
 
-                    byte r = texturedata[RGBa.r];
-                    byte g = texturedata[RGBa.g];
-                    byte b = texturedata[RGBa.b];
-                    byte a = 255;
-
-                    bitmap.SetPixel(x, y, Color.FromArgb(r, g, b));
+                    bitmap.SetPixel(x, y, Color.FromArgb(RGBa.r, RGBa.g, RGBa.b));
                 }
             }
 

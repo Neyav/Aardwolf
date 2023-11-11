@@ -26,6 +26,7 @@ namespace Aardwolf
             }
 
             dh.parseLevelData();
+            dh.prepareVSWAP();
 
             byte[] leveldata = dh.getLevelData(0);
 
@@ -57,6 +58,36 @@ namespace Aardwolf
             {
                 comboBox1.Items.Add(dh.getLevelName(i));
             }
+
+            VSWAPHeader VSWAPH = dh.getVSWAPHeader;
+
+            for (int i = 0; i < VSWAPH.spiteStart; i++)
+            {
+                comboBox2.Items.Add("Texture - " + i.ToString());
+            }
+
+            bitmap = new Bitmap(64, 64);
+            byte[] texturedata = dh.getTexture(0);
+
+            for (int y = 0; y < 64; y++)
+            {
+                for (int x = 0; x < 64; x++)
+                {
+                    int offset = (y * 64 + x);
+
+                    int r = texturedata[offset];
+                    int g = texturedata[offset];
+                    int b = texturedata[offset];
+                    int a = 255;
+
+                    bitmap.SetPixel(x, y, Color.FromArgb(a, r, g, b));
+                }
+            }
+            
+            pictureBox2.Image = bitmap;
+            pictureBox2.SizeMode = PictureBoxSizeMode.StretchImage;
+            pictureBox2.Size = new Size(128, 128);
+            pictureBox2.Refresh();
         }
 
         private void pictureBox1_Click(object sender, EventArgs e)
@@ -89,6 +120,33 @@ namespace Aardwolf
             pictureBox1.SizeMode = PictureBoxSizeMode.StretchImage;
             pictureBox1.Size = new Size(640, 640);
             pictureBox1.Refresh();
+        }
+
+        private void comboBox2_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            byte[] texturedata = dh.getTexture(comboBox2.SelectedIndex);
+
+            Bitmap bitmap = new Bitmap(64, 64);
+
+            for (int y = 0; y < 64; y++)
+            {
+                for (int x = 0; x < 64; x++)
+                {
+                    int offset = (y * 64 + x);
+
+                    int r = texturedata[offset];
+                    int g = texturedata[offset];
+                    int b = texturedata[offset];
+                    int a = 255;
+
+                    bitmap.SetPixel(x, y, Color.FromArgb(a, r, g, b));
+                }
+            }
+
+            pictureBox2.Image = bitmap;
+            pictureBox2.SizeMode = PictureBoxSizeMode.StretchImage;
+            pictureBox2.Size = new Size(128, 128);
+            pictureBox2.Refresh();
         }
     }
 }

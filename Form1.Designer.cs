@@ -33,7 +33,12 @@
             comboBox1 = new ComboBox();
             radioButton1 = new RadioButton();
             radioButton2 = new RadioButton();
+            label1 = new Label();
+            label2 = new Label();
+            comboBox2 = new ComboBox();
+            pictureBox2 = new PictureBox();
             ((System.ComponentModel.ISupportInitialize)pictureBox1).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)pictureBox2).BeginInit();
             SuspendLayout();
             // 
             // button1
@@ -58,7 +63,7 @@
             // comboBox1
             // 
             comboBox1.FormattingEnabled = true;
-            comboBox1.Location = new Point(12, 106);
+            comboBox1.Location = new Point(12, 120);
             comboBox1.Name = "comboBox1";
             comboBox1.Size = new Size(151, 23);
             comboBox1.TabIndex = 2;
@@ -86,11 +91,53 @@
             radioButton2.Text = "Spear of Destiny";
             radioButton2.UseVisualStyleBackColor = true;
             // 
+            // label1
+            // 
+            label1.AutoSize = true;
+            label1.Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point);
+            label1.Location = new Point(11, 102);
+            label1.Name = "label1";
+            label1.Size = new Size(92, 15);
+            label1.TabIndex = 5;
+            label1.Text = "Level Selection";
+            // 
+            // label2
+            // 
+            label2.AutoSize = true;
+            label2.Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point);
+            label2.Location = new Point(11, 146);
+            label2.Name = "label2";
+            label2.Size = new Size(106, 15);
+            label2.TabIndex = 6;
+            label2.Text = "Texture Selection";
+            // 
+            // comboBox2
+            // 
+            comboBox2.FormattingEnabled = true;
+            comboBox2.Location = new Point(12, 164);
+            comboBox2.Name = "comboBox2";
+            comboBox2.Size = new Size(151, 23);
+            comboBox2.TabIndex = 7;
+            comboBox2.SelectedIndexChanged += comboBox2_SelectedIndexChanged;
+            // 
+            // pictureBox2
+            // 
+            pictureBox2.BorderStyle = BorderStyle.Fixed3D;
+            pictureBox2.Location = new Point(11, 193);
+            pictureBox2.Name = "pictureBox2";
+            pictureBox2.Size = new Size(128, 128);
+            pictureBox2.TabIndex = 8;
+            pictureBox2.TabStop = false;
+            // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(857, 662);
+            Controls.Add(pictureBox2);
+            Controls.Add(comboBox2);
+            Controls.Add(label2);
+            Controls.Add(label1);
             Controls.Add(radioButton2);
             Controls.Add(radioButton1);
             Controls.Add(comboBox1);
@@ -100,6 +147,7 @@
             Name = "Form1";
             Text = "Aardwolf Test Application";
             ((System.ComponentModel.ISupportInitialize)pictureBox1).EndInit();
+            ((System.ComponentModel.ISupportInitialize)pictureBox2).EndInit();
             ResumeLayout(false);
             PerformLayout();
         }
@@ -111,5 +159,9 @@
         private ComboBox comboBox1;
         private RadioButton radioButton1;
         private RadioButton radioButton2;
+        private Label label1;
+        private Label label2;
+        private ComboBox comboBox2;
+        private PictureBox pictureBox2;
     }
 }

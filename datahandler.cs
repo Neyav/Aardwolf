@@ -36,6 +36,26 @@ namespace Aardwolf
         }
     }
 
+    struct VSWAPHeader
+    {
+        public UInt16 chunkCount;
+        public UInt16 spiteStart;
+        public UInt16 soundStart;
+
+        public UInt32[] chunkOffsets;
+        public UInt16[] chunkLengths;
+
+        public VSWAPHeader()
+        {
+            chunkCount = 0;
+            spiteStart = 0;
+            soundStart = 0;
+
+            chunkOffsets = new UInt32[1];
+            chunkLengths = new UInt16[1];
+        }
+    }
+
     internal class dataHandler
     {
         Byte[] _AUDIOHED;
@@ -47,14 +67,16 @@ namespace Aardwolf
         Byte[] _VGAGRAPH;
         Byte[] _VSWAP;
 
+        // Level data
         Int32[] _mapOffsets;
-
         int _levels;
-
         List<mapDataHeader> _mapDataHeaders;
         List<byte[]> _mapData_offPlane0;
         List<byte[]> _mapData_offPlane1;
         List<byte[]> _mapData_offPlane2;
+
+        // VSWAP data
+        VSWAPHeader _VSWAPHeader;
 
         bool _isLoaded = false;
         bool _isSOD = false;
@@ -202,6 +224,42 @@ namespace Aardwolf
             return levelName;
         }
 
+        public void prepareVSWAP()
+        {
+            _VSWAPHeader.chunkCount = BitConverter.ToUInt16(_VSWAP, 0);
+            _VSWAPHeader.spiteStart = BitConverter.ToUInt16(_VSWAP, 2);
+            _VSWAPHeader.soundStart = BitConverter.ToUInt16(_VSWAP, 4);
+
+            Debug.WriteLine("VSWAP Header: ChunkCount: {0}, SpiteStart: {1}, SoundStart: {2}", _VSWAPHeader.chunkCount, _VSWAPHeader.spiteStart, _VSWAPHeader.soundStart);
+        
+            _VSWAPHeader.chunkOffsets = new UInt32[_VSWAPHeader.chunkCount];
+            _VSWAPHeader.chunkLengths = new UInt16[_VSWAPHeader.chunkCount];
+
+            for (int i = 0; i < _VSWAPHeader.chunkCount; i++)
+            {
+                _VSWAPHeader.chunkOffsets[i] = BitConverter.ToUInt32(_VSWAP, 6 + (i * 4));
+                _VSWAPHeader.chunkLengths[i] = BitConverter.ToUInt16(_VSWAP, 6 + (_VSWAPHeader.chunkCount * 4) + (i * 2));
+
+                Debug.WriteLine("VSWAP Chunk {0}: Offset: {1}, Length: {2}", i, _VSWAPHeader.chunkOffsets[i], _VSWAPHeader.chunkLengths[i]);
+            }
+        }
+
+        public VSWAPHeader getVSWAPHeader
+        {
+            get { return _VSWAPHeader; }
+        }
+        public byte[] getTexture(int chunk)
+        {
+            if (chunk >= _VSWAPHeader.spiteStart)
+                return null;
+
+            byte[] chunkData = new byte[_VSWAPHeader.chunkLengths[chunk]];
+
+            chunkData = _VSWAP.Skip((int)_VSWAPHeader.chunkOffsets[chunk]).Take((int)_VSWAPHeader.chunkLengths[chunk]).ToArray();
+
+            return chunkData;
+        }
+
         public dataHandler()
         {
             _isLoaded = false;
@@ -213,6 +271,8 @@ namespace Aardwolf
             _mapData_offPlane0 = new List<byte[]>();
             _mapData_offPlane1 = new List<byte[]>();
             _mapData_offPlane2 = new List<byte[]>();
+
+            _VSWAPHeader = new VSWAPHeader();
 
             _levels = 0;
         }

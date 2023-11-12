@@ -111,6 +111,17 @@ namespace Aardwolf
                     int r = leveldata[offset];
                     int g = leveldata[offset];
                     int b = leveldata[offset];
+
+                    if (g > 100)
+                        r = b = 0;
+                    if (r > 40)
+                        g = b = 0;
+                    if (b > 10)
+                        r = g = 0;
+
+                    r *= 2;
+                    b *= 6;
+
                     int a = 255;
                     Debug.WriteLine("Leveldata for x: {0}, y: {1} is {2}", x, y, r);
 

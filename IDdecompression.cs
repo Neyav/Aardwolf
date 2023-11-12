@@ -104,7 +104,7 @@ namespace Aardwolf
                     else
                     {
                         byte count = topend; // The number of words to copy.
-                        int offset = input[inputIterator]; // The offset (in words ) to copy from.
+                        int offset = input[inputIterator]; // The offset (in words) to copy from.
                         inputIterator++;
                         offset *= 2; // We multiply by two because we're dealing with bytes, not words.
 

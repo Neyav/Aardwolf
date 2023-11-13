@@ -100,34 +100,61 @@ namespace Aardwolf
         {
             byte[] leveldata = dh.getLevelData(comboBox1.SelectedIndex);
 
-            Bitmap bitmap = new Bitmap(64, 64);
+            Bitmap bitmap = new Bitmap(1280, 1280);
+
+            // There must be a better way to do this.
+            for (int x = 0; x < 1280; x++)
+            {
+                for (int y = 0; y < 1280; y++)
+                {
+                    bitmap.SetPixel(x, y, Color.FromArgb(255, 0, 0, 0));
+                }
+            }
+
+            List<int> tilecount = new List<int>();
 
             for (int x = 0; x < 64; x++)
             {
                 for (int y = 0; y < 64; y++)
                 {
                     int offset = (y * 64 + x) * 2;
+                    if (leveldata[offset] == 0 || leveldata[offset] > 64) // 64 is maxtile in Wolf3D.
+                        continue;
+                    int texture = (leveldata[offset] - 1) * 2;
 
-                    int r = leveldata[offset];
-                    int g = leveldata[offset];
-                    int b = leveldata[offset];
+                    tilecount.Add(leveldata[offset]);
 
-                    if (g > 100)
-                        r = b = 0;
-                    if (r > 40)
-                        g = b = 0;
-                    if (b > 10)
-                        r = g = 0;
+                    // Now load the appropriate texture.
+                    byte[] texturedata = dh.getTexture(texture);
 
-                    r *= 2;
-                    b *= 6;
+                    // Now we need to draw a 10x10 square of the texturedata onto the bitmap.
+                    for (int x2 = 0; x2 < 20; x2++)
+                    {
+                        for (int y2 = 0; y2 < 20; y2++)
+                        {
+                            int offset2 = ((x2 * 3) * 64 + (y2 * 3));
 
-                    int a = 255;
-                    Debug.WriteLine("Leveldata for x: {0}, y: {1} is {2}", x, y, r);
+                            RGBA RGBa = ph.getPaletteColor(texturedata[offset2]);
 
-                    bitmap.SetPixel(x, y, Color.FromArgb(a, r, g, b));
+                            bitmap.SetPixel(x * 20 + x2, y * 20 + y2, Color.FromArgb(RGBa.r, RGBa.g, RGBa.b));
+                        }
+                    }
+
+                    //bitmap.SetPixel(x, y, Color.FromArgb(a, r, g, b));
                 }
             }
+
+            // Display, in order from most to least, the number of tiles used in the level.
+            var sorted = tilecount.GroupBy(i => i).OrderByDescending(grp => grp.Count()).Select(grp => grp.Key).ToList();
+
+            string tilecountstring = "";
+
+            for (int i = 0; i < sorted.Count(); i++)
+            {
+                tilecountstring += sorted[i].ToString() + " ";
+            }
+
+            Debug.WriteLine(tilecountstring);
 
             pictureBox1.Image = bitmap;
             pictureBox1.SizeMode = PictureBoxSizeMode.StretchImage;

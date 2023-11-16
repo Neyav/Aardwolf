@@ -6,11 +6,11 @@ namespace Aardwolf
     public partial class Form1 : Form
     {
         dataHandler dh = new dataHandler();
-        palettehandler ph = new palettehandler();
+        palettehandler ph = new palettehandler(false);
         public Form1()
         {
             InitializeComponent();
-        }
+        }    
 
         private void button1_Click(object sender, EventArgs e)
         {
@@ -22,10 +22,12 @@ namespace Aardwolf
             if (radioButton1.Checked)
             {
                 dh.loadAllData(false);
+                ph = new palettehandler(false);
             }
             else
             {
                 dh.loadAllData(true);
+                ph = new palettehandler(true);
             }
 
             dh.parseLevelData();
@@ -91,11 +93,6 @@ namespace Aardwolf
             pictureBox2.Refresh();
         }
 
-        private void pictureBox1_Click(object sender, EventArgs e)
-        {
-
-        }
-
         private void comboBox1_SelectedIndexChanged(object sender, EventArgs e)
         {
             byte[] leveldata = dh.getLevelData(comboBox1.SelectedIndex);
@@ -118,9 +115,22 @@ namespace Aardwolf
                 for (int y = 0; y < 64; y++)
                 {
                     int offset = (y * 64 + x) * 2;
-                    if (leveldata[offset] == 0 || leveldata[offset] > 64) // 64 is maxtile in Wolf3D.
+                    if (leveldata[offset] == 0 || (leveldata[offset] > 64 && leveldata[offset] < 90) || leveldata[offset] > 101) // 64 is maxtile in Wolf3D.
                         continue;
-                    int texture = (leveldata[offset] - 1) * 2;
+
+                    int texture = 0;
+
+                    if (leveldata[offset] >= 90)
+                    {  // This is a door.
+                        if (leveldata[offset] == 90 || leveldata[offset] == 91)
+                            texture = 98;
+                        if (leveldata[offset] > 91 && leveldata[offset] < 100)
+                            texture = 104;
+                        if (leveldata[offset] == 100 || leveldata[offset] == 101)
+                            texture = 102;
+                    }
+                    else
+                        texture = (leveldata[offset] - 1) * 2;
 
                     tilecount.Add(leveldata[offset]);
 

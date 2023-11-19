@@ -7,10 +7,15 @@ namespace Aardwolf
     {
         dataHandler dh = new dataHandler();
         palettehandler ph = new palettehandler(false);
+
+        int previewZoom = 0;
+        int previewCenterX = 0;
+        int previewCenterY = 0;
+
         public Form1()
         {
             InitializeComponent();
-        }    
+        }
 
         private void button1_Click(object sender, EventArgs e)
         {
@@ -93,7 +98,7 @@ namespace Aardwolf
             pictureBox2.Refresh();
         }
 
-        private void comboBox1_SelectedIndexChanged(object sender, EventArgs e)
+        private void rendercurrentLevel()
         {
             byte[] leveldata = dh.getLevelData(comboBox1.SelectedIndex);
 
@@ -137,16 +142,41 @@ namespace Aardwolf
                     // Now load the appropriate texture.
                     byte[] texturedata = dh.getTexture(texture);
 
-                    // Now we need to draw a 10x10 square of the texturedata onto the bitmap.
-                    for (int x2 = 0; x2 < 20; x2++)
+                    // Determine where the image is to be drawn based on previewZoom.
+                    int drawX = 0;
+                    int drawY = 0;
+                    int tileWidth = 0;
+                    int tileHeight = 0;
+
+                    // previewZoom 1 = 2x zoom, 2 = 4x zoom, 3 = 8x zoom.
+                    // previewCenterX and previewCenterY are the center of the preview.
+                    // We need to calculate where each tile is to be drawn based on the zoom and center.
+                    if (previewZoom == 1)
                     {
-                        for (int y2 = 0; y2 < 20; y2++)
+                        drawX = (x - previewCenterX) * 40 + 640;
+                        drawY = (y - previewCenterY) * 40 + 640;
+                        tileWidth = 40;
+                        tileHeight = 40;
+                    }
+                    else
+                    {
+                        tileWidth = 20;
+                        tileHeight = 20;
+                        drawX = x * 20;
+                        drawY = y * 20;
+                    }
+
+                    // Now we need to draw a 10x10 square of the texturedata onto the bitmap.
+                    for (int x2 = 0; x2 < tileHeight; x2++)
+                    {
+                        for (int y2 = 0; y2 < tileWidth; y2++)
                         {
-                            int offset2 = ((x2 * 3) * 64 + (y2 * 3));
+                            int offset2 = (int)((x2 * (float)(64/tileHeight)) * 64 + (y2 * (float)(64/tileWidth)));
 
                             RGBA RGBa = ph.getPaletteColor(texturedata[offset2]);
 
-                            bitmap.SetPixel(x * 20 + x2, y * 20 + y2, Color.FromArgb(RGBa.r, RGBa.g, RGBa.b));
+                            if (drawX +x2 > 0 && drawY + y2 > 0 && drawX + x2 < 1280 && drawY + y2 < 1280)
+                                bitmap.SetPixel(drawX + x2, drawY + y2, Color.FromArgb(RGBa.r, RGBa.g, RGBa.b));
                         }
                     }
 
@@ -154,21 +184,13 @@ namespace Aardwolf
                 }
             }
 
-            // Display, in order from most to least, the number of tiles used in the level.
-            var sorted = tilecount.GroupBy(i => i).OrderByDescending(grp => grp.Count()).Select(grp => grp.Key).ToList();
-
-            string tilecountstring = "";
-
-            for (int i = 0; i < sorted.Count(); i++)
-            {
-                tilecountstring += sorted[i].ToString() + " ";
-            }
-
-            Debug.WriteLine(tilecountstring);
-
             pictureBox1.Image = bitmap;
             pictureBox1.SizeMode = PictureBoxSizeMode.StretchImage;
             pictureBox1.Refresh();
+        }
+        private void comboBox1_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            this.rendercurrentLevel();
         }
 
         private void comboBox2_SelectedIndexChanged(object sender, EventArgs e)
@@ -190,6 +212,26 @@ namespace Aardwolf
             pictureBox2.Image = bitmap;
             pictureBox2.SizeMode = PictureBoxSizeMode.StretchImage;
             pictureBox2.Refresh();
+        }
+
+        private void pictureBox1_Click(object sender, EventArgs e)
+        {
+            // Set preview zoom to 0-3.
+            previewZoom++;
+            if (previewZoom > 3)
+                previewZoom = 0;
+
+            if (previewZoom == 0) return;
+
+            // Get the tile that was clicked.
+            int x = (int)Math.Floor((double)(MousePosition.X - pictureBox1.Location.X - this.Location.X - 8) / 20);
+            int y = (int)Math.Floor((double)(MousePosition.Y - pictureBox1.Location.Y - this.Location.Y - 30) / 20);
+
+            // Set the center of the preview to the tile that was clicked.
+            previewCenterX = x;
+            previewCenterY = y;
+
+            this.rendercurrentLevel();
         }
     }
 }

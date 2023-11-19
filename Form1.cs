@@ -148,15 +148,22 @@ namespace Aardwolf
                     int tileWidth = 0;
                     int tileHeight = 0;
 
-                    // previewZoom 1 = 2x zoom, 2 = 4x zoom, 3 = 8x zoom.
+                    // previewZoom 1 = 2x zoom, 2 = 100% zoom.
                     // previewCenterX and previewCenterY are the center of the preview.
                     // We need to calculate where each tile is to be drawn based on the zoom and center.
                     if (previewZoom == 1)
                     {
-                        drawX = (x - previewCenterX) * 40 + 640;
-                        drawY = (y - previewCenterY) * 40 + 640;
+                        drawX = (x - previewCenterX) * 40 + 0;
+                        drawY = (y - previewCenterY) * 40 + 0;
                         tileWidth = 40;
                         tileHeight = 40;
+                    }
+                    else if (previewZoom == 2)
+                    {
+                        drawX = (x - previewCenterX) * 64 + 0;
+                        drawY = (y - previewCenterY) * 64 + 0;
+                        tileWidth = 64;
+                        tileHeight = 64;
                     }
                     else
                     {
@@ -171,7 +178,7 @@ namespace Aardwolf
                     {
                         for (int y2 = 0; y2 < tileWidth; y2++)
                         {
-                            int offset2 = (int)((x2 * (float)(64/tileHeight)) * 64 + (y2 * (float)(64/tileWidth)));
+                            int offset2 = (int)(((float)x2 * (float)(64/tileHeight)) * (float)64 + ((float)y2 * (float)(64/tileWidth)));
 
                             RGBA RGBa = ph.getPaletteColor(texturedata[offset2]);
 
@@ -218,10 +225,14 @@ namespace Aardwolf
         {
             // Set preview zoom to 0-3.
             previewZoom++;
-            if (previewZoom > 3)
+            if (previewZoom > 2)
                 previewZoom = 0;
 
-            if (previewZoom == 0) return;
+            if (previewZoom == 0)
+            {
+                this.rendercurrentLevel();
+                return;
+            }
 
             // Get the tile that was clicked.
             int x = (int)Math.Floor((double)(MousePosition.X - pictureBox1.Location.X - this.Location.X - 8) / 20);

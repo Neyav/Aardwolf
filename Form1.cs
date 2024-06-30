@@ -71,7 +71,7 @@ namespace Aardwolf
 
             VSWAPHeader VSWAPH = dh.getVSWAPHeader;
 
-            for (int i = 0; i < VSWAPH.spiteStart; i++)
+            for (int i = 0; i < VSWAPH.spriteStart; i++)
             {
                 comboBox2.Items.Add("Texture - " + i.ToString());
             }
@@ -179,11 +179,11 @@ namespace Aardwolf
                     {
                         for (int y2 = 0; y2 < tileWidth; y2++)
                         {
-                            int offset2 = (int)(((float)x2 * (float)(64/tileHeight)) * (float)64 + ((float)y2 * (float)(64/tileWidth)));
+                            int offset2 = (int)(((float)x2 * (float)(64 / tileHeight)) * (float)64 + ((float)y2 * (float)(64 / tileWidth)));
 
                             RGBA RGBa = ph.getPaletteColor(texturedata[offset2]);
 
-                            if (drawX +x2 > 0 && drawY + y2 > 0 && drawX + x2 < 1280 && drawY + y2 < 1280)
+                            if (drawX + x2 > 0 && drawY + y2 > 0 && drawX + x2 < 1280 && drawY + y2 < 1280)
                                 bitmap.SetPixel(drawX + x2, drawY + y2, Color.FromArgb(RGBa.r, RGBa.g, RGBa.b));
                         }
                     }
@@ -199,6 +199,9 @@ namespace Aardwolf
         private void comboBox1_SelectedIndexChanged(object sender, EventArgs e)
         {
             this.rendercurrentLevel();
+
+            // Enable the Render 3D button now that a level has been selected.
+            button2.Enabled = true;
         }
 
         private void comboBox2_SelectedIndexChanged(object sender, EventArgs e)
@@ -244,6 +247,11 @@ namespace Aardwolf
             previewCenterY = y;
 
             this.rendercurrentLevel();
+        }
+
+        private void button2_Click(object sender, EventArgs e)
+        {
+
         }
     }
 }

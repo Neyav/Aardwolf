@@ -37,6 +37,7 @@
             label2 = new Label();
             comboBox2 = new ComboBox();
             pictureBox2 = new PictureBox();
+            button2 = new Button();
             ((System.ComponentModel.ISupportInitialize)pictureBox1).BeginInit();
             ((System.ComponentModel.ISupportInitialize)pictureBox2).BeginInit();
             SuspendLayout();
@@ -129,11 +130,23 @@
             pictureBox2.TabIndex = 8;
             pictureBox2.TabStop = false;
             // 
+            // button2
+            // 
+            button2.Enabled = false;
+            button2.Location = new Point(179, 119);
+            button2.Name = "button2";
+            button2.Size = new Size(291, 68);
+            button2.TabIndex = 9;
+            button2.Text = "Render Level in 3D";
+            button2.UseVisualStyleBackColor = true;
+            button2.Click += button2_Click;
+            // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(1303, 819);
+            Controls.Add(button2);
             Controls.Add(pictureBox2);
             Controls.Add(comboBox2);
             Controls.Add(label2);
@@ -144,6 +157,7 @@
             Controls.Add(pictureBox1);
             Controls.Add(button1);
             FormBorderStyle = FormBorderStyle.Fixed3D;
+            MaximizeBox = false;
             Name = "Form1";
             Text = "Aardwolf Test Application";
             ((System.ComponentModel.ISupportInitialize)pictureBox1).EndInit();
@@ -163,5 +177,6 @@
         private Label label2;
         private ComboBox comboBox2;
         private PictureBox pictureBox2;
+        private Button button2;
     }
 }

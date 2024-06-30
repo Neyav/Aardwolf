@@ -39,7 +39,7 @@ namespace Aardwolf
     struct VSWAPHeader
     {
         public UInt16 chunkCount;
-        public UInt16 spiteStart;
+        public UInt16 spriteStart;
         public UInt16 soundStart;
 
         public UInt32[] chunkOffsets;
@@ -48,7 +48,7 @@ namespace Aardwolf
         public VSWAPHeader()
         {
             chunkCount = 0;
-            spiteStart = 0;
+            spriteStart = 0;
             soundStart = 0;
 
             chunkOffsets = new UInt32[1];
@@ -228,10 +228,10 @@ namespace Aardwolf
         public void prepareVSWAP()
         {
             _VSWAPHeader.chunkCount = BitConverter.ToUInt16(_VSWAP, 0);
-            _VSWAPHeader.spiteStart = BitConverter.ToUInt16(_VSWAP, 2);
+            _VSWAPHeader.spriteStart = BitConverter.ToUInt16(_VSWAP, 2);
             _VSWAPHeader.soundStart = BitConverter.ToUInt16(_VSWAP, 4);
 
-            Debug.WriteLine("VSWAP Header: ChunkCount: {0}, SpiteStart: {1}, SoundStart: {2}", _VSWAPHeader.chunkCount, _VSWAPHeader.spiteStart, _VSWAPHeader.soundStart);
+            Debug.WriteLine("VSWAP Header: ChunkCount: {0}, spriteStart: {1}, SoundStart: {2}", _VSWAPHeader.chunkCount, _VSWAPHeader.spriteStart, _VSWAPHeader.soundStart);
         
             _VSWAPHeader.chunkOffsets = new UInt32[_VSWAPHeader.chunkCount];
             _VSWAPHeader.chunkLengths = new UInt16[_VSWAPHeader.chunkCount];
@@ -251,7 +251,7 @@ namespace Aardwolf
         }
         public byte[] getTexture(int chunk)
         {
-            if (chunk >= _VSWAPHeader.spiteStart)
+            if (chunk >= _VSWAPHeader.spriteStart)
                 return null;
 
             byte[] chunkData = new byte[_VSWAPHeader.chunkLengths[chunk]];

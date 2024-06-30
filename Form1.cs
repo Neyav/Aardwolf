@@ -54,6 +54,7 @@ namespace Aardwolf
                     int a = 255;
 
                     bitmap.SetPixel(x, y, Color.FromArgb(a, r, g, b));
+
                 }
             }
 

@@ -99,6 +99,7 @@ namespace Aardwolf
                 _mapData_offPlane1.Add(decompressor.RLEWDecompress(decompressor.CarmackDecompress(localPlane1)));
                 _mapData_offPlane2.Add(decompressor.RLEWDecompress(decompressor.CarmackDecompress(localPlane2)));
             }
+  
         }
 
         public void loadAllData(bool isSOD)

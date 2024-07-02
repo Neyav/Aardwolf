@@ -145,6 +145,24 @@ namespace Aardwolf
 
             return _mapData_offPlane0[level];
         }
+
+        public bool tileIsPushWall(int level, int x, int y)
+        {            
+            if (!_isLoaded)
+                return false;
+
+            if (level > _levels)
+                return false;
+
+            if (x > _mapDataHeaders[level].width)
+                return false;
+
+            if (y > _mapDataHeaders[level].height)
+                return false;
+
+            // The x2 is because a byte is two characters in the array thanks to unicode.
+            return (_mapData_offPlane1[level][(y * _mapDataHeaders[level].width + x) * 2] == 98);            
+        }
         public void parseLevelData()
         {
             int iterator = 0;

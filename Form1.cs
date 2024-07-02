@@ -1,5 +1,12 @@
 using System.Diagnostics;
 using System.DirectoryServices;
+using System;
+using System.Windows.Forms;
+using OpenTK;
+using OpenTK.Graphics;
+using OpenTK.Graphics.OpenGL;
+using OpenTK.Input;
+using OpenTK.Windowing.Desktop;
 
 namespace Aardwolf
 {
@@ -174,6 +181,8 @@ namespace Aardwolf
                         drawY = y * 20;
                     }
 
+                    bool isPushWall = dh.tileIsPushWall(comboBox1.SelectedIndex, x, y);
+
                     // Now we need to draw a 10x10 square of the texturedata onto the bitmap.
                     for (int x2 = 0; x2 < tileHeight; x2++)
                     {
@@ -183,12 +192,36 @@ namespace Aardwolf
 
                             RGBA RGBa = ph.getPaletteColor(texturedata[offset2]);
 
+                            // If it's a push wall colour reverse the colours so it stands out.
+                            if (isPushWall)
+                            {
+                                byte RGBMax = 255;
+                                
+                                RGBa.r = (byte)(RGBMax - RGBa.r);
+                                RGBa.g = (byte)(RGBMax - RGBa.g);
+                                RGBa.b = (byte)(RGBMax - RGBa.b);
+                            }
+                            
                             if (drawX + x2 > 0 && drawY + y2 > 0 && drawX + x2 < 1280 && drawY + y2 < 1280)
                                 bitmap.SetPixel(drawX + x2, drawY + y2, Color.FromArgb(RGBa.r, RGBa.g, RGBa.b));
                         }
                     }
 
-                    //bitmap.SetPixel(x, y, Color.FromArgb(a, r, g, b));
+                    // If it's a pushwall draw a red border around it.
+                    if (isPushWall)
+                    {
+                        for (int x2 = 0; x2 < tileHeight; x2++)
+                        {
+                            for (int y2 = 0; y2 < tileWidth; y2++)
+                            {
+                                if (drawX + x2 > 0 && drawY + y2 > 0 && drawX + x2 < 1280 && drawY + y2 < 1280)
+                                {
+                                    if (x2 == 0 || x2 == tileHeight - 1 || y2 == 0 || y2 == tileWidth - 1)
+                                        bitmap.SetPixel(drawX + x2, drawY + y2, Color.FromArgb(255, 255, 0, 0));
+                                }
+                            }
+                        }
+                    }
                 }
             }
 

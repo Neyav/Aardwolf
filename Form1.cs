@@ -192,14 +192,10 @@ namespace Aardwolf
 
                             RGBA RGBa = ph.getPaletteColor(texturedata[offset2]);
 
-                            // If it's a push wall colour reverse the colours so it stands out.
+                            // If it's a push wall give it a strong red tint so it stands out.
                             if (isPushWall)
                             {
-                                byte RGBMax = 255;
-                                
-                                RGBa.r = (byte)(RGBMax - RGBa.r);
-                                RGBa.g = (byte)(RGBMax - RGBa.g);
-                                RGBa.b = (byte)(RGBMax - RGBa.b);
+                                RGBa.r = 255;
                             }
                             
                             if (drawX + x2 > 0 && drawY + y2 > 0 && drawX + x2 < 1280 && drawY + y2 < 1280)

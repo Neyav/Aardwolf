@@ -106,16 +106,16 @@ namespace Aardwolf
             pictureBox2.Refresh();
         }
 
-        private void rendercurrentLevel()
+        private Bitmap rendercurrentLevel(int sizeWidth, int sizeHeight)
         {
             byte[] leveldata = dh.getLevelData(comboBox1.SelectedIndex);
 
-            Bitmap bitmap = new Bitmap(1280, 1280);
+            Bitmap bitmap = new Bitmap(sizeWidth, sizeHeight);
 
             // There must be a better way to do this.
-            for (int x = 0; x < 1280; x++)
+            for (int x = 0; x < sizeWidth; x++)
             {
-                for (int y = 0; y < 1280; y++)
+                for (int y = 0; y < sizeHeight; y++)
                 {
                     bitmap.SetPixel(x, y, Color.FromArgb(255, 0, 0, 0));
                 }
@@ -185,44 +185,38 @@ namespace Aardwolf
                     byte[] texturedata = dh.getTexture(texture);
 
                     // Determine where the image is to be drawn based on previewZoom.
-                    int drawX = 0;
-                    int drawY = 0;
-                    int tileWidth = 0;
-                    int tileHeight = 0;
+                    int tileWidth = (int) ((float)sizeWidth / 64);
+                    int tileHeight = (int) ((float)sizeHeight / 64);
+                    int drawX = x * tileWidth;
+                    int drawY = y * tileHeight;
 
                     // previewZoom 1 = 2x zoom, 2 = 100% zoom.
                     // previewCenterX and previewCenterY are the center of the preview.
                     // We need to calculate where each tile is to be drawn based on the zoom and center.
+                 
                     if (previewZoom == 1)
                     {
-                        drawX = (x - previewCenterX) * 40 + 0;
-                        drawY = (y - previewCenterY) * 40 + 0;
-                        tileWidth = 40;
-                        tileHeight = 40;
+                        drawX = (x - previewCenterX) * sizeWidth / 32 + 0;
+                        drawY = (y - previewCenterY) * sizeHeight / 32 + 0;
+                        tileWidth = sizeWidth / 32;
+                        tileHeight = sizeHeight / 32;
                     }
                     else if (previewZoom == 2)
                     {
-                        drawX = (x - previewCenterX) * 64 + 0;
-                        drawY = (y - previewCenterY) * 64 + 0;
-                        tileWidth = 64;
-                        tileHeight = 64;
-                    }
-                    else
-                    {
-                        tileWidth = 20;
-                        tileHeight = 20;
-                        drawX = x * 20;
-                        drawY = y * 20;
+                        drawX = (x - previewCenterX) * sizeWidth / 16 + 0;
+                        drawY = (y - previewCenterY) * sizeHeight / 16 + 0;
+                        tileWidth = sizeWidth / 16;
+                        tileHeight = sizeHeight / 16;
                     }
 
                     bool isPushWall = dh.tileIsPushWall(comboBox1.SelectedIndex, x, y);
 
-                    // Now we need to draw a 10x10 square of the texturedata onto the bitmap.
-                    for (int x2 = 0; x2 < tileHeight; x2++)
+                    // Now we need to draw the texturedata onto the bitmap, scaled for our bitmap size.
+                    for (int x2 = 0; x2 < tileWidth; x2++)
                     {
-                        for (int y2 = 0; y2 < tileWidth; y2++)
+                        for (int y2 = 0; y2 < tileHeight; y2++)
                         {
-                            int offset2 = (int)(((float)x2 * (float)(64 / tileHeight)) * (float)64 + ((float)y2 * (float)(64 / tileWidth)));
+                            int offset2 = (int)(((float)x2 * (float)(64 / tileWidth)) * (float)64 + ((float)y2 * (float)(64 / tileHeight)));
 
                             RGBA RGBa = ph.getPaletteColor(texturedata[offset2]);
 
@@ -232,7 +226,7 @@ namespace Aardwolf
                                 RGBa.r = 255;
                             }
                             
-                            if (drawX + x2 > 0 && drawY + y2 > 0 && drawX + x2 < 1280 && drawY + y2 < 1280)
+                            if (drawX + x2 > 0 && drawY + y2 > 0 && drawX + x2 < sizeHeight && drawY + y2 < sizeWidth)
                                 bitmap.SetPixel(drawX + x2, drawY + y2, Color.FromArgb(RGBa.r, RGBa.g, RGBa.b));
                         }
                     }
@@ -240,13 +234,13 @@ namespace Aardwolf
                     // If it's a pushwall draw a red border around it.
                     if (isPushWall)
                     {
-                        for (int x2 = 0; x2 < tileHeight; x2++)
+                        for (int x2 = 0; x2 < tileWidth; x2++)
                         {
-                            for (int y2 = 0; y2 < tileWidth; y2++)
+                            for (int y2 = 0; y2 < tileHeight; y2++)
                             {
-                                if (drawX + x2 > 0 && drawY + y2 > 0 && drawX + x2 < 1280 && drawY + y2 < 1280)
+                                if (drawX + x2 > 0 && drawY + y2 > 0 && drawX + x2 < sizeHeight && drawY + y2 < sizeWidth)
                                 {
-                                    if (x2 == 0 || x2 == tileHeight - 1 || y2 == 0 || y2 == tileWidth - 1)
+                                    if (x2 == 0 || x2 == tileWidth - 1 || y2 == 0 || y2 == tileHeight - 1)
                                         bitmap.SetPixel(drawX + x2, drawY + y2, Color.FromArgb(255, 255, 0, 0));
                                 }
                             }
@@ -255,13 +249,19 @@ namespace Aardwolf
                 }
             }
 
-            pictureBox1.Image = bitmap;
-            pictureBox1.SizeMode = PictureBoxSizeMode.StretchImage;
-            pictureBox1.Refresh();
+            return bitmap;
+            //pictureBox1.Image = bitmap;
+            //pictureBox1.SizeMode = PictureBoxSizeMode.StretchImage;
+            //pictureBox1.Refresh();
         }
         private void comboBox1_SelectedIndexChanged(object sender, EventArgs e)
         {
-            this.rendercurrentLevel();
+            pictureBox1.Image = this.rendercurrentLevel(pictureBox1.Width, pictureBox1.Height);
+            pictureBox1.SizeMode = PictureBoxSizeMode.StretchImage;
+            pictureBox1.Refresh();
+
+            // Save a copy so we can look at it.
+            this.rendercurrentLevel(2048, 2048).Save("level.png");
 
             // Enable the Render 3D button now that a level has been selected.
             button2.Enabled = true;
@@ -297,7 +297,9 @@ namespace Aardwolf
 
             if (previewZoom == 0)
             {
-                this.rendercurrentLevel();
+                pictureBox1.Image = this.rendercurrentLevel(1280, 1280);
+                pictureBox1.SizeMode = PictureBoxSizeMode.StretchImage;
+                pictureBox1.Refresh();
                 return;
             }
 
@@ -309,7 +311,9 @@ namespace Aardwolf
             previewCenterX = x;
             previewCenterY = y;
 
-            this.rendercurrentLevel();
+            pictureBox1.Image = this.rendercurrentLevel(1280, 1280);
+            pictureBox1.SizeMode = PictureBoxSizeMode.StretchImage;
+            pictureBox1.Refresh();
         }
 
         private void button2_Click(object sender, EventArgs e)

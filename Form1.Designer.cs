@@ -133,9 +133,9 @@
             // button2
             // 
             button2.Enabled = false;
-            button2.Location = new Point(179, 119);
+            button2.Location = new Point(347, 12);
             button2.Name = "button2";
-            button2.Size = new Size(291, 68);
+            button2.Size = new Size(147, 37);
             button2.TabIndex = 9;
             button2.Text = "Render Level in 3D";
             button2.UseVisualStyleBackColor = true;

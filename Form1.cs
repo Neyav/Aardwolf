@@ -133,14 +133,48 @@ namespace Aardwolf
 
                     int texture = 0;
 
-                    if (leveldata[offset] >= 90)
+                    if (leveldata[offset] >= 90 && leveldata[offset] <= 101)
                     {  // This is a door.
-                        if (leveldata[offset] == 90 || leveldata[offset] == 91)
-                            texture = 98;
-                        if (leveldata[offset] > 91 && leveldata[offset] < 100)
-                            texture = 104;
-                        if (leveldata[offset] == 100 || leveldata[offset] == 101)
-                            texture = 102;
+                        VSWAPHeader VSWAPHead = dh.getVSWAPHeader;
+                        byte doorType = 0;
+                        byte doorWall = (byte)(VSWAPHead.spriteStart - 8); 
+
+                        switch (leveldata[offset])
+                        {
+                            case 90:
+                            case 92:
+                            case 94:
+                            case 96:
+                            case 98:
+                            case 100:
+                                doorType = (byte)((leveldata[offset] - 90) / 2);
+                                break;
+                            case 91:
+                            case 93:
+                            case 95:
+                            case 97:
+                            case 99:
+                            case 101:
+                                doorType = (byte)((leveldata[offset] - 91) / 2);
+                                break;
+                        }
+                        
+                        switch (doorType)
+                        {
+                            case 0:
+                                texture = doorWall;
+                                break;
+                            case 1:
+                            case 2:
+                            case 3:
+                            case 4:
+                                texture = doorWall + 6;
+                                break;
+                            case 5:
+                                texture = doorWall + 4;
+                                break;
+                        }
+
                     }
                     else
                         texture = (leveldata[offset] - 1) * 2;

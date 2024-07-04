@@ -251,15 +251,6 @@ namespace Aardwolf
 
             VSWAPHeader VSWAPHeadA = dh.getVSWAPHeader;
 
-            for (int i = 0; i < 1; i++)
-                dh.getSprite(i);
-
-            dh.getSprite(317);
-
-            return bitmap;
-            //pictureBox1.Image = bitmap;
-            //pictureBox1.SizeMode = PictureBoxSizeMode.StretchImage;
-            //pictureBox1.Refresh();
         }
         private void comboBox1_SelectedIndexChanged(object sender, EventArgs e)
         {

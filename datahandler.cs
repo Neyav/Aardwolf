@@ -280,7 +280,7 @@ namespace Aardwolf
             return chunkData;
         }
 
-        public void getSprite(int sprite)
+        public Bitmap getSprite(int sprite)
         {
             int spriteOffset = sprite + _VSWAPHeader.spriteStart;
             Bitmap bitmap = new Bitmap(64, 64, PixelFormat.Format32bppArgb);
@@ -330,18 +330,9 @@ namespace Aardwolf
                 columnOffsets[i] = BitConverter.ToUInt16(rawSpriteData, 4 + (i * 2));
             }
 
-            // DEBUG PRINT THE COLUMN OFFSETS
-            for (int i = 0; i < numColumns; i++)
-            {
-                Debug.WriteLine("Column {0}: {1}", i, columnOffsets[i]);
-            }
-
-            //         The pixel data starts at the end of the column offset list. So we know that the pixel data starts at 4 + ((xEnd - xStart + 1) * 2).
+            //         The pixel data starts at the end of the column offset list. So we know that the pixel data starts at 4 + (numColumns * 2).
             //         We're going to keep track of this as an iterator so we always know which pixel colour we're on.
             int pixelDataIterator = 4 + (numColumns * 2);
-
-            // DEBUG PRINT THE PIXELDATAITERATOR
-            Debug.WriteLine("Pixel Data Iterator: {0}", pixelDataIterator);
 
             //          Now lets start processing the drawing instructions. They are stored in 6 byte segments, three groups of uint16s.
             //          If the first uint16 is 0, it indicates the end of the instruction set for this column. This is actually fairly clever, because it allows us to
@@ -362,7 +353,7 @@ namespace Aardwolf
             //          So the first int is 56, which is the y offset from the top of the image, doubled. So 28, y: 14 - 1 = 13.
             //          The second int is... Carmack knows. I don't know. It's some voodoo magic the engine uses. We're not using it here.
             //          The third int is 52, which is the y offset from the top of the image, doubled again. So 26, y: 13 - 1 = 12.
-            //          So our drawing instruction in this example has our first pixel colour occupying X: xStart, Y: 12 -> 13.
+            //          So our drawing instruction in this example has our first two pixel colours occupying X: xStart, Y: 12 -> 13.
 
             //          Let's start processing the drawing instructions.
 
@@ -377,7 +368,7 @@ namespace Aardwolf
                 {
                     // Grab yEnd.
                     yEnd = BitConverter.ToUInt16(rawSpriteData, instructionOffset);
-                    // If yStart is 0, we're done with this column.
+                    // If yEnd is 0, we're done with this column.
                     if (yEnd == 0)
                         break;
 
@@ -387,17 +378,14 @@ namespace Aardwolf
                     // Move the instruction offset to the next instruction.
                     instructionOffset += 6;
 
-                    // Cut them in half for... whatever reason.
+                    // Cut them in half for... whatever reason. I'm sure like most of the data here, this is stored this way to make
+                    // it easier for the old engine to process. We don't need these optimizations, and most of them don't even make sense in the modern era.
                     yStart = (UInt16)(yStart / 2);
                     yEnd = (UInt16)(yEnd / 2);
 
                     for (int yDraw = yStart; yDraw < yEnd; yDraw++)
                     {
                         byte colour = rawSpriteData[pixelDataIterator];
-
-                        // DEBUG PRINT THE COLOUR
-                        Debug.WriteLine("Colour: {0}", colour);
-
                         pixelDataIterator++;
 
                         // We need to translate the colour from a 256 palette reference to a RGB value.
@@ -409,8 +397,7 @@ namespace Aardwolf
                 }
             }
 
-            // Save the bitmap to a file for debugging.
-            bitmap.Save("sprite" + sprite + ".png", ImageFormat.Png);
+            return bitmap;
         }
 
         public dataHandler()

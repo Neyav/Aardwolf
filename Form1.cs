@@ -251,8 +251,10 @@ namespace Aardwolf
 
             VSWAPHeader VSWAPHeadA = dh.getVSWAPHeader;
 
-            for (int i = 0; i < 100; i++)
+            for (int i = 0; i < 1; i++)
                 dh.getSprite(i);
+
+            dh.getSprite(317);
 
             return bitmap;
             //pictureBox1.Image = bitmap;

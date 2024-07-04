@@ -321,16 +321,27 @@ namespace Aardwolf
             //          instructions describe how to draw the columns. We're just going to fetch the whole series of offsets here and store it in an array. The data inbetween the
             //          end of this offset list (There is one offset for every column from xStart to xEnd) and the first offset is the actual pixel data. We'll get there, don't worry.
 
-            UInt16[] columnOffsets = new UInt16[xEnd - xStart + 1];
+            int numColumns = xEnd - xStart + 1;
 
-            for (int i = 0; i < xEnd - xStart + 1; i++)
+            UInt16[] columnOffsets = new UInt16[numColumns];
+
+            for (int i = 0; i < numColumns; i++)
             {
                 columnOffsets[i] = BitConverter.ToUInt16(rawSpriteData, 4 + (i * 2));
             }
 
+            // DEBUG PRINT THE COLUMN OFFSETS
+            for (int i = 0; i < numColumns; i++)
+            {
+                Debug.WriteLine("Column {0}: {1}", i, columnOffsets[i]);
+            }
+
             //         The pixel data starts at the end of the column offset list. So we know that the pixel data starts at 4 + ((xEnd - xStart + 1) * 2).
             //         We're going to keep track of this as an iterator so we always know which pixel colour we're on.
-            int pixelDataIterator = 4 + ((xEnd - xStart + 1) * 2);
+            int pixelDataIterator = 4 + (numColumns * 2);
+
+            // DEBUG PRINT THE PIXELDATAITERATOR
+            Debug.WriteLine("Pixel Data Iterator: {0}", pixelDataIterator);
 
             //          Now lets start processing the drawing instructions. They are stored in 6 byte segments, three groups of uint16s.
             //          If the first uint16 is 0, it indicates the end of the instruction set for this column. This is actually fairly clever, because it allows us to
@@ -361,7 +372,7 @@ namespace Aardwolf
                 // Grab an iterator to our drawing instruction offset.
                 int instructionOffset = columnOffsets[xDraw - xStart];
 
-                // This loop occurs for every instruction in the column and represents a single pixel colour.
+                // This loop occurs for every instruction in the column.
                 while (true)
                 {
                     // Grab yEnd.
@@ -380,9 +391,13 @@ namespace Aardwolf
                     yStart = (UInt16)(yStart / 2);
                     yEnd = (UInt16)(yEnd / 2);
 
-                    for (int yDraw = yStart; yDraw <= yEnd; yDraw++)
+                    for (int yDraw = yStart; yDraw < yEnd; yDraw++)
                     {
                         byte colour = rawSpriteData[pixelDataIterator];
+
+                        // DEBUG PRINT THE COLOUR
+                        Debug.WriteLine("Colour: {0}", colour);
+
                         pixelDataIterator++;
 
                         // We need to translate the colour from a 256 palette reference to a RGB value.

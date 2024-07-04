@@ -147,8 +147,10 @@ namespace Aardwolf
             return _mapData_offPlane0[level];
         }
 
-        public int getTileActor(int level, int x, int y)
-        {            
+        public Byte getTileActor(int level, int x, int y)
+        {
+            byte lowByte = 0;
+
             if (!_isLoaded)
                 return 0;
 
@@ -161,8 +163,9 @@ namespace Aardwolf
             if (y > _mapDataHeaders[level].height)
                 return 0;
 
-            // The x2 is because a byte is two characters in the array thanks to unicode.
-            return _mapData_offPlane1[level][(y * _mapDataHeaders[level].width + x) * 2];            
+            lowByte = _mapData_offPlane1[level][(y * _mapDataHeaders[level].width + x) * 2];
+
+            return lowByte;            
         }
         public void parseLevelData()
         {

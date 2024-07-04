@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.DirectoryServices;
 using System;
+using System.Drawing;
 using System.Windows.Forms;
 using OpenTK;
 using OpenTK.Graphics;
@@ -84,7 +85,7 @@ namespace Aardwolf
             }
             for (int i = VSWAPH.spriteStart; i < VSWAPH.soundStart; i++)
             {
-                comboBox2.Items.Add("Sprite - " + i.ToString());
+                comboBox2.Items.Add("Sprite - " + (i - VSWAPH.spriteStart).ToString());
             }
 
             bitmap = new Bitmap(64, 64);
@@ -125,15 +126,13 @@ namespace Aardwolf
                 }
             }
 
-            List<int> tilecount = new List<int>();
-
             for (int x = 0; x < 64; x++)
             {
                 for (int y = 0; y < 64; y++)
                 {
                     int offset = (y * 64 + x) * 2;
-                    if (leveldata[offset] == 0 || (leveldata[offset] > 64 && leveldata[offset] < 90) || leveldata[offset] > 101) // 64 is maxtile in Wolf3D.
-                        continue;
+                    //if (leveldata[offset] == 0 || (leveldata[offset] > 64 && leveldata[offset] < 90) || leveldata[offset] > 101) // 64 is maxtile in Wolf3D.
+                    //    continue;
 
                     int texture = 0;
 
@@ -183,8 +182,6 @@ namespace Aardwolf
                     else
                         texture = (leveldata[offset] - 1) * 2;
 
-                    tilecount.Add(leveldata[offset]);
-
                     // Now load the appropriate texture.
                     byte[] texturedata = dh.getTexture(texture);
 
@@ -212,45 +209,83 @@ namespace Aardwolf
                         tileWidth = sizeWidth / 16;
                         tileHeight = sizeHeight / 16;
                     }*/
-                    int tileActor = dh.getTileActor(comboBox1.SelectedIndex, x, y);
+
+                    Byte tileActor = dh.getTileActor(comboBox1.SelectedIndex, x, y);
+
                     bool isPushWall = tileActor == 98;
 
                     // Now we need to draw the texturedata onto the bitmap, scaled for our bitmap size.
-                    for (int x2 = 0; x2 < tileWidth; x2++)
-                    {
-                        for (int y2 = 0; y2 < tileHeight; y2++)
-                        {
-                            int offset2 = (int)(((float)x2 * (float)(64 / tileWidth)) * (float)64 + ((float)y2 * (float)(64 / tileHeight)));
-
-                            RGBA RGBa = ph.getPaletteColor(texturedata[offset2]);
-
-                            // If it's a push wall give it a strong red tint so it stands out.
-                            if (isPushWall)
-                            {
-                                RGBa.r = 255;
-                            }
-                            
-                            if (drawX + x2 > 0 && drawY + y2 > 0 && drawX + x2 < sizeHeight && drawY + y2 < sizeWidth)
-                                bitmap.SetPixel(drawX + x2, drawY + y2, Color.FromArgb(RGBa.r, RGBa.g, RGBa.b));
-                        }
-                    }
-
-                    // If it's a pushwall draw a red border around it.
-                    if (isPushWall)
+                    if (texturedata != null)
                     {
                         for (int x2 = 0; x2 < tileWidth; x2++)
                         {
                             for (int y2 = 0; y2 < tileHeight; y2++)
                             {
-                                if (drawX + x2 > 0 && drawY + y2 > 0 && drawX + x2 < sizeHeight && drawY + y2 < sizeWidth)
+                                int offset2 = (int)(((float)x2 * (float)(64 / tileWidth)) * (float)64 + ((float)y2 * (float)(64 / tileHeight)));
+
+                                RGBA RGBa = ph.getPaletteColor(texturedata[offset2]);
+
+                                // If it's a push wall give it a strong red tint so it stands out.
+                                if (isPushWall)
                                 {
-                                    if (x2 == 0 || x2 == tileWidth - 1 || y2 == 0 || y2 == tileHeight - 1)
-                                        bitmap.SetPixel(drawX + x2, drawY + y2, Color.FromArgb(255, 255, 0, 0));
+                                    RGBa.r = 255;
+                                }
+
+                                if (drawX + x2 > 0 && drawY + y2 > 0 && drawX + x2 < sizeHeight && drawY + y2 < sizeWidth)
+                                    bitmap.SetPixel(drawX + x2, drawY + y2, Color.FromArgb(RGBa.r, RGBa.g, RGBa.b));
+                            }
+                        }
+
+                        // If it's a pushwall draw a red border around it.
+                        if (isPushWall)
+                        {
+                            for (int x2 = 0; x2 < tileWidth; x2++)
+                            {
+                                for (int y2 = 0; y2 < tileHeight; y2++)
+                                {
+                                    if (drawX + x2 > 0 && drawY + y2 > 0 && drawX + x2 < sizeHeight && drawY + y2 < sizeWidth)
+                                    {
+                                        if (x2 == 0 || x2 == tileWidth - 1 || y2 == 0 || y2 == tileHeight - 1)
+                                            bitmap.SetPixel(drawX + x2, drawY + y2, Color.FromArgb(255, 255, 0, 0));
+                                    }
                                 }
                             }
                         }
                     }
+                    else
+                    { // draw a sprite.
 
+                        int renderSprite = -1;
+                        bool _isSOD = false;
+
+                        if (radioButton2.Checked)
+                            _isSOD = true;
+
+                        // Draw the actor on top of the tile.
+                        if (tileActor >= 19 && tileActor <= 22) // Player Start
+                        {
+                            if (_isSOD)
+                                renderSprite = 0;   // SOD doesn't have a player start sprite. Use the demo sprite.
+                            else
+                                renderSprite = 409;
+                        }
+
+                        if (renderSprite >= 0) // We have a sprite to render.
+                        {
+                            Bitmap sprite = dh.getSprite(renderSprite);
+
+                            // Scale and draw the Bitmap sprite onto the level bitmap.
+                            //sprite.
+
+                            Debug.WriteLine("Drawing sprite " + renderSprite + " at " + drawX + ", " + drawY);
+
+                            using (Graphics graphics = Graphics.FromImage(bitmap))
+                            {
+                                graphics.DrawImage(sprite, drawX, drawY, tileWidth, tileHeight);
+                            }
+                        }
+
+                    }
 
                 }
             }
@@ -287,7 +322,7 @@ namespace Aardwolf
                 return;
             }
 
-            pictureBox1.BackColor = Color.Black;
+            pictureBox2.BackColor = Color.Black;
 
             for (int x = 0; x < 64; x++)
             {

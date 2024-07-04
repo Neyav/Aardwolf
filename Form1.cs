@@ -198,7 +198,7 @@ namespace Aardwolf
                     // previewCenterX and previewCenterY are the center of the preview.
                     // We need to calculate where each tile is to be drawn based on the zoom and center.
                  
-                    if (previewZoom == 1)
+                    /*if (previewZoom == 1)
                     {
                         drawX = (x - previewCenterX) * sizeWidth / 32 + 0;
                         drawY = (y - previewCenterY) * sizeHeight / 32 + 0;
@@ -211,9 +211,9 @@ namespace Aardwolf
                         drawY = (y - previewCenterY) * sizeHeight / 16 + 0;
                         tileWidth = sizeWidth / 16;
                         tileHeight = sizeHeight / 16;
-                    }
-
-                    bool isPushWall = dh.tileIsPushWall(comboBox1.SelectedIndex, x, y);
+                    }*/
+                    int tileActor = dh.getTileActor(comboBox1.SelectedIndex, x, y);
+                    bool isPushWall = tileActor == 98;
 
                     // Now we need to draw the texturedata onto the bitmap, scaled for our bitmap size.
                     for (int x2 = 0; x2 < tileWidth; x2++)
@@ -250,6 +250,8 @@ namespace Aardwolf
                             }
                         }
                     }
+
+
                 }
             }
 

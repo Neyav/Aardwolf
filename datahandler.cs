@@ -6,6 +6,7 @@ using System.IO;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 using System.Diagnostics;
+using System.Drawing.Imaging;
 
 namespace Aardwolf
 {
@@ -277,6 +278,154 @@ namespace Aardwolf
             chunkData = _VSWAP.Skip((int)_VSWAPHeader.chunkOffsets[chunk]).Take((int)_VSWAPHeader.chunkLengths[chunk]).ToArray();
 
             return chunkData;
+        }
+
+        public void getSprite(int sprite)
+        {
+            int spriteOffset = sprite + _VSWAPHeader.spriteStart;
+            Bitmap bitmap = new Bitmap(64, 64, PixelFormat.Format32bppArgb);
+            palettehandler palette = new palettehandler(_isSOD);
+
+            byte[] rawSpriteData = new byte[_VSWAPHeader.chunkLengths[spriteOffset]];
+
+            rawSpriteData = _VSWAP.Skip((int)_VSWAPHeader.chunkOffsets[spriteOffset]).Take((int)_VSWAPHeader.chunkLengths[spriteOffset]).ToArray();
+
+            // Set the whole bitmap to be transparent.
+            for (int x = 0; x < 64; x++)
+            {
+                for (int y = 0; y < 64; y++)
+                {
+                    bitmap.SetPixel(x, y, System.Drawing.Color.FromArgb(0, 0, 0, 0));
+                }
+            }
+
+            // [Dash|RD] -- Man, this Wolf3D stuff is a pain. I can never find good guides or references for it. Half the source code references I can find.
+            //              to try and understand it use double casting from a pointer to a value and back to a pointer while also iterating the pointer on the same line.
+            //              Okay, granted that's an exageration, but it's how I feel at this point. Nobody has been clear about how it works, and everyone that writes an
+            //              implementation seems to be trying to get awesome grades for being clever. Well, we're not clever here. This is the future. We have 128 CORE CPUs.
+            //              and more RAM than I can shake a stick at. I'm coding this in C# for Gods sake. Let's aim for readability. If this segment helps ANYONE in the future.
+            //              out I will be so happy, because this was painful for me.
+
+            //              rawSpriteData here is a dump of the total sprite data from the VSWAP file. Everything I talk about in here is going to be in reference to that.
+            //              Anything NOT described in the data for the sprite is considered transparent. Everyone says Wolf3D has a transparency colour, there is no transparency
+            //              colour. The data for transparent pixels is SIMPLY not described here. Also, everyone refers to them as texels. I get that, but it's annoying. We're
+            //              drawing pixels. This is a primitive form of texture mapping; I don't like the word texel, maybe I'm just an old man. COFFEE is COFFEE, keep your frappachino
+            //              out of my coding politics.
+
+            //          The first four bytes describes the X extents for the sprite. Let's deal with that first.
+            UInt16 xStart = BitConverter.ToUInt16(rawSpriteData, 0);
+            UInt16 xEnd = BitConverter.ToUInt16(rawSpriteData, 2);
+
+            //          Next we have a series of 16 bit unsigned ints that describe the offset to drawing instructions. These are offsets from the beginning of the sprite data.
+            //          Wolf3D sprites are drawn in columns because the whole renderer is based on columns. It's part of the magic sauce that made it so fast. So these drawing
+            //          instructions describe how to draw the columns. We're just going to fetch the whole series of offsets here and store it in an array. The data inbetween the
+            //          end of this offset list (There is one offset for every column from xStart to xEnd) and the first offset is the actual pixel data. We'll get there, don't worry.
+
+            UInt16[] columnOffsets = new UInt16[xEnd - xStart + 1];
+
+            for (int i = 0; i < xEnd - xStart + 1; i++)
+            {
+                columnOffsets[i] = BitConverter.ToUInt16(rawSpriteData, 4 + (i * 2));
+            }
+
+            //         The pixel data starts at the end of the column offset list. So we know that the pixel data starts at 4 + ((xEnd - xStart + 1) * 2).
+            //         We're going to keep track of this as an iterator so we always know which pixel colour we're on.
+            int pixelDataIterator = 4 + ((xEnd - xStart) * 2);
+
+            //          Now lets start processing the drawing instructions. They are stored in 6 byte segments, three groups of uint16s.
+            //          If the first uint16 is 0, it indicates the end of the instruction set for this column. This is actually fairly clever, because it allows us to
+            //          terminate a 6 byte code sequence with a 2 byte signal, and the next columns data begins immedately after. This means we save 4 bytes of padding.
+            //          This would have saved a lot of space back in the day. There are 400+ sprites in Wolf3D, and if they averaged 32 columns of data each, you save
+            //          51k+ by doing this. Don't look at me like that. I had a 40MB HD when I first got Wolf3D. 51K was almost 10% of our conventional RAM. I ONLY HAD 2MB of
+            //          memory in total. Man... almost makes me want to store all the sprites in memory and preprocess them just so that data exists twice in memory here.
+            //          32GB of RAM, so much room for activities in here.
+            //          
+            //          Anyhow, the actual 6 byte code sequence. This is an example of it:
+            //          76-- 56
+            //          77-- 0
+            //          78-- 248
+            //          79-- 255
+            //          80-- 52
+            //          81-- 0
+            //
+            //          So the first int is 56, which is the y offset from the top of the image, doubled. So 28, y: 14 - 1 = 13.
+            //          The second int is... Carmack knows. I don't know. It's some voodoo magic the engine uses. We're not using it here.
+            //          The third int is 52, which is the y offset from the top of the image, doubled again. So 26, y: 13 - 1 = 12.
+            //          So our drawing instruction in this example has our first pixel colour occupying X: xStart, Y: 12 -> 13.
+
+            //          Let's start processing the drawing instructions.
+
+            // Put line by line of the sprite data to debug as a sanity check, with line numbers.
+            for (int i = 0; i < rawSpriteData.Length; i++)
+            {
+                Debug.WriteLine("{0}-- {1}", i, rawSpriteData[i]);
+            }
+
+
+
+
+            for (int xDraw = xStart; xDraw <= xEnd; xDraw++)
+            {
+                UInt16 yStart, yEnd;
+                byte colour;
+                // Grab an iterator to our drawing instruction offset.
+                int instructionOffset = columnOffsets[xDraw - xStart];
+
+                // Write the xStart to debug
+                Debug.WriteLine("xDraw: {0}", xDraw);
+
+                // This loop occurs for every instruction in the column and represents a single pixel colour.
+                while (true)
+                {
+                    // Grab yEnd.
+                    yEnd = BitConverter.ToUInt16(rawSpriteData, instructionOffset);
+                    // If yStart is 0, we're done with this column.
+                    if (yEnd == 0)
+                        break;
+
+                    // Grab yStart.
+                    yStart = BitConverter.ToUInt16(rawSpriteData, instructionOffset + 4);
+
+                    // Instruction offset to debug
+                    Debug.WriteLine("Instruction Offset: {0}", instructionOffset);
+                    // Write the yStart and yEnd to debug.
+                    Debug.WriteLine("yStart: {0}, yEnd: {1}", yStart, yEnd);
+
+                    // Move the instruction offset to the next instruction.
+                    instructionOffset += 6;
+
+                    // Cut them in half for... whatever reason.
+                    yStart = (UInt16)(yStart / 2);
+                    yEnd = (UInt16)(yEnd / 2);
+
+                    // Subtract them from 63 to get the actual Y position, as they are offsets from the bottom of the sprite.
+                    //yStart = (UInt16)(63 - yStart);
+                    //yEnd = (UInt16)(63 - yEnd);
+
+                    // Grab the colour and iterate the pixel iterator.
+                    // PIXELDATAITERATOR PRINTED TO DEBUG
+                    Debug.WriteLine("Pixel Data Iterator: {0}", pixelDataIterator);
+
+                    colour = rawSpriteData[pixelDataIterator];
+                    pixelDataIterator++;
+
+                    // We need to translate the colour from a 256 palette reference to a RGB value.
+                    RGBA colourRGBA = palette.getPaletteColor(colour);
+                    colourRGBA.a = 255; // The bitmap was preset to be transparent, so we're going to make every rendered pixel opaque.
+
+                    // Write the colour and the yStart and yEnd to debug.
+                    Debug.WriteLine("Colour: {0}, yStart: {1}, yEnd: {2}", colour, yStart, yEnd);
+
+                    // Now draw the pixel coloumn.
+                    for (int yDraw = yStart; yDraw <= yEnd; yDraw++)
+                    {
+                        bitmap.SetPixel(xDraw, yDraw, System.Drawing.Color.FromArgb(colourRGBA.a, colourRGBA.r, colourRGBA.g, colourRGBA.b));
+                    }
+                }
+            }
+
+            // Save the bitmap to a file for debugging.
+            bitmap.Save("sprite" + sprite + ".png", ImageFormat.Png);
         }
 
         public dataHandler()

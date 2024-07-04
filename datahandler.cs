@@ -330,7 +330,7 @@ namespace Aardwolf
 
             //         The pixel data starts at the end of the column offset list. So we know that the pixel data starts at 4 + ((xEnd - xStart + 1) * 2).
             //         We're going to keep track of this as an iterator so we always know which pixel colour we're on.
-            int pixelDataIterator = 4 + ((xEnd - xStart) * 2);
+            int pixelDataIterator = 4 + ((xEnd - xStart + 1) * 2);
 
             //          Now lets start processing the drawing instructions. They are stored in 6 byte segments, three groups of uint16s.
             //          If the first uint16 is 0, it indicates the end of the instruction set for this column. This is actually fairly clever, because it allows us to
@@ -355,24 +355,11 @@ namespace Aardwolf
 
             //          Let's start processing the drawing instructions.
 
-            // Put line by line of the sprite data to debug as a sanity check, with line numbers.
-            for (int i = 0; i < rawSpriteData.Length; i++)
-            {
-                Debug.WriteLine("{0}-- {1}", i, rawSpriteData[i]);
-            }
-
-
-
-
             for (int xDraw = xStart; xDraw <= xEnd; xDraw++)
             {
                 UInt16 yStart, yEnd;
-                byte colour;
                 // Grab an iterator to our drawing instruction offset.
                 int instructionOffset = columnOffsets[xDraw - xStart];
-
-                // Write the xStart to debug
-                Debug.WriteLine("xDraw: {0}", xDraw);
 
                 // This loop occurs for every instruction in the column and represents a single pixel colour.
                 while (true)
@@ -386,11 +373,6 @@ namespace Aardwolf
                     // Grab yStart.
                     yStart = BitConverter.ToUInt16(rawSpriteData, instructionOffset + 4);
 
-                    // Instruction offset to debug
-                    Debug.WriteLine("Instruction Offset: {0}", instructionOffset);
-                    // Write the yStart and yEnd to debug.
-                    Debug.WriteLine("yStart: {0}, yEnd: {1}", yStart, yEnd);
-
                     // Move the instruction offset to the next instruction.
                     instructionOffset += 6;
 
@@ -398,27 +380,15 @@ namespace Aardwolf
                     yStart = (UInt16)(yStart / 2);
                     yEnd = (UInt16)(yEnd / 2);
 
-                    // Subtract them from 63 to get the actual Y position, as they are offsets from the bottom of the sprite.
-                    //yStart = (UInt16)(63 - yStart);
-                    //yEnd = (UInt16)(63 - yEnd);
-
-                    // Grab the colour and iterate the pixel iterator.
-                    // PIXELDATAITERATOR PRINTED TO DEBUG
-                    Debug.WriteLine("Pixel Data Iterator: {0}", pixelDataIterator);
-
-                    colour = rawSpriteData[pixelDataIterator];
-                    pixelDataIterator++;
-
-                    // We need to translate the colour from a 256 palette reference to a RGB value.
-                    RGBA colourRGBA = palette.getPaletteColor(colour);
-                    colourRGBA.a = 255; // The bitmap was preset to be transparent, so we're going to make every rendered pixel opaque.
-
-                    // Write the colour and the yStart and yEnd to debug.
-                    Debug.WriteLine("Colour: {0}, yStart: {1}, yEnd: {2}", colour, yStart, yEnd);
-
-                    // Now draw the pixel coloumn.
                     for (int yDraw = yStart; yDraw <= yEnd; yDraw++)
                     {
+                        byte colour = rawSpriteData[pixelDataIterator];
+                        pixelDataIterator++;
+
+                        // We need to translate the colour from a 256 palette reference to a RGB value.
+                        RGBA colourRGBA = palette.getPaletteColor(colour);
+                        colourRGBA.a = 255; // The bitmap was preset to be transparent, so we're going to make every rendered pixel opaque.
+
                         bitmap.SetPixel(xDraw, yDraw, System.Drawing.Color.FromArgb(colourRGBA.a, colourRGBA.r, colourRGBA.g, colourRGBA.b));
                     }
                 }

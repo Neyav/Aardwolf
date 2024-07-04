@@ -271,16 +271,34 @@ namespace Aardwolf
         {
             get { return _VSWAPHeader; }
         }
-        public byte[] getTexture(int chunk)
+        public Bitmap getTexture(int chunk)
         {
             if (chunk >= _VSWAPHeader.spriteStart)
                 return null;
 
+            Bitmap bitmap = new Bitmap(64, 64, PixelFormat.Format32bppArgb);
+
+            // Render the texture to our Bitmap.
             byte[] chunkData = new byte[_VSWAPHeader.chunkLengths[chunk]];
+            for (int i = 0; i < _VSWAPHeader.chunkLengths[chunk]; i++)
+            {
+                chunkData[i] = _VSWAP[_VSWAPHeader.chunkOffsets[chunk] + i];
+            }
 
-            chunkData = _VSWAP.Skip((int)_VSWAPHeader.chunkOffsets[chunk]).Take((int)_VSWAPHeader.chunkLengths[chunk]).ToArray();
+            palettehandler palette = new palettehandler(_isSOD);
 
-            return chunkData;
+            for (int x = 0; x < 64; x++)
+            {
+                for (int y = 0; y < 64; y++)
+                {
+                    byte colour = chunkData[x * 64 + y];
+                    RGBA colourRGBA = palette.getPaletteColor(colour);
+                    colourRGBA.a = 255;
+                    bitmap.SetPixel(x, y, System.Drawing.Color.FromArgb(colourRGBA.a, colourRGBA.r, colourRGBA.g, colourRGBA.b));
+                }
+            }
+
+            return bitmap;
         }
 
         public Bitmap getSprite(int sprite)

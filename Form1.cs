@@ -88,24 +88,8 @@ namespace Aardwolf
                 comboBox2.Items.Add("Sprite - " + (i - VSWAPH.spriteStart).ToString());
             }
 
-            bitmap = new Bitmap(64, 64);
-            byte[] texturedata = dh.getTexture(0);
-
-            for (int y = 0; y < 64; y++)
-            {
-                for (int x = 0; x < 64; x++)
-                {
-                    int offset = (y * 64 + x);
-
-                    int r = texturedata[offset];
-                    int g = texturedata[offset];
-                    int b = texturedata[offset];
-                    int a = 255;
-
-                    bitmap.SetPixel(x, y, Color.FromArgb(a, r, g, b));
-                }
-            }
-
+            bitmap = dh.getTexture(0);
+            
             pictureBox2.Image = bitmap;
             pictureBox2.SizeMode = PictureBoxSizeMode.StretchImage;
             pictureBox2.Refresh();
@@ -183,7 +167,7 @@ namespace Aardwolf
                         texture = (leveldata[offset] - 1) * 2;
 
                     // Now load the appropriate texture.
-                    byte[] texturedata = dh.getTexture(texture);
+                    Bitmap texturedata = dh.getTexture(texture);
 
                     // Determine where the image is to be drawn based on previewZoom.
                     int tileWidth = (int) ((float)sizeWidth / 64);
@@ -217,24 +201,11 @@ namespace Aardwolf
                     // Now we need to draw the texturedata onto the bitmap, scaled for our bitmap size.
                     if (texturedata != null)
                     {
-                        for (int x2 = 0; x2 < tileWidth; x2++)
+                        // Draw a scaled version of the texture to our image.
+                        using (Graphics graphics = Graphics.FromImage(bitmap))
                         {
-                            for (int y2 = 0; y2 < tileHeight; y2++)
-                            {
-                                int offset2 = (int)(((float)x2 * (float)(64 / tileWidth)) * (float)64 + ((float)y2 * (float)(64 / tileHeight)));
-
-                                RGBA RGBa = ph.getPaletteColor(texturedata[offset2]);
-
-                                // If it's a push wall give it a strong red tint so it stands out.
-                                if (isPushWall)
-                                {
-                                    RGBa.r = 255;
-                                }
-
-                                if (drawX + x2 > 0 && drawY + y2 > 0 && drawX + x2 < sizeHeight && drawY + y2 < sizeWidth)
-                                    bitmap.SetPixel(drawX + x2, drawY + y2, Color.FromArgb(RGBa.r, RGBa.g, RGBa.b));
-                            }
-                        }
+                            graphics.DrawImage(texturedata, drawX, drawY, tileWidth, tileHeight);
+                        }                        
 
                         // If it's a pushwall draw a red border around it.
                         if (isPushWall)
@@ -246,11 +217,14 @@ namespace Aardwolf
                                     if (drawX + x2 > 0 && drawY + y2 > 0 && drawX + x2 < sizeHeight && drawY + y2 < sizeWidth)
                                     {
                                         if (x2 == 0 || x2 == tileWidth - 1 || y2 == 0 || y2 == tileHeight - 1)
-                                            bitmap.SetPixel(drawX + x2, drawY + y2, Color.FromArgb(255, 255, 0, 0));
+                                            bitmap.SetPixel(drawX + x2, drawY + y2, Color.FromArgb(255, 255, 0, 0)); // Outline the border in red.
+                                        else
+                                            bitmap.SetPixel(drawX + x2, drawY + y2, Color.FromArgb(100, 255, 0, 0)); // Tint the insides red.
                                     }
                                 }
                             }
                         }
+                        
                     }
                     else
                     { // draw a sprite.
@@ -299,8 +273,8 @@ namespace Aardwolf
             pictureBox1.SizeMode = PictureBoxSizeMode.StretchImage;
             pictureBox1.Refresh();
 
-            // Save a copy so we can look at it.
-            this.rendercurrentLevel(2048, 2048).Save("level.png");
+            // Save a copy so we can look at it. Make it fullsized so it's BEAUTFIUL. ;)
+            this.rendercurrentLevel(4096, 4096).Save("level.png");
 
             // Enable the Render 3D button now that a level has been selected.
             button2.Enabled = true;
@@ -308,10 +282,6 @@ namespace Aardwolf
 
         private void comboBox2_SelectedIndexChanged(object sender, EventArgs e)
         {
-            byte[] texturedata = dh.getTexture(comboBox2.SelectedIndex);
-
-            Bitmap bitmap = new Bitmap(64, 64);
-
             // If it's a sprite, load the sprite -- Admitedly this is a bit of a hack. I should move getTexture to output a bitmap just like getSprite.
             if (comboBox2.SelectedIndex >= dh.getVSWAPHeader.spriteStart)
             {
@@ -323,19 +293,9 @@ namespace Aardwolf
                 return;
             }
 
-            pictureBox2.BackColor = Color.Black;
+            pictureBox2.BackColor = Color.Black;            
 
-            for (int x = 0; x < 64; x++)
-            {
-                for (int y = 0; y < 64; y++)
-                {
-                    RGBA RGBa = ph.getPaletteColor(texturedata[x * 64 + y]);
-
-                    bitmap.SetPixel(x, y, Color.FromArgb(RGBa.r, RGBa.g, RGBa.b));
-                }
-            }
-
-            pictureBox2.Image = bitmap;
+            pictureBox2.Image = dh.getTexture(comboBox2.SelectedIndex);
             pictureBox2.SizeMode = PictureBoxSizeMode.StretchImage;
             pictureBox2.Refresh();
         }

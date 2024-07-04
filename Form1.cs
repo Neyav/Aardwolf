@@ -82,6 +82,10 @@ namespace Aardwolf
             {
                 comboBox2.Items.Add("Texture - " + i.ToString());
             }
+            for (int i = VSWAPH.spriteStart; i < VSWAPH.soundStart; i++)
+            {
+                comboBox2.Items.Add("Sprite - " + i.ToString());
+            }
 
             bitmap = new Bitmap(64, 64);
             byte[] texturedata = dh.getTexture(0);
@@ -249,8 +253,7 @@ namespace Aardwolf
                 }
             }
 
-            VSWAPHeader VSWAPHeadA = dh.getVSWAPHeader;
-
+            return bitmap;
         }
         private void comboBox1_SelectedIndexChanged(object sender, EventArgs e)
         {
@@ -270,6 +273,19 @@ namespace Aardwolf
             byte[] texturedata = dh.getTexture(comboBox2.SelectedIndex);
 
             Bitmap bitmap = new Bitmap(64, 64);
+
+            // If it's a sprite, load the sprite -- Admitedly this is a bit of a hack. I should move getTexture to output a bitmap just like getSprite.
+            if (comboBox2.SelectedIndex >= dh.getVSWAPHeader.spriteStart)
+            {
+                pictureBox2.BackColor = Color.Magenta;
+                pictureBox2.Image = dh.getSprite(comboBox2.SelectedIndex - dh.getVSWAPHeader.spriteStart);
+                pictureBox2.SizeMode = PictureBoxSizeMode.StretchImage;
+                pictureBox2.Refresh();
+
+                return;
+            }
+
+            pictureBox1.BackColor = Color.Black;
 
             for (int x = 0; x < 64; x++)
             {

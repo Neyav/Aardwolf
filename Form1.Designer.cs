@@ -54,9 +54,9 @@
             // 
             // pictureBox1
             // 
-            pictureBox1.Location = new Point(496, 12);
+            pictureBox1.Location = new Point(551, 12);
             pictureBox1.Name = "pictureBox1";
-            pictureBox1.Size = new Size(800, 800);
+            pictureBox1.Size = new Size(960, 960);
             pictureBox1.TabIndex = 1;
             pictureBox1.TabStop = false;
             pictureBox1.Click += pictureBox1_Click;
@@ -123,10 +123,12 @@
             // 
             // pictureBox2
             // 
+            pictureBox2.BackColor = Color.Black;
             pictureBox2.BorderStyle = BorderStyle.Fixed3D;
             pictureBox2.Location = new Point(11, 193);
+            pictureBox2.Margin = new Padding(0);
             pictureBox2.Name = "pictureBox2";
-            pictureBox2.Size = new Size(459, 459);
+            pictureBox2.Size = new Size(512, 512);
             pictureBox2.TabIndex = 8;
             pictureBox2.TabStop = false;
             // 
@@ -145,7 +147,7 @@
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(1303, 819);
+            ClientSize = new Size(1513, 975);
             Controls.Add(button2);
             Controls.Add(pictureBox2);
             Controls.Add(comboBox2);

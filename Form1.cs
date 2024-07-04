@@ -269,15 +269,16 @@ namespace Aardwolf
                             else
                                 renderSprite = 409;
                         }
+                        else if (tileActor >= 23 && tileActor <= 74) // Assorted map objects
+                        {
+                            renderSprite = tileActor - 21;
+                        }
 
                         if (renderSprite >= 0) // We have a sprite to render.
                         {
                             Bitmap sprite = dh.getSprite(renderSprite);
 
                             // Scale and draw the Bitmap sprite onto the level bitmap.
-                            //sprite.
-
-                            Debug.WriteLine("Drawing sprite " + renderSprite + " at " + drawX + ", " + drawY);
 
                             using (Graphics graphics = Graphics.FromImage(bitmap))
                             {

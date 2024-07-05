@@ -79,6 +79,9 @@ namespace Aardwolf
         // VSWAP data
         VSWAPHeader _VSWAPHeader;
 
+        // Palette translation handler.
+        palettehandler _paletteHandler;
+
         bool _isLoaded = false;
         bool _isSOD = false;
 
@@ -134,6 +137,9 @@ namespace Aardwolf
             }
             
             _isLoaded = true;
+
+            // Initalize the palette translation handler.
+            palettehandler palette = new palettehandler(_isSOD);
         }
 
         public byte[] getLevelData(int level)
@@ -285,14 +291,12 @@ namespace Aardwolf
                 chunkData[i] = _VSWAP[_VSWAPHeader.chunkOffsets[chunk] + i];
             }
 
-            palettehandler palette = new palettehandler(_isSOD);
-
             for (int x = 0; x < 64; x++)
             {
                 for (int y = 0; y < 64; y++)
                 {
                     byte colour = chunkData[x * 64 + y];
-                    RGBA colourRGBA = palette.getPaletteColor(colour);
+                    RGBA colourRGBA = _paletteHandler.getPaletteColor(colour);
                     colourRGBA.a = 255;
                     bitmap.SetPixel(x, y, System.Drawing.Color.FromArgb(colourRGBA.a, colourRGBA.r, colourRGBA.g, colourRGBA.b));
                 }
@@ -305,8 +309,7 @@ namespace Aardwolf
         {
             int spriteOffset = sprite + _VSWAPHeader.spriteStart;
             Bitmap bitmap = new Bitmap(64, 64, PixelFormat.Format32bppArgb);
-            palettehandler palette = new palettehandler(_isSOD);
-
+            
             byte[] rawSpriteData = new byte[_VSWAPHeader.chunkLengths[spriteOffset]];
 
             rawSpriteData = _VSWAP.Skip((int)_VSWAPHeader.chunkOffsets[spriteOffset]).Take((int)_VSWAPHeader.chunkLengths[spriteOffset]).ToArray();
@@ -322,7 +325,7 @@ namespace Aardwolf
 
             // [Dash|RD] -- Man, this Wolf3D stuff is a pain. I can never find good guides or references for it. Half the source code references I can find.
             //              to try and understand it use double casting from a pointer to a value and back to a pointer while also iterating the pointer on the same line.
-            //              Okay, granted that's an exageration, but it's how I feel at this point. Nobody has been clear about how it works, and everyone that writes an
+            //              Okay, granted that's an exaggeration, but it's how I feel at this point. Nobody has been clear about how it works, and everyone that writes an
             //              implementation seems to be trying to get awesome grades for being clever. Well, we're not clever here. This is the future. We have 128 CORE CPUs.
             //              and more RAM than I can shake a stick at. I'm coding this in C# for Gods sake. Let's aim for readability. If this segment helps ANYONE in the future.
             //              out I will be so happy, because this was painful for me.
@@ -410,7 +413,7 @@ namespace Aardwolf
                         pixelDataIterator++;
 
                         // We need to translate the colour from a 256 palette reference to a RGB value.
-                        RGBA colourRGBA = palette.getPaletteColor(colour);
+                        RGBA colourRGBA = _paletteHandler.getPaletteColor(colour);
                         colourRGBA.a = 255; // The bitmap was preset to be transparent, so we're going to make every rendered pixel opaque.
 
                         bitmap.SetPixel(xDraw, yDraw, System.Drawing.Color.FromArgb(colourRGBA.a, colourRGBA.r, colourRGBA.g, colourRGBA.b));
@@ -434,6 +437,8 @@ namespace Aardwolf
             _mapData_offPlane2 = new List<byte[]>();
 
             _VSWAPHeader = new VSWAPHeader();
+
+            _paletteHandler = new palettehandler(false);
 
             _levels = 0;
         }

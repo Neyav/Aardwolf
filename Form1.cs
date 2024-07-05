@@ -14,11 +14,6 @@ namespace Aardwolf
     public partial class Form1 : Form
     {
         dataHandler dh = new dataHandler();
-        palettehandler ph = new palettehandler(false);
-
-        int previewZoom = 0;
-        int previewCenterX = 0;
-        int previewCenterY = 0;
 
         public Form1()
         {
@@ -35,12 +30,10 @@ namespace Aardwolf
             if (radioButton1.Checked)
             {
                 dh.loadAllData(false);
-                ph = new palettehandler(false);
             }
             else
             {
                 dh.loadAllData(true);
-                ph = new palettehandler(true);
             }
 
             dh.parseLevelData();
@@ -169,30 +162,11 @@ namespace Aardwolf
                     // Now load the appropriate texture.
                     Bitmap texturedata = dh.getTexture(texture);
 
-                    // Determine where the image is to be drawn based on previewZoom.
+                    // Determine where the image is to be drawn.
                     int tileWidth = (int) ((float)sizeWidth / 64);
                     int tileHeight = (int) ((float)sizeHeight / 64);
                     int drawX = x * tileWidth;
                     int drawY = y * tileHeight;
-
-                    // previewZoom 1 = 2x zoom, 2 = 100% zoom.
-                    // previewCenterX and previewCenterY are the center of the preview.
-                    // We need to calculate where each tile is to be drawn based on the zoom and center.
-                 
-                    /*if (previewZoom == 1)
-                    {
-                        drawX = (x - previewCenterX) * sizeWidth / 32 + 0;
-                        drawY = (y - previewCenterY) * sizeHeight / 32 + 0;
-                        tileWidth = sizeWidth / 32;
-                        tileHeight = sizeHeight / 32;
-                    }
-                    else if (previewZoom == 2)
-                    {
-                        drawX = (x - previewCenterX) * sizeWidth / 16 + 0;
-                        drawY = (y - previewCenterY) * sizeHeight / 16 + 0;
-                        tileWidth = sizeWidth / 16;
-                        tileHeight = sizeHeight / 16;
-                    }*/
 
                     Byte tileActor = dh.getTileActor(comboBox1.SelectedIndex, x, y);
 
@@ -302,30 +276,7 @@ namespace Aardwolf
 
         private void pictureBox1_Click(object sender, EventArgs e)
         {
-            // Set preview zoom to 0-3.
-            previewZoom++;
-            if (previewZoom > 2)
-                previewZoom = 0;
 
-            if (previewZoom == 0)
-            {
-                pictureBox1.Image = this.rendercurrentLevel(1280, 1280);
-                pictureBox1.SizeMode = PictureBoxSizeMode.StretchImage;
-                pictureBox1.Refresh();
-                return;
-            }
-
-            // Get the tile that was clicked.
-            int x = (int)Math.Floor((double)(MousePosition.X - pictureBox1.Location.X - this.Location.X - 8) / 20);
-            int y = (int)Math.Floor((double)(MousePosition.Y - pictureBox1.Location.Y - this.Location.Y - 30) / 20);
-
-            // Set the center of the preview to the tile that was clicked.
-            previewCenterX = x;
-            previewCenterY = y;
-
-            pictureBox1.Image = this.rendercurrentLevel(1280, 1280);
-            pictureBox1.SizeMode = PictureBoxSizeMode.StretchImage;
-            pictureBox1.Refresh();
         }
 
         private void button2_Click(object sender, EventArgs e)

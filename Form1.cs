@@ -184,21 +184,12 @@ namespace Aardwolf
                         // If it's a pushwall make it red with a translucent red border around it.
                         if (isPushWall)
                         {
-
-                            for (int x2 = 0; x2 < tileWidth; x2++)
-                            {
-                                for (int y2 = 0; y2 < tileHeight; y2++)
-                                {
-                                    if (drawX + x2 > 0 && drawY + y2 > 0 && drawX + x2 < sizeHeight && drawY + y2 < sizeWidth)
-                                    {
-                                        if (x2 == 0 || x2 == tileWidth - 1 || y2 == 0 || y2 == tileHeight - 1)
-                                            bitmap.SetPixel(drawX + x2, drawY + y2, Color.FromArgb(255, 255, 0, 0)); // Outline the border in red.                                            
-                                    }
-                                }
-                            }
-
+                            
                             using (Graphics g = Graphics.FromImage(bitmap))
                             {
+                                // Draw a red border around the pushwall.
+                                g.DrawRectangle(new Pen(Color.Red), drawX, drawY, tileWidth - 1, tileHeight - 1);
+                            
                                 // Make a semi-transparent red brush the size of the internals of the pushwall, excluding the 1 pixel border.
                                 // Paint it transparent red.
                                 SolidBrush brush = new SolidBrush(Color.FromArgb(128, 255, 0, 0));

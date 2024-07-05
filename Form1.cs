@@ -256,20 +256,18 @@ namespace Aardwolf
 
         private void comboBox2_SelectedIndexChanged(object sender, EventArgs e)
         {
-            // If it's a sprite, load the sprite -- Admitedly this is a bit of a hack. I should move getTexture to output a bitmap just like getSprite.
+
             if (comboBox2.SelectedIndex >= dh.getVSWAPHeader.spriteStart)
             {
                 pictureBox2.BackColor = Color.Magenta;
                 pictureBox2.Image = dh.getSprite(comboBox2.SelectedIndex - dh.getVSWAPHeader.spriteStart);
-                pictureBox2.SizeMode = PictureBoxSizeMode.StretchImage;
-                pictureBox2.Refresh();
-
-                return;
+            }
+            else
+            {
+                pictureBox2.BackColor = Color.Black;
+                pictureBox2.Image = dh.getTexture(comboBox2.SelectedIndex);
             }
 
-            pictureBox2.BackColor = Color.Black;            
-
-            pictureBox2.Image = dh.getTexture(comboBox2.SelectedIndex);
             pictureBox2.SizeMode = PictureBoxSizeMode.StretchImage;
             pictureBox2.Refresh();
         }

@@ -179,11 +179,12 @@ namespace Aardwolf
                         using (Graphics graphics = Graphics.FromImage(bitmap))
                         {
                             graphics.DrawImage(texturedata, drawX, drawY, tileWidth, tileHeight);
-                        }                        
+                        }
 
-                        // If it's a pushwall draw a red border around it.
+                        // If it's a pushwall make it red with a translucent red border around it.
                         if (isPushWall)
                         {
+
                             for (int x2 = 0; x2 < tileWidth; x2++)
                             {
                                 for (int y2 = 0; y2 < tileHeight; y2++)
@@ -191,14 +192,20 @@ namespace Aardwolf
                                     if (drawX + x2 > 0 && drawY + y2 > 0 && drawX + x2 < sizeHeight && drawY + y2 < sizeWidth)
                                     {
                                         if (x2 == 0 || x2 == tileWidth - 1 || y2 == 0 || y2 == tileHeight - 1)
-                                            bitmap.SetPixel(drawX + x2, drawY + y2, Color.FromArgb(255, 255, 0, 0)); // Outline the border in red.
-                                        else
-                                            bitmap.SetPixel(drawX + x2, drawY + y2, Color.FromArgb(100, 255, 0, 0)); // Tint the insides red.
+                                            bitmap.SetPixel(drawX + x2, drawY + y2, Color.FromArgb(255, 255, 0, 0)); // Outline the border in red.                                            
                                     }
                                 }
                             }
+
+                            using (Graphics g = Graphics.FromImage(bitmap))
+                            {
+                                // Make a semi-transparent red brush the size of the internals of the pushwall, excluding the 1 pixel border.
+                                // Paint it transparent red.
+                                SolidBrush brush = new SolidBrush(Color.FromArgb(128, 255, 0, 0));
+                                g.FillRectangle(brush, drawX + 1, drawY + 1, tileWidth - 2, tileHeight - 2);
+                            }
+
                         }
-                        
                     }
                     else
                     { // draw a sprite.
@@ -241,6 +248,7 @@ namespace Aardwolf
 
             return bitmap;
         }
+
         private void comboBox1_SelectedIndexChanged(object sender, EventArgs e)
         {
             pictureBox1.Image = this.rendercurrentLevel(pictureBox1.Width, pictureBox1.Height);

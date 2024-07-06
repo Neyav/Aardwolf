@@ -181,12 +181,11 @@ namespace Aardwolf
             // Grab the mapheader from _mapOffsets as we go, if it is valid, and dump it into
             // _mapDataHeaders. Use _MAPHEAD and _GAMEMAPS to do this.
 
-            // SOD doesn't have the padding that Wolf3d does, so we need to do this differently.
+            // Grab the map offsets from the MAPHEAD file. Wolf3D had padding in its MapHead file, SOD does not, so make sure
+            // we reference the length from MAPHEAD.
             for (int i = 2; i < _MAPHEAD.Length; i = i + 4)
             {
                 _mapOffsets[i / 4] = BitConverter.ToInt32(_MAPHEAD, i);
-
-                Debug.WriteLine("Offset: {0} -> {1}", i / 4, _mapOffsets[i / 4]);
             }
 
             while (_mapOffsets[iterator] != 0)
@@ -262,7 +261,7 @@ namespace Aardwolf
         public string getLevelName(int level)
         {
             if (level > _levels)
-                return null;
+                return "!!Invalid Level!!";
 
             string levelName = new string(_mapDataHeaders[level].name);
 
@@ -275,8 +274,6 @@ namespace Aardwolf
             _VSWAPHeader.spriteStart = BitConverter.ToUInt16(_VSWAP, 2);
             _VSWAPHeader.soundStart = BitConverter.ToUInt16(_VSWAP, 4);
 
-            Debug.WriteLine("VSWAP Header: ChunkCount: {0}, spriteStart: {1}, SoundStart: {2}", _VSWAPHeader.chunkCount, _VSWAPHeader.spriteStart, _VSWAPHeader.soundStart);
-        
             _VSWAPHeader.chunkOffsets = new UInt32[_VSWAPHeader.chunkCount];
             _VSWAPHeader.chunkLengths = new UInt16[_VSWAPHeader.chunkCount];
 
@@ -284,8 +281,6 @@ namespace Aardwolf
             {
                 _VSWAPHeader.chunkOffsets[i] = BitConverter.ToUInt32(_VSWAP, 6 + (i * 4));
                 _VSWAPHeader.chunkLengths[i] = BitConverter.ToUInt16(_VSWAP, 6 + (_VSWAPHeader.chunkCount * 4) + (i * 2));
-
-                Debug.WriteLine("VSWAP Chunk {0}: Offset: {1}, Length: {2}", i, _VSWAPHeader.chunkOffsets[i], _VSWAPHeader.chunkLengths[i]);
             }
         }
 

@@ -1,15 +1,54 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿// maphandler -- It is the estimated design that this will be responsible for clipping and collision detection, doors, item pickups, and pushwalls.
+//               Enemy AI is probable best left as part of the actor class, with access to a pathfinding class.
+//               This is all rough planning so far.
 
 namespace Aardwolf
 {
+    public enum mapObjectTypes
+    {
+        MAPOBJECT_NONE = 0,
+        MAPOBJECT_DOOR = 1,
+        MAPOBJECT_PUSHWALL = 2
+    }
+    public enum mapDirection
+    {
+        DIR_NORTH = 0,
+        DIR_EAST = 1,
+        DIR_SOUTH = 2,
+        DIR_WEST = 3
+    }
+
+    // We don't have any kind of game ticrate setup yet, so things are either open or closed.
+    // [Dash|RD] TODO: When we get a ticrate setup we'll need to add a tick method to this class to automatically handle all of the map objects.
+    struct dynamicMapObject
+    {
+        public mapObjectTypes type;
+        public int spawnx;
+        public int spawny;
+        public int x;
+        public int y;
+
+        public bool activated;
+        public mapDirection activatedDirection;
+        public int progress;
+
+        public dynamicMapObject()
+        {
+            this.type = mapObjectTypes.MAPOBJECT_NONE;
+            this.spawnx = 0;
+            this.spawny = 0;
+            this.x = 0;
+            this.y = 0;
+            this.activated = false;
+            this.activatedDirection = mapDirection.DIR_NORTH;
+            this.progress = 0;
+        }
+    }
+
     internal class maphandler
     {
         private byte[][] levelTileMap;
+        List<dynamicMapObject> dynamicMapObjects;
         private bool _isLoaded = false;
         private int _mapHeight;
         private int _mapWidth;
@@ -35,20 +74,36 @@ namespace Aardwolf
             }
 
             _isLoaded = true;
+        }
 
-            // Print the map to debug output.
-            /*for (int i = 0; i < mapHeight; i++)
+        public void spawnMapObject(int objNumber, int x, int y)
+        {
+            if (objNumber == 98) // It's a pushwall.
             {
-                for (int j = 0; j < mapWidth; j++)
+                dynamicMapObject newObject = new dynamicMapObject();
+                newObject.type = mapObjectTypes.MAPOBJECT_PUSHWALL;
+                newObject.spawnx = x;
+                newObject.spawny = y;
+                newObject.x = x;
+                newObject.y = y;
+                dynamicMapObjects.Add(newObject);
+            }
+        }
+
+        public bool isTilePushable(int x, int y)
+        {
+            foreach (dynamicMapObject obj in dynamicMapObjects)
+            {
+                if (obj.x == x && obj.y == y)
                 {
-                    // Make sure we write two three bytes for each tile, even if it's a single number.
-                    if (levelTileMap[i][j] < 10)
-                        Debug.Write(" " + levelTileMap[i][j].ToString() + " ");
-                    else
-                        Debug.Write(levelTileMap[i][j].ToString() + " ");
+                    if (obj.type == mapObjectTypes.MAPOBJECT_PUSHWALL && !obj.activated)
+                    {
+                        return true;
+                    }
                 }
-                Debug.WriteLine("");
-            }*/
+            }
+
+            return false;
         }
 
         public byte getTileData(int Height, int Width)
@@ -75,6 +130,8 @@ namespace Aardwolf
 
         public maphandler()
         {
+            dynamicMapObjects = new List<dynamicMapObject>();
+
             _mapHeight = 0;
             _mapWidth = 0;
         }

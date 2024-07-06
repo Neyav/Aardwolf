@@ -61,8 +61,8 @@ namespace Aardwolf
         private Bitmap rendercurrentLevel(int sizeWidth, int sizeHeight)
         {
             int selectedLevel = comboBox1.SelectedIndex;
-            maphandler maptiledata = new maphandler();
-            maptiledata.importMapData(dh.getLevelData(selectedLevel), dh.levelHeight(selectedLevel), dh.levelWidth(selectedLevel));
+            maphandler mapdata = new maphandler();
+            mapdata.importMapData(dh.getLevelData(selectedLevel), dh.levelHeight(selectedLevel), dh.levelWidth(selectedLevel));
 
             Bitmap bitmap = new Bitmap(sizeWidth, sizeHeight);
 
@@ -75,15 +75,15 @@ namespace Aardwolf
                 }
             }
 
-            for (int x = 0; x < maptiledata.getMapWidth(); x++)
+            for (int x = 0; x < mapdata.getMapWidth(); x++)
             {
-                for (int y = 0; y < maptiledata.getMapHeight(); y++)
+                for (int y = 0; y < mapdata.getMapHeight(); y++)
                 {
-                    byte leveldata = maptiledata.getTileData(y, x);
+                    byte leveldata = mapdata.getTileData(y, x);
                     int texture = 0;
                     // Setup render location and size for any future drawing.
-                    int tileWidth = (int)((float)sizeWidth / maptiledata.getMapWidth());
-                    int tileHeight = (int)((float)sizeHeight / maptiledata.getMapHeight());
+                    int tileWidth = (int)((float)sizeWidth / mapdata.getMapWidth());
+                    int tileHeight = (int)((float)sizeHeight / mapdata.getMapHeight());
                     int drawX = x * tileWidth;
                     int drawY = y * tileHeight;
                     Bitmap texturedata = null;
@@ -142,7 +142,7 @@ namespace Aardwolf
 
                     Byte tileActor = dh.getTileActor(comboBox1.SelectedIndex, x, y);
 
-                    bool isPushWall = tileActor == 98;
+                    mapdata.spawnMapObject(tileActor, x, y);
 
                     // Now we need to draw the texturedata onto the bitmap, scaled for our bitmap size.
                     if (texturedata != null)
@@ -153,7 +153,7 @@ namespace Aardwolf
                             g.DrawImage(texturedata, drawX, drawY, tileWidth, tileHeight);
 
                             // If it's a pushwall make it red with a translucent red border around it.
-                            if (isPushWall)
+                            if (mapdata.isTilePushable(x, y))
                             {
                                 // Draw a red border around the pushwall.
                                 g.DrawRectangle(new Pen(Color.Red), drawX, drawY, tileWidth - 1, tileHeight - 1);

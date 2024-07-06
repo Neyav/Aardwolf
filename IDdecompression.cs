@@ -1,14 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Diagnostics.Eventing.Reader;
-using System.Linq;
-using System.Net.Http.Headers;
-using System.Text;
-using System.Threading.Tasks;
-using System.Xml;
-
-// IDdecompression class --
+﻿// IDdecompression class --
 //
 // Handles the decompression of data using ID Software's LZ compression and RLEW compression schemes that were popular during this time frame.
 

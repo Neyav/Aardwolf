@@ -1,11 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.IO;
-using System.Threading.Tasks;
-using System.Xml.Linq;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Drawing.Imaging;
 
 namespace Aardwolf
@@ -223,15 +216,9 @@ namespace Aardwolf
                 }
                 string levelName = new string(localHeader.name);
 
-                Debug.WriteLine("Level Name: [{0}] -- ", levelName);
-
-                Debug.WriteLine("Level {0}: Width: {1}, Height: {2}, LenPlane0: {3}", iterator, localHeader.width, localHeader.height, localHeader.lenPlane0);
-
                 _mapDataHeaders.Add(localHeader);
                 iterator++;
             }
-
-            Debug.WriteLine("Levels detected: {0}", _levels);
 
             // Now that we have all the mapDataHeaders, we can decompress the data and put it into a byte array.
             prefetchAndDecompressPlanes();

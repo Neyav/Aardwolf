@@ -39,30 +39,6 @@ namespace Aardwolf
             dh.parseLevelData();
             dh.prepareVSWAP();
 
-            byte[] leveldata = dh.getLevelData(0);
-
-            Bitmap bitmap = new Bitmap(64, 64);
-
-            for (int x = 0; x < 64; x++)
-            {
-                for (int y = 0; y < 64; y++)
-                {
-                    int offset = (y * 64 + x) * 2;
-
-                    int r = leveldata[offset];
-                    int g = leveldata[offset];
-                    int b = leveldata[offset];
-                    int a = 255;
-
-                    bitmap.SetPixel(x, y, Color.FromArgb(a, r, g, b));
-
-                }
-            }
-
-            pictureBox1.Image = bitmap;
-            pictureBox1.SizeMode = PictureBoxSizeMode.StretchImage;
-            pictureBox1.Refresh();
-
             int levels = dh.getLevels();
 
             for (int i = 0; i < levels; i++)
@@ -80,17 +56,12 @@ namespace Aardwolf
             {
                 comboBox2.Items.Add("Sprite - " + (i - VSWAPH.spriteStart).ToString());
             }
-
-            bitmap = dh.getTexture(0);
-            
-            pictureBox2.Image = bitmap;
-            pictureBox2.SizeMode = PictureBoxSizeMode.StretchImage;
-            pictureBox2.Refresh();
         }
 
         private Bitmap rendercurrentLevel(int sizeWidth, int sizeHeight)
         {
-            byte[] leveldata = dh.getLevelData(comboBox1.SelectedIndex);
+            int selectedLevel = comboBox1.SelectedIndex;
+            byte[] leveldata = dh.getLevelData(selectedLevel);
 
             Bitmap bitmap = new Bitmap(sizeWidth, sizeHeight);
 
@@ -103,13 +74,11 @@ namespace Aardwolf
                 }
             }
 
-            for (int x = 0; x < 64; x++)
+            for (int x = 0; x < dh.levelWidth(selectedLevel); x++)
             {
-                for (int y = 0; y < 64; y++)
+                for (int y = 0; y < dh.levelHeight(selectedLevel); y++)
                 {
-                    int offset = (y * 64 + x) * 2;
-                    //if (leveldata[offset] == 0 || (leveldata[offset] > 64 && leveldata[offset] < 90) || leveldata[offset] > 101) // 64 is maxtile in Wolf3D.
-                    //    continue;
+                    int offset = (y * dh.levelHeight(selectedLevel) + x) * 2;
 
                     int texture = 0;
 
@@ -163,8 +132,8 @@ namespace Aardwolf
                     Bitmap texturedata = dh.getTexture(texture);
 
                     // Determine where the image is to be drawn.
-                    int tileWidth = (int) ((float)sizeWidth / 64);
-                    int tileHeight = (int) ((float)sizeHeight / 64);
+                    int tileWidth = (int) ((float)sizeWidth / dh.levelWidth(selectedLevel));
+                    int tileHeight = (int) ((float)sizeHeight / dh.levelHeight(selectedLevel));
                     int drawX = x * tileWidth;
                     int drawY = y * tileHeight;
 

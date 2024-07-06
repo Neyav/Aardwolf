@@ -241,7 +241,23 @@ namespace Aardwolf
         public int getLevels()
         {
             return _levels;
-        }   
+        }
+
+        public int levelWidth(int level)
+        {
+            if (level > _levels)
+                return 0;
+
+            return (int)_mapDataHeaders[level].width;
+        }
+
+        public int levelHeight(int level)
+        {
+            if (level > _levels)
+                return 0;
+
+            return (int)_mapDataHeaders[level].height;
+        }
 
         public string getLevelName(int level)
         {

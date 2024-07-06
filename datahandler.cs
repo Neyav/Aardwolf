@@ -156,10 +156,10 @@ namespace Aardwolf
             if (level > _levels)
                 return 0;
 
-            if (x > _mapDataHeaders[level].width)
+            if (x > _mapDataHeaders[level].height)
                 return 0;
 
-            if (y > _mapDataHeaders[level].height)
+            if (y > _mapDataHeaders[level].width)
                 return 0;
 
             lowByte = _mapData_offPlane1[level][(y * _mapDataHeaders[level].width + x) * 2];

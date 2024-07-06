@@ -61,7 +61,8 @@ namespace Aardwolf
         private Bitmap rendercurrentLevel(int sizeWidth, int sizeHeight)
         {
             int selectedLevel = comboBox1.SelectedIndex;
-            byte[] leveldata = dh.getLevelData(selectedLevel);
+            maphandler maptiledata = new maphandler();
+            maptiledata.importMapData(dh.getLevelData(selectedLevel), dh.levelHeight(selectedLevel), dh.levelWidth(selectedLevel));
 
             Bitmap bitmap = new Bitmap(sizeWidth, sizeHeight);
 
@@ -74,68 +75,70 @@ namespace Aardwolf
                 }
             }
 
-            for (int x = 0; x < dh.levelWidth(selectedLevel); x++)
+            for (int x = 0; x < maptiledata.getMapWidth(); x++)
             {
-                for (int y = 0; y < dh.levelHeight(selectedLevel); y++)
+                for (int y = 0; y < maptiledata.getMapHeight(); y++)
                 {
-                    int offset = (y * dh.levelHeight(selectedLevel) + x) * 2;
-
+                    byte leveldata = maptiledata.getTileData(y, x);
                     int texture = 0;
-
-                    if (leveldata[offset] >= 90 && leveldata[offset] <= 101)
-                    {  // This is a door.
-                        VSWAPHeader VSWAPHead = dh.getVSWAPHeader;
-                        byte doorType = 0;
-                        byte doorWall = (byte)(VSWAPHead.spriteStart - 8); 
-
-                        switch (leveldata[offset])
-                        {
-                            case 90:
-                            case 92:
-                            case 94:
-                            case 96:
-                            case 98:
-                            case 100:
-                                doorType = (byte)((leveldata[offset] - 90) / 2);
-                                break;
-                            case 91:
-                            case 93:
-                            case 95:
-                            case 97:
-                            case 99:
-                            case 101:
-                                doorType = (byte)((leveldata[offset] - 91) / 2);
-                                break;
-                        }
-                        
-                        switch (doorType)
-                        {
-                            case 0:
-                                texture = doorWall;
-                                break;
-                            case 1:
-                            case 2:
-                            case 3:
-                            case 4:
-                                texture = doorWall + 6;
-                                break;
-                            case 5:
-                                texture = doorWall + 4;
-                                break;
-                        }
-
-                    }
-                    else
-                        texture = (leveldata[offset] - 1) * 2;
-
-                    // Now load the appropriate texture.
-                    Bitmap texturedata = dh.getTexture(texture);
-
-                    // Determine where the image is to be drawn.
-                    int tileWidth = (int) ((float)sizeWidth / dh.levelWidth(selectedLevel));
-                    int tileHeight = (int) ((float)sizeHeight / dh.levelHeight(selectedLevel));
+                    // Setup render location and size for any future drawing.
+                    int tileWidth = (int)((float)sizeWidth / maptiledata.getMapWidth());
+                    int tileHeight = (int)((float)sizeHeight / maptiledata.getMapHeight());
                     int drawX = x * tileWidth;
                     int drawY = y * tileHeight;
+                    Bitmap texturedata = null;
+
+                    if (leveldata > 0)
+                    {
+                        if (leveldata >= 90 && leveldata <= 101)
+                        {  // This is a door.
+                            VSWAPHeader VSWAPHead = dh.getVSWAPHeader;
+                            byte doorType = 0;
+                            byte doorWall = (byte)(VSWAPHead.spriteStart - 8);
+
+                            switch (leveldata)
+                            {
+                                case 90:
+                                case 92:
+                                case 94:
+                                case 96:
+                                case 98:
+                                case 100:
+                                    doorType = (byte)((leveldata - 90) / 2);
+                                    break;
+                                case 91:
+                                case 93:
+                                case 95:
+                                case 97:
+                                case 99:
+                                case 101:
+                                    doorType = (byte)((leveldata - 91) / 2);
+                                    break;
+                            }
+
+                            switch (doorType)
+                            {
+                                case 0:
+                                    texture = doorWall;
+                                    break;
+                                case 1:
+                                case 2:
+                                case 3:
+                                case 4:
+                                    texture = doorWall + 6;
+                                    break;
+                                case 5:
+                                    texture = doorWall + 4;
+                                    break;
+                            }
+
+                        }
+                        else
+                            texture = (leveldata - 1) * 2;
+
+                        // Now load the appropriate texture.
+                        texturedata = dh.getTexture(texture);
+                    }
 
                     Byte tileActor = dh.getTileActor(comboBox1.SelectedIndex, x, y);
 
@@ -145,26 +148,21 @@ namespace Aardwolf
                     if (texturedata != null)
                     {
                         // Draw a scaled version of the texture to our image.
-                        using (Graphics graphics = Graphics.FromImage(bitmap))
+                        using (Graphics g = Graphics.FromImage(bitmap))
                         {
-                            graphics.DrawImage(texturedata, drawX, drawY, tileWidth, tileHeight);
-                        }
+                            g.DrawImage(texturedata, drawX, drawY, tileWidth, tileHeight);
 
-                        // If it's a pushwall make it red with a translucent red border around it.
-                        if (isPushWall)
-                        {
-                            
-                            using (Graphics g = Graphics.FromImage(bitmap))
+                            // If it's a pushwall make it red with a translucent red border around it.
+                            if (isPushWall)
                             {
                                 // Draw a red border around the pushwall.
                                 g.DrawRectangle(new Pen(Color.Red), drawX, drawY, tileWidth - 1, tileHeight - 1);
-                            
+
                                 // Make a semi-transparent red brush the size of the internals of the pushwall, excluding the 1 pixel border.
                                 // Paint it transparent red.
                                 SolidBrush brush = new SolidBrush(Color.FromArgb(128, 255, 0, 0));
                                 g.FillRectangle(brush, drawX + 1, drawY + 1, tileWidth - 2, tileHeight - 2);
                             }
-
                         }
                     }
                     else
@@ -216,7 +214,7 @@ namespace Aardwolf
             pictureBox1.Refresh();
 
             // Save a copy so we can look at it. Make it fullsized so it's BEAUTFIUL. ;)
-            this.rendercurrentLevel(4096, 4096).Save("level.png");
+            this.rendercurrentLevel(4096, 4096).Save("level.png");            
 
             // Enable the Render 3D button now that a level has been selected.
             button2.Enabled = true;

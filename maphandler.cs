@@ -75,6 +75,9 @@ namespace Aardwolf
         private int _mapHeight;
         private int _mapWidth;
 
+        Dictionary<byte, bool> blockingMapObjects;
+        Dictionary<byte, bool> obtainableMapObjects;
+
         public void importMapData(byte[] rawMapData, int mapHeight, int mapWidth)
         {
             _mapHeight = mapHeight;
@@ -169,9 +172,39 @@ namespace Aardwolf
                 newObject.y = y;
                 dynamicMapObjects.Add(newObject);
             }
-            
+            else if (objNumber >= 23 && (objNumber <= 70 || (_isSoD && objNumber <= 74)))
+            { // It's a static object.
+                staticMapObject newObject = new staticMapObject();
+                newObject.x = x;
+                newObject.y = y;
+
+                // Determine if it's blocking or obtainable.
+                if (blockingMapObjects.ContainsKey((byte)objNumber))
+                {
+                    // Debug output
+                    newObject.blocking = true;
+                }
+
+                staticMapObjects.Add(newObject);
+            }
+
         }
 
+        public bool isTileBlocking(int x, int y)
+        {
+            foreach (staticMapObject obj in staticMapObjects)
+            {
+                if (obj.x == x && obj.y == y)
+                {
+                    if (obj.blocking)
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
         public bool isTilePushable(int x, int y)
         {
             foreach (dynamicMapObject obj in dynamicMapObjects)
@@ -245,6 +278,14 @@ namespace Aardwolf
             _isSoD = _isSoD;
             _mapHeight = 0;
             _mapWidth = 0;
+
+            // Manually add blocking map objects.
+            blockingMapObjects = new Dictionary<byte, bool>
+            {
+                { 24, true }, // Green Barrel
+                { 25, true }, // Table/chairs
+                { 26, true } // Floor Lamp
+            };
         }
     }
 }

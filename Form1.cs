@@ -61,7 +61,12 @@ namespace Aardwolf
         private Bitmap rendercurrentLevel(int sizeWidth, int sizeHeight)
         {
             int selectedLevel = comboBox1.SelectedIndex;
-            maphandler mapdata = new maphandler();
+            bool _isSOD = false;
+
+            if (radioButton2.Checked)
+                _isSOD = true;
+
+            maphandler mapdata = new maphandler(_isSOD);
             mapdata.importMapData(dh.getLevelData(selectedLevel), dh.levelHeight(selectedLevel), dh.levelWidth(selectedLevel));
 
             Bitmap bitmap = new Bitmap(sizeWidth, sizeHeight);
@@ -169,10 +174,6 @@ namespace Aardwolf
                     { // draw a sprite.
 
                         int renderSprite = -1;
-                        bool _isSOD = false;
-
-                        if (radioButton2.Checked)
-                            _isSOD = true;
 
                         // Draw the actor on top of the tile.
                         if (tileActor >= 19 && tileActor <= 22) // Player Start

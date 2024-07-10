@@ -71,6 +71,7 @@ namespace Aardwolf
         List<dynamicMapObject> dynamicMapObjects;
         List<staticMapObject> staticMapObjects;
         private bool _isLoaded = false;
+        private bool _isSoD = false;
         private int _mapHeight;
         private int _mapWidth;
 
@@ -236,11 +237,12 @@ namespace Aardwolf
             return _mapWidth;
         }
 
-        public maphandler()
+        public maphandler(bool _isSoD)
         {
             dynamicMapObjects = new List<dynamicMapObject>();
             staticMapObjects = new List<staticMapObject>();
 
+            _isSoD = _isSoD;
             _mapHeight = 0;
             _mapWidth = 0;
         }

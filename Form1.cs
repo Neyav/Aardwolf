@@ -215,7 +215,11 @@ namespace Aardwolf
             pictureBox1.Refresh();
 
             // Save a copy so we can look at it. Make it fullsized so it's BEAUTFIUL. ;)
-            this.rendercurrentLevel(4096, 4096).Save("level.png");            
+            // The garbage collector likes to take its sweet time freeing this memory, so let's tell it that we only need it for this statement.
+            using (Image fullSizeImage = this.rendercurrentLevel(4096, 4096))
+            {
+                fullSizeImage.Save("level.png");
+            }            
 
             // Enable the Render 3D button now that a level has been selected.
             button2.Enabled = true;

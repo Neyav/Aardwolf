@@ -49,10 +49,27 @@ namespace Aardwolf
         }
     }
 
+    struct staticMapObject
+    {
+        public bool blocking;
+        public bool obtainable;
+        public int x;
+        public int y;
+
+        public staticMapObject()
+        {
+            this.blocking = false;
+            this.obtainable = false;
+            this.x = 0;
+            this.y = 0;
+        }
+    }
+
     internal class maphandler
     {
         private byte[][] levelTileMap;
         List<dynamicMapObject> dynamicMapObjects;
+        List<staticMapObject> staticMapObjects;
         private bool _isLoaded = false;
         private int _mapHeight;
         private int _mapWidth;
@@ -81,9 +98,7 @@ namespace Aardwolf
                     if (tilebyte >= 90 && tilebyte <= 101)
                     {   // It's a door, spawn a dynamic object for it so we can track it.
                         spawnDoorObject(tilebyte, j, i);
-                    }
-
-                    // If the tile is a door spawn a dynamic map object for it.
+                    }                    
                 }
             }
 
@@ -224,6 +239,7 @@ namespace Aardwolf
         public maphandler()
         {
             dynamicMapObjects = new List<dynamicMapObject>();
+            staticMapObjects = new List<staticMapObject>();
 
             _mapHeight = 0;
             _mapWidth = 0;

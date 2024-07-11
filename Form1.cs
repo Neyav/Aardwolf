@@ -202,7 +202,7 @@ namespace Aardwolf
 
                     }
 
-                    if (mapdata.isTileBlocking(x, y))
+                    if (mapdata.isTileBlocked(x, y))
                     {
                         // Draw a white border around the blocking tile.
                         using (Graphics g = Graphics.FromImage(bitmap))

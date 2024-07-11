@@ -1,4 +1,4 @@
-﻿// maphandler -- It is the estimated design that this will be responsible for clipping and collision detection, doors, item pickups, and pushwalls.
+﻿ // maphandler -- It is the estimated design that this will be responsible for clipping and collision detection, doors, item pickups, and pushwalls.
 //               Enemy AI is probable best left as part of the actor class, with access to a pathfinding class.
 //               This is all rough planning so far.
 
@@ -18,6 +18,13 @@ namespace Aardwolf
         DIR_EAST = 1,
         DIR_SOUTH = 2,
         DIR_WEST = 3
+    }
+
+    public enum staticObjectInteraction
+    {
+        OBJ_NONE = 0,
+        OBJ_BLOCKING = 1,
+        OBJ_OBTAINABLE = 2
     }
 
     // We don't have any kind of game ticrate setup yet, so things are either open or closed.
@@ -75,8 +82,7 @@ namespace Aardwolf
         private int _mapHeight;
         private int _mapWidth;
 
-        Dictionary<byte, bool> blockingMapObjects;
-        Dictionary<byte, bool> obtainableMapObjects;
+        Dictionary<byte, staticObjectInteraction> staticObjectClassification;        
 
         public void importMapData(byte[] rawMapData, int mapHeight, int mapWidth)
         {
@@ -179,10 +185,17 @@ namespace Aardwolf
                 newObject.y = y;
 
                 // Determine if it's blocking or obtainable.
-                if (blockingMapObjects.ContainsKey((byte)objNumber))
+                if (staticObjectClassification.ContainsKey((byte)objNumber))
                 {
-                    // Debug output
-                    newObject.blocking = true;
+                    switch (staticObjectClassification[(byte)objNumber])
+                    {
+                        case staticObjectInteraction.OBJ_BLOCKING:
+                            newObject.blocking = true;
+                            break;
+                        case staticObjectInteraction.OBJ_OBTAINABLE:
+                            newObject.obtainable = true;
+                            break;
+                    }
                 }
 
                 staticMapObjects.Add(newObject);
@@ -280,11 +293,11 @@ namespace Aardwolf
             _mapWidth = 0;
 
             // Manually add blocking map objects.
-            blockingMapObjects = new Dictionary<byte, bool>
+            staticObjectClassification = new Dictionary<byte, staticObjectInteraction>
             {
-                { 24, true }, // Green Barrel
-                { 25, true }, // Table/chairs
-                { 26, true } // Floor Lamp
+                { 24, staticObjectInteraction.OBJ_BLOCKING }, // Green Barrel
+                { 25, staticObjectInteraction.OBJ_BLOCKING }, // Table/chairs
+                { 26, staticObjectInteraction.OBJ_BLOCKING } // Floor Lamp
             };
         }
     }

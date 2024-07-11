@@ -60,6 +60,7 @@ namespace Aardwolf
     {
         public bool blocking;
         public bool obtainable;
+        public int objectID;
         public int x;
         public int y;
 
@@ -67,6 +68,7 @@ namespace Aardwolf
         {
             this.blocking = false;
             this.obtainable = false;
+            this.objectID = 0;
             this.x = 0;
             this.y = 0;
         }
@@ -183,6 +185,7 @@ namespace Aardwolf
                 staticMapObject newObject = new staticMapObject();
                 newObject.x = x;
                 newObject.y = y;
+                newObject.objectID = objNumber;
 
                 // Determine if it's blocking or obtainable.
                 if (staticObjectClassification.ContainsKey((byte)objNumber))
@@ -211,6 +214,9 @@ namespace Aardwolf
                 {
                     if (obj.blocking)
                     {
+                        // Dump the object to debug, including objectID.
+                        Debug.WriteLine("Blocking object at " + x + ", " + y + " with ID " + obj.objectID);
+
                         return true;
                     }
                 }
@@ -283,22 +289,70 @@ namespace Aardwolf
             return _mapWidth;
         }
 
-        public maphandler(bool _isSoD)
+        public maphandler(bool a_isSoD)
         {
             dynamicMapObjects = new List<dynamicMapObject>();
             staticMapObjects = new List<staticMapObject>();
 
-            _isSoD = _isSoD;
+            _isSoD = a_isSoD;
             _mapHeight = 0;
             _mapWidth = 0;
 
             // Manually add blocking map objects.
+            // These are the common objects. We'll add the SoD/non-SoD specifics after.
             staticObjectClassification = new Dictionary<byte, staticObjectInteraction>
             {
                 { 24, staticObjectInteraction.OBJ_BLOCKING }, // Green Barrel
                 { 25, staticObjectInteraction.OBJ_BLOCKING }, // Table/chairs
-                { 26, staticObjectInteraction.OBJ_BLOCKING } // Floor Lamp
+                { 26, staticObjectInteraction.OBJ_BLOCKING }, // Floor Lamp
+                { 28, staticObjectInteraction.OBJ_BLOCKING }, // Hanged Man
+                { 29, staticObjectInteraction.OBJ_OBTAINABLE }, // Bad Food
+                { 30, staticObjectInteraction.OBJ_BLOCKING }, // Red Pillar
+                { 31, staticObjectInteraction.OBJ_BLOCKING }, // Tree
+                { 33, staticObjectInteraction.OBJ_BLOCKING }, // Sink
+                { 34, staticObjectInteraction.OBJ_BLOCKING }, // Potted Plant
+                { 35, staticObjectInteraction.OBJ_BLOCKING }, // Urn
+                { 36, staticObjectInteraction.OBJ_BLOCKING }, // Bare Table
+                { 39, staticObjectInteraction.OBJ_BLOCKING }, // Suit of armor
+                { 40, staticObjectInteraction.OBJ_BLOCKING }, // Hanging Cage
+                { 41, staticObjectInteraction.OBJ_BLOCKING }, // Skeleton in Cage
+                { 43, staticObjectInteraction.OBJ_OBTAINABLE }, // Gold Key
+                { 44, staticObjectInteraction.OBJ_OBTAINABLE }, // Silver Key
+                { 45, staticObjectInteraction.OBJ_BLOCKING }, // STUFF
+                { 47, staticObjectInteraction.OBJ_OBTAINABLE }, // Good Food
+                { 48, staticObjectInteraction.OBJ_OBTAINABLE }, // First Aid
+                { 49, staticObjectInteraction.OBJ_OBTAINABLE }, // Clip
+                { 50, staticObjectInteraction.OBJ_OBTAINABLE }, // Machine Gun
+                { 51, staticObjectInteraction.OBJ_OBTAINABLE }, // Gatling Gun
+                { 52, staticObjectInteraction.OBJ_OBTAINABLE }, // Cross
+                { 53, staticObjectInteraction.OBJ_OBTAINABLE }, // Chalice
+                { 54, staticObjectInteraction.OBJ_OBTAINABLE }, // Bible
+                { 55, staticObjectInteraction.OBJ_OBTAINABLE }, // Crown
+                { 56, staticObjectInteraction.OBJ_OBTAINABLE }, // One Up
+                { 57, staticObjectInteraction.OBJ_OBTAINABLE }, // Gibs food
+                { 58, staticObjectInteraction.OBJ_BLOCKING }, // Barrel
+                { 59, staticObjectInteraction.OBJ_BLOCKING }, // Well
+                { 60, staticObjectInteraction.OBJ_BLOCKING }, // Empty Well
+                { 61, staticObjectInteraction.OBJ_OBTAINABLE }, // Edible Gibs 2
+                { 62, staticObjectInteraction.OBJ_BLOCKING }, // Flag
+                { 68, staticObjectInteraction.OBJ_BLOCKING }, // Stove
+                { 69, staticObjectInteraction.OBJ_BLOCKING } // Spears
             };
+
+            // Add SoD specific objects.
+            if (_isSoD)
+            {
+                staticObjectClassification.Add(38, staticObjectInteraction.OBJ_BLOCKING); // Gibs!
+                staticObjectClassification.Add(67, staticObjectInteraction.OBJ_BLOCKING); // Gibs!
+                staticObjectClassification.Add(71, staticObjectInteraction.OBJ_BLOCKING); // Marble Pillar
+                staticObjectClassification.Add(72, staticObjectInteraction.OBJ_OBTAINABLE); // Box of ammo
+                staticObjectClassification.Add(73, staticObjectInteraction.OBJ_BLOCKING); // Truck
+                staticObjectClassification.Add(74, staticObjectInteraction.OBJ_OBTAINABLE); // Spear of Destiny
+            }
+            else
+            {
+                staticObjectClassification.Add(63, staticObjectInteraction.OBJ_BLOCKING); // Aaaardwolf!
+            }
         }
     }
 }

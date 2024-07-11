@@ -206,7 +206,7 @@ namespace Aardwolf
 
         }
 
-        // [Dash|RD] This is not refering to walls. It is purely a check on whether the tile is blocked by a static object.
+        // [Dash|RD] This is not referring to walls. It is purely a check on whether the tile is blocked by a static object.
         //           [TODO]: This same segment makes sense to refer to any dynamic objects as well, so we'll update it when they're in the game.
         public bool isTileBlocked(int x, int y)
         {

@@ -4,10 +4,10 @@ namespace Aardwolf
 {
     internal class pathfindingGraph
     {
-        private List<int[][]> graphMap;
-        private List<bool[][]> visited;
-        private List<int[][]> travelDistance;
-        private List<int[][]> travelDirection;
+        public List<int[][]> graphMap;
+        public List<bool[][]> visited;
+        public List<int[][]> travelDistance;
+        public List<int[][]> travelDirection;
         private int _Width;
         private int _Height;
 
@@ -88,12 +88,86 @@ namespace Aardwolf
         }
     }
 
+    struct pathfindingNode
+    {
+        public int height;
+        public int width;
+        public int floor;
+
+        public pathfindingNode(int height, int width, int floor)
+        {
+            this.height = height;
+            this.width = width;
+            this.floor = floor;
+        }
+    }
+
     internal class pathfinder
     {
-        private maphandler _mapdata;
-        private int _currentNode;
+        private maphandler _mapdata;        
         private pathfindingGraph _graph;
+        int firstNodeWidth;
+        int firstNodeHeight;
 
+        pathfindingNode findsmallestunexploredNode()
+        {
+            pathfindingNode smallestNode = new pathfindingNode(-1, -1, -1);
+
+            // Find the smallest travel distance node that hasn't been visited yet across all floors.
+            for (int i = 0; i < _graph.graphMap.Count; i++)
+            {
+                for (int j = 0; j < _mapdata.getMapHeight(); j++)
+                {
+                    for (int k = 0; k < _mapdata.getMapWidth(); k++)
+                    {
+                        if (_graph.visited[i][j][k] == false && _graph.travelDistance[i][j][k] != -1)
+                        {
+                            // if our smallest node is set to -1, then this node takes the cake, otherwise compare them and choose the smallest.
+                            if (smallestNode.height == -1)
+                            {
+                                smallestNode.height = j;
+                                smallestNode.width = k;
+                                smallestNode.floor = i;
+                            }
+                            else
+                            {
+                                if (_graph.travelDistance[i][j][k] < _graph.travelDistance[smallestNode.floor][smallestNode.height][smallestNode.width])
+                                {
+                                    smallestNode.height = j;
+                                    smallestNode.width = k;
+                                    smallestNode.floor = i;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            return smallestNode;
+
+        }
+
+        public void solveMaze()
+        {
+            // Set the first position to be explored with a travel distance of 0.
+            _graph.travelDistance[0][firstNodeHeight][firstNodeWidth] = 0;
+            // Travel direction of -1 is the start point. 1-4 are the directions of N, E, S, W. 4 + floor number is the travel floor.
+            _graph.travelDirection[0][firstNodeHeight][firstNodeWidth] = -1;
+            _graph.visited[0][firstNodeHeight][firstNodeWidth] = true;
+
+            while (true)
+            {
+                pathfindingNode currentNode = findsmallestunexploredNode();
+                // Find the next node to explore. It will be a visitable place adjacent to the current node with the lowest travel distance.
+
+            }
+        }
+
+        public void setStart(int height, int width)
+        {
+            firstNodeHeight = height;
+            firstNodeWidth = width;
+        }
         public void prepareBaseFloor()
         {
             // Check tile by tile of the mapdata. If it's a wall, set the graph value to -1. If it's a floor set it to 1, and if it's a door set it to 2.
@@ -178,9 +252,10 @@ namespace Aardwolf
 
         public pathfinder(ref maphandler mapdata)
         {
-            _mapdata = mapdata;            
+            _mapdata = mapdata;
 
-            _currentNode = 0;
+            firstNodeHeight = -1;
+            firstNodeWidth = -1;
 
             // Initialize our pathfinding graph.
             _graph = new pathfindingGraph(_mapdata.getMapWidth(), _mapdata.getMapHeight());

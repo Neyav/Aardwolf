@@ -147,7 +147,7 @@ namespace Aardwolf
 
                     Byte tileActor = dh.getTileActor(comboBox1.SelectedIndex, x, y);
 
-                    mapdata.spawnMapObject(tileActor, x, y);
+                    mapdata.spawnMapObject(tileActor, y, x);
 
                     // Now we need to draw the texturedata onto the bitmap, scaled for our bitmap size.
                     if (texturedata != null)
@@ -158,7 +158,7 @@ namespace Aardwolf
                             g.DrawImage(texturedata, drawX, drawY, tileWidth, tileHeight);
 
                             // If it's a pushwall make it red with a translucent red border around it.
-                            if (mapdata.isTilePushable(x, y))
+                            if (mapdata.isTilePushable(y, x))
                             {
                                 // Draw a red border around the pushwall.
                                 g.DrawRectangle(new Pen(Color.Red), drawX, drawY, tileWidth - 1, tileHeight - 1);
@@ -202,7 +202,7 @@ namespace Aardwolf
 
                     }
 
-                    if (mapdata.isTileBlocked(x, y))
+                    if (mapdata.isTileBlocked(y, x))
                     {
                         // Draw a white border around the blocking tile.
                         using (Graphics g = Graphics.FromImage(bitmap))

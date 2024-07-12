@@ -32,10 +32,10 @@ namespace Aardwolf
     struct dynamicMapObject
     {
         public mapObjectTypes type;
-        public int spawnx;
-        public int spawny;
-        public int x;
-        public int y;
+        public int spawnwidth;
+        public int spawnheight;
+        public int poswidth;
+        public int posheight;
 
         public int keyNumber;
         public bool activated;
@@ -45,10 +45,10 @@ namespace Aardwolf
         public dynamicMapObject()
         {
             this.type = mapObjectTypes.MAPOBJECT_NONE;
-            this.spawnx = 0;
-            this.spawny = 0;
-            this.x = 0;
-            this.y = 0;
+            this.spawnwidth = 0;
+            this.spawnheight = 0;
+            this.poswidth = 0;
+            this.posheight = 0;
             this.keyNumber = 0;
             this.activated = false;
             this.activatedDirection = mapDirection.DIR_NORTH;
@@ -61,16 +61,16 @@ namespace Aardwolf
         public bool blocking;
         public bool obtainable;
         public int objectID;
-        public int x;
-        public int y;
+        public int poswidth;
+        public int posheight;
 
         public staticMapObject()
         {
             this.blocking = false;
             this.obtainable = false;
             this.objectID = 0;
-            this.x = 0;
-            this.y = 0;
+            this.poswidth = 0;
+            this.posheight = 0;
         }
     }
 
@@ -109,7 +109,7 @@ namespace Aardwolf
 
                     if (tilebyte >= 90 && tilebyte <= 101)
                     {   // It's a door, spawn a dynamic object for it so we can track it.
-                        spawnDoorObject(tilebyte, j, i);
+                        spawnDoorObject(tilebyte, i, j);
                     }                    
                 }
             }
@@ -117,7 +117,7 @@ namespace Aardwolf
             _isLoaded = true;
         }
 
-        public void spawnDoorObject(int tileNumber, int x, int y)
+        public void spawnDoorObject(int tileNumber, int height, int width)
         {
             if (tileNumber >= 90 && tileNumber <= 101) // It's a door.
             {
@@ -146,18 +146,15 @@ namespace Aardwolf
 
                 dynamicMapObject newObject = new dynamicMapObject();
                 newObject.type = mapObjectTypes.MAPOBJECT_DOOR;
-                newObject.spawnx = x;
-                newObject.spawny = y;
-                newObject.x = x;
-                newObject.y = y;
+                newObject.spawnwidth = width;
+                newObject.spawnheight = height;
+                newObject.poswidth = width;
+                newObject.posheight = height;
 
                 // It's a locked door, set the appropriate key type.
                 if (doorType > 0 && doorType < 5)
                 {
                     newObject.keyNumber = doorType;
-
-                    // Print to debug that we require a key.
-                    Debug.WriteLine("Door at " + x + ", " + y + " requires key " + doorType);
                 }
 
                 dynamicMapObjects.Add(newObject);
@@ -168,23 +165,23 @@ namespace Aardwolf
             }
         }
 
-        public void spawnMapObject(int objNumber, int x, int y)
+        public void spawnMapObject(int objNumber, int height, int width)
         {
             if (objNumber == 98) // It's a pushwall.
             {
                 dynamicMapObject newObject = new dynamicMapObject();
                 newObject.type = mapObjectTypes.MAPOBJECT_PUSHWALL;
-                newObject.spawnx = x;
-                newObject.spawny = y;
-                newObject.x = x;
-                newObject.y = y;
+                newObject.spawnwidth = width;
+                newObject.spawnheight = height;
+                newObject.poswidth = width;
+                newObject.posheight = height;
                 dynamicMapObjects.Add(newObject);
             }
             else if (objNumber >= 23 && (objNumber <= 70 || (_isSoD && objNumber <= 74)))
             { // It's a static object.
                 staticMapObject newObject = new staticMapObject();
-                newObject.x = x;
-                newObject.y = y;
+                newObject.poswidth = width;
+                newObject.posheight = height;
                 newObject.objectID = objNumber;
 
                 // Determine if it's blocking or obtainable.
@@ -208,17 +205,14 @@ namespace Aardwolf
 
         // [Dash|RD] This is not referring to walls. It is purely a check on whether the tile is blocked by a static object.
         //           [TODO]: This same segment makes sense to refer to any dynamic objects as well, so we'll update it when they're in the game.
-        public bool isTileBlocked(int x, int y)
+        public bool isTileBlocked(int height, int width)
         {
             foreach (staticMapObject obj in staticMapObjects)
             {
-                if (obj.x == x && obj.y == y)
+                if (obj.poswidth == width && obj.posheight == height)
                 {
                     if (obj.blocking)
                     {
-                        // Dump the object to debug, including objectID.
-                        Debug.WriteLine("Blocking object at " + x + ", " + y + " with ID " + obj.objectID);
-
                         return true;
                     }
                 }
@@ -226,11 +220,11 @@ namespace Aardwolf
 
             return false;
         }
-        public bool isTilePushable(int x, int y)
+        public bool isTilePushable(int height, int width)
         {
             foreach (dynamicMapObject obj in dynamicMapObjects)
             {
-                if (obj.x == x && obj.y == y)
+                if (obj.poswidth == width && obj.posheight == height)
                 {
                     if (obj.type == mapObjectTypes.MAPOBJECT_PUSHWALL && !obj.activated)
                     {
@@ -242,11 +236,11 @@ namespace Aardwolf
             return false;
         }
 
-        public bool isDoorOpenable(int x, int y, bool goldKey, bool silverKey)
+        public bool isDoorOpenable(int height, int width, bool goldKey, bool silverKey)
         {
             foreach (dynamicMapObject obj in dynamicMapObjects)
             {
-                if (obj.x == x && obj.y == y)
+                if (obj.poswidth == width && obj.posheight == height)
                 {
                     if (obj.type == mapObjectTypes.MAPOBJECT_DOOR)
                     {

@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Diagnostics;
 
 namespace Aardwolf
 {
@@ -16,14 +11,14 @@ namespace Aardwolf
         private int _Width;
         private int _Height;
 
-        public void setGraphValue(int floor, int x, int y, int value)
+        public void setGraphValue(int floor, int height, int width, int value)
         {
-            graphMap[floor][x][y] = value;
+            graphMap[floor][height][width] = value;
         }
 
-        public int getGraphValue(int floor, int x, int y)
+        public int getGraphValue(int floor, int height, int width)
         {
-            return graphMap[floor][x][y];
+            return graphMap[floor][height][width];
         }
 
         public int addFloor(int baseFloor)
@@ -121,10 +116,10 @@ namespace Aardwolf
                     {
                         // Check to see if it's a door.
                         // [TODO] : x and y criss cross. I need to fix this and establish some consistency.
-                        bool isDoor = _mapdata.isDoorOpenable(j, i, false, false);
-                        bool isGoldDoor = _mapdata.isDoorOpenable(j, i, true, false);
-                        bool isSilverDoor = _mapdata.isDoorOpenable(j, i, false, true);
-                        bool isPushwall = _mapdata.isTilePushable(j, i);
+                        bool isDoor = _mapdata.isDoorOpenable(i, j, false, false);
+                        bool isGoldDoor = _mapdata.isDoorOpenable(i, j, true, false);
+                        bool isSilverDoor = _mapdata.isDoorOpenable(i, j, false, true);
+                        bool isPushwall = _mapdata.isTilePushable(i, j);
 
                         if (isDoor)
                         {
@@ -146,14 +141,14 @@ namespace Aardwolf
                     else
                     {
                         // If an static map object is blocking the path, also set it to -1.
-                        if (_mapdata.isTileBlocked(j, i))
+                        if (_mapdata.isTileBlocked(i, j))
                         {
                             _graph.setGraphValue(0, i, j, -1);
                         }
                         else
                         {
                             // If an exit tile is found to the left or right set it to 0 to signify the exit of the path.
-                            if (_mapdata.getTileData(j - 1, i) == 21 || _mapdata.getTileData(j + 1, i) == 21)
+                            if (_mapdata.getTileData(i, j - 1) == 21 || _mapdata.getTileData(i, j + 1) == 21)
                             {
                                 _graph.setGraphValue(0, i, j, 0);
                             }

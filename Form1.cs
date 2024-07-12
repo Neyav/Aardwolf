@@ -214,6 +214,10 @@ namespace Aardwolf
                 }
             }
 
+            pathfinder finder = new pathfinder(ref mapdata);
+
+            finder.prepareBaseFloor();
+
             return bitmap;
         }
 

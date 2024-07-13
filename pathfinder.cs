@@ -6,6 +6,11 @@ namespace Aardwolf
     {
         public List<int[][]> graphMap;
         public List<int> floorMap;
+        public List<int> HeightCeiling;
+        public List<int> WidthCeiling;
+        public List<int> HeightFloor;
+        public List<int> WidthFloor;
+        public List<bool> floorCleared;
         public List<bool[][]> visited;
         public List<int[][]> travelDistance;
         public List<int[][]> travelDirection;
@@ -45,6 +50,10 @@ namespace Aardwolf
 
             graphMap.Add(newFloor);
             floorMap.Add(baseFloor); // Keep track of the floor we came from.
+            floorCleared.Add(false); // Keep track of if the floor has been cleared or not.
+
+            // Debug print out a floor was created and from where.
+            Debug.WriteLine("Floor " + (graphMap.Count - 1) + " created from floor " + baseFloor);
 
             // Create a new blank visited template.
             bool[][] newVisited = new bool[_Height][];
@@ -86,9 +95,14 @@ namespace Aardwolf
             // Initialize the graph with a single floor.
             graphMap = new List<int[][]>();
             floorMap = new List<int>();
+            floorCleared = new List<bool>();
             visited = new List<bool[][]>();
             travelDistance = new List<int[][]>();
             travelDirection = new List<int[][]>();
+            HeightCeiling = new List<int>();
+            WidthCeiling = new List<int>();
+            HeightFloor = new List<int>();
+            WidthFloor = new List<int>();
 
             this.addFloor(-1);
         }
@@ -124,19 +138,83 @@ namespace Aardwolf
             // Find the smallest travel distance node that hasn't been visited yet across all floors.
             for (int i = 0; i < _graph.graphMap.Count; i++)
             {
-                for (int j = 0; j < _mapdata.getMapHeight(); j++)
+                if (_graph.floorCleared[i] == true)
                 {
-                    for (int k = 0; k < _mapdata.getMapWidth(); k++)
+                    continue;
+                }
+                bool floorCleared = true; // Assume the floor is cleared until proven otherwise.
+
+                // If there is no heightfloor/heightceiling/etc for this floor, scan it quickly for nodes, and set the floor bounds.
+                if (_graph.HeightFloor.Count < i + 1)
+                {
+                    _graph.HeightFloor.Add(_mapdata.getMapHeight());
+                    _graph.WidthFloor.Add(_mapdata.getMapWidth());
+                    _graph.HeightCeiling.Add(0);
+                    _graph.WidthCeiling.Add(0);
+
+                    for (int j = 0; j < _mapdata.getMapHeight(); j++)
+                    {
+                        for (int k = 0; k < _mapdata.getMapWidth(); k++)
+                        {
+                            if (_graph.travelDistance[i][j][k] > -1)
+                            {
+                                if (j <= _graph.HeightFloor[i])
+                                {
+                                    _graph.HeightFloor[i] = j - 1;
+                                }
+                                if (j >= _graph.HeightCeiling[i])
+                                {
+                                    _graph.HeightCeiling[i] = j + 1;
+                                }
+                                if (k <= _graph.WidthFloor[i])
+                                {
+                                    _graph.WidthFloor[i] = k - 1;
+                                }
+                                if (k >= _graph.WidthCeiling[i])
+                                {
+                                    _graph.WidthCeiling[i] = k + 1;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Debug out heightfloor/ceiling/etc
+                //Debug.WriteLine("Floor " + i + " HeightFloor: " + _graph.HeightFloor[i] + " HeightCeiling: " + _graph.HeightCeiling[i] + " WidthFloor: " + _graph.WidthFloor[i] + " WidthCeiling: " + _graph.WidthCeiling[i]);
+
+
+                for (int j = _graph.HeightFloor[i]; j <= _graph.HeightCeiling[i]; j++)
+                {
+                    for (int k = _graph.WidthFloor[i]; k <=_graph.WidthCeiling[i]; k++)
                     {
                         if (_graph.visited[i][j][k] == false && _graph.travelDistance[i][j][k] != -1)
                         {
+                            floorCleared = false;
+
+                            // If this = the ceiling/floor bounds, we need to expand that bound.
+                            if (j == _graph.HeightFloor[i])
+                            {
+                                _graph.HeightFloor[i] = j - 1;
+                            }
+                            if (j == _graph.HeightCeiling[i])
+                            {
+                                _graph.HeightCeiling[i] = j + 1;
+                            }
+                            if (k == _graph.WidthFloor[i])
+                            {
+                                _graph.WidthFloor[i] = k - 1;
+                            }
+                            if (k == _graph.WidthCeiling[i])
+                            {
+                                _graph.WidthCeiling[i] = k + 1;
+                            }
+
                             // if our smallest node is set to -1, then any valid node will be the smallest.
                             if (smallestNode.height == -1)
                             {
                                 smallestNode.height = j;
                                 smallestNode.width = k;
-                                smallestNode.floor = i;
-            
+                                smallestNode.floor = i;            
                             }
                             else
                             {
@@ -150,10 +228,133 @@ namespace Aardwolf
                         }
                     }
                 }
+
+                if (floorCleared)
+                {
+                    _graph.floorCleared[i] = true;
+                    // We didn't find any unvisited nodes on this floor, consider it cleared and never look at it again.
+                    // Display to debug
+                    Debug.WriteLine("Floor " + i + " has been cleared.");
+                }
             }
 
             return smallestNode;
 
+        }
+
+        private bool canPushWallMove(pathfindingNode Node)
+        {
+            if (_graph.getGraphValue(Node.floor, Node.height, Node.width) == 1)
+            {
+                return true;
+            }
+            else if (_graph.getGraphValue(Node.floor, Node.height, Node.width) == -2)
+            {
+                return true;
+            }
+            else if (_graph.getGraphValue(Node.floor, Node.height, Node.width) == -3)
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+        private bool detectNearPushwall(pathfindingNode currentNode, int direction, bool activate)
+        {
+            // Check to see if there's a pushwall in that direction.
+            pathfindingNode updateNode = currentNode;
+            bool pushwallCanMove = false;
+
+            switch (direction)
+            {
+                case 1:
+                    updateNode.height -= 1;
+                    break;
+                case 2:
+                    updateNode.width += 1;
+                    break;
+                case 3:
+                    updateNode.height += 1;
+                    break;
+                case 4:
+                    updateNode.width -= 1;
+                    break;
+            }
+            // Is updateNode a pushwall?
+            if (_graph.getGraphValue(updateNode.floor, updateNode.height, updateNode.width) == -5)
+            {
+                pathfindingNode pushWallNode = updateNode;
+                pathfindingNode pushWallTest = updateNode;
+
+                // If we push it in this direction can it move, and if so would it be able to move one block or two blocks?
+                switch (direction)
+                {
+                    case 1:
+                        pushWallTest.height -= 1;
+                        break;
+                    case 2:
+                        pushWallTest.width += 1;
+                        break;
+                    case 3:
+                        pushWallTest.height += 1;
+                        break;
+                    case 4:
+                        pushWallTest.width -= 1;
+                        break;
+                }
+                // Check to see if the pushwall can move.
+                if (canPushWallMove(pushWallTest))
+                {
+                    pushwallCanMove = true;
+                    pushWallNode = pushWallTest;
+                    // Can we move a second time?
+                    switch (direction)
+                    {
+                        case 1:
+                            pushWallTest.height -= 1;
+                            break;
+                        case 2:
+                            pushWallTest.width += 1;
+                            break;
+                        case 3:
+                            pushWallTest.height += 1;
+                            break;
+                        case 4:
+                            pushWallTest.width -= 1;
+                            break;
+                    }
+
+                    if (canPushWallMove(pushWallTest))
+                    {
+                        pushWallNode = pushWallTest;
+                    }
+                }
+
+                updateNode = pushWallNode;
+            }
+
+            if (activate)
+            {
+                if (pushwallCanMove)
+                {
+                    // Debug text the pushwall location that lead to this new floor.
+                    Debug.WriteLine("Pushwall found at: " + updateNode.height + " " + updateNode.width + " " + updateNode.floor);
+
+                    // Clone a new floor and move us to that floor.
+                    int newFloor = _graph.addFloor(currentNode.floor);
+                    _graph.setGraphValue(newFloor, updateNode.height, updateNode.width, -1);
+                    _graph.setGraphValue(newFloor, currentNode.height, currentNode.width, 1);
+
+                    // Set the travel distance and to be the same on the new floor, but the direction to be 5, to indicate we're going down to the floor that spawned this floor.
+                    _graph.travelDistance[newFloor][currentNode.height][currentNode.width] = _graph.travelDistance[currentNode.floor][currentNode.height][currentNode.width] + 5;
+                    _graph.travelDirection[newFloor][currentNode.height][currentNode.width] = 5;
+
+                    return pushwallCanMove;
+                }
+            }
+
+            return pushwallCanMove;
         }
 
         private void updateTravelDistance(pathfindingNode currentNode, int direction)
@@ -283,7 +484,7 @@ namespace Aardwolf
                 }
 
                 // Dump to debug
-                Debug.WriteLine("Current Node: " + currentNode.height + " " + currentNode.width + " " + currentNode.floor + " " + _graph.travelDistance[currentNode.floor][currentNode.height][currentNode.width]);
+                //Debug.WriteLine("Current Node: " + currentNode.height + " " + currentNode.width + " " + currentNode.floor + " " + _graph.travelDistance[currentNode.floor][currentNode.height][currentNode.width]);
 
 
                 // If we've reached the exit, we're done.
@@ -306,6 +507,12 @@ namespace Aardwolf
 
                 // Mark the current node as visited.
                 _graph.visited[currentNode.floor][currentNode.height][currentNode.width] = true;
+
+                // Check to see if there is a pushwall nearby.
+                detectNearPushwall(currentNode, 1, true);
+                detectNearPushwall(currentNode, 2, true);
+                detectNearPushwall(currentNode, 3, true);
+                detectNearPushwall(currentNode, 4, true);
             }
 
            if (mazeSolved)

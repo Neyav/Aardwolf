@@ -62,6 +62,8 @@ namespace Aardwolf
         {
             int selectedLevel = comboBox1.SelectedIndex;
             bool _isSOD = false;
+            int playerSpawnHeight = 0;
+            int playerSpawnWidth = 0;
 
             if (radioButton2.Checked)
                 _isSOD = true;
@@ -182,6 +184,8 @@ namespace Aardwolf
                                 renderSprite = 0;   // SOD doesn't have a player start sprite. Use the demo sprite.
                             else
                                 renderSprite = 409;
+                            playerSpawnHeight = y;
+                            playerSpawnWidth = x;
                         }
                         else if (tileActor >= 23 && tileActor <= 74) // Assorted map objects
                         {
@@ -217,6 +221,28 @@ namespace Aardwolf
             pathfinder finder = new pathfinder(ref mapdata);
 
             finder.prepareBaseFloor();
+            finder.setStart(playerSpawnHeight, playerSpawnWidth);
+            finder.solveMaze();
+
+            // Draw the pathfinder solution.
+            for (int x = 0; x < mapdata.getMapWidth(); x++)
+            {
+                for (int y = 0; y < mapdata.getMapHeight(); y++)
+                {
+                    if (finder.isTileOnPath(y, x))
+                    {
+                        int tileWidth = (int)((float)sizeWidth / mapdata.getMapWidth());
+                        int tileHeight = (int)((float)sizeHeight / mapdata.getMapHeight());
+                        int drawX = x * tileWidth;
+                        int drawY = y * tileHeight;
+
+                        using (Graphics g = Graphics.FromImage(bitmap))
+                        {
+                            g.FillRectangle(new SolidBrush(Color.FromArgb(60, 0, 255, 0)), drawX, drawY, tileWidth, tileHeight);
+                        }
+                    }
+                }
+            }
 
             return bitmap;
         }

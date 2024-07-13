@@ -49,6 +49,7 @@ namespace Aardwolf
             for (int i = 0; i < _Height; i++)
             {
                 newVisited[i] = new bool[_Width];
+                newVisited[i] = Enumerable.Repeat(false, _Width).ToArray();
             }
 
             visited.Add(newVisited);
@@ -58,6 +59,7 @@ namespace Aardwolf
             for (int i = 0; i < _Height; i++)
             {
                 newTravelDistance[i] = new int[_Width];
+                newTravelDistance[i] = Enumerable.Repeat(-1, _Width).ToArray();
             }
 
             travelDistance.Add(newTravelDistance);
@@ -67,6 +69,7 @@ namespace Aardwolf
             for (int i = 0; i < _Height; i++)
             {
                 newTravelDirection[i] = new int[_Width];
+                newTravelDirection[i] = Enumerable.Repeat(0, _Width).ToArray();
             }
 
             travelDirection.Add(newTravelDirection);
@@ -106,8 +109,10 @@ namespace Aardwolf
     {
         private maphandler _mapdata;        
         private pathfindingGraph _graph;
+        private List<pathfindingNode> _path;
         int firstNodeWidth;
         int firstNodeHeight;
+        bool mazeSolved;
 
         pathfindingNode findsmallestunexploredNode()
         {
@@ -122,12 +127,13 @@ namespace Aardwolf
                     {
                         if (_graph.visited[i][j][k] == false && _graph.travelDistance[i][j][k] != -1)
                         {
-                            // if our smallest node is set to -1, then this node takes the cake, otherwise compare them and choose the smallest.
+                            // if our smallest node is set to -1, then any valid node will be the smallest.
                             if (smallestNode.height == -1)
                             {
                                 smallestNode.height = j;
                                 smallestNode.width = k;
                                 smallestNode.floor = i;
+            
                             }
                             else
                             {
@@ -147,20 +153,157 @@ namespace Aardwolf
 
         }
 
+        private void updateTravelDistance(pathfindingNode currentNode, int direction)
+        {
+            pathfindingNode updateNode = currentNode;
+
+            // Modify updateNode to point to the new node.
+            switch (direction)
+            {
+                case 1:
+                    updateNode.height -= 1;
+                    break;
+                case 2:
+                    updateNode.width += 1;
+                    break;
+                case 3:
+                    updateNode.height += 1;
+                    break;
+                case 4:
+                    updateNode.width -= 1;
+                    break;
+            }
+
+            // Check to see if the new node is within the bounds of the map.
+            if (updateNode.height < 0 || updateNode.height >= _mapdata.getMapHeight() || updateNode.width < 0 || updateNode.width >= _mapdata.getMapWidth())
+            {
+                return;
+            }
+
+            // Check to see if we've already visited this node.
+            if (_graph.visited[updateNode.floor][updateNode.height][updateNode.width] == true)
+            {
+                return;
+            }
+
+            int travelDistance = _graph.getGraphValue(updateNode.floor, updateNode.height, updateNode.width);
+
+            // Check to see if we can travel to the new node.
+            if (travelDistance < 0)
+            {
+                return;
+            }
+
+            // If the new node has a smaller travel distance than what we're going to update it to, don't update it.
+            if (_graph.travelDistance[updateNode.floor][updateNode.height][updateNode.width] != -1 && _graph.travelDistance[updateNode.floor][updateNode.height][updateNode.width] < _graph.travelDistance[currentNode.floor][currentNode.height][currentNode.width] + travelDistance)
+            {
+                return;
+            }
+
+            // Update the travel distance of the new node along with the direction we traveled to get there.
+            _graph.travelDistance[updateNode.floor][updateNode.height][updateNode.width] = _graph.travelDistance[currentNode.floor][currentNode.height][currentNode.width] + travelDistance;
+            _graph.travelDirection[updateNode.floor][updateNode.height][updateNode.width] = direction;
+        }
+
+        public bool isTileOnPath(int height, int width)
+        {
+            for (int i = 0; i < _path.Count; i++)
+            {
+                if (_path[i].height == height && _path[i].width == width)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         public void solveMaze()
         {
+            pathfindingNode exitNode = new pathfindingNode(-1, -1, -1);
             // Set the first position to be explored with a travel distance of 0.
             _graph.travelDistance[0][firstNodeHeight][firstNodeWidth] = 0;
             // Travel direction of -1 is the start point. 1-4 are the directions of N, E, S, W. 4 + floor number is the travel floor.
-            _graph.travelDirection[0][firstNodeHeight][firstNodeWidth] = -1;
-            _graph.visited[0][firstNodeHeight][firstNodeWidth] = true;
+            _graph.travelDirection[0][firstNodeHeight][firstNodeWidth] = -1;            
 
             while (true)
             {
                 pathfindingNode currentNode = findsmallestunexploredNode();
-                // Find the next node to explore. It will be a visitable place adjacent to the current node with the lowest travel distance.
 
+                if (currentNode.height == -1)
+                {
+                    // If we can't find any more nodes to explore, we're done.
+                    Debug.WriteLine("No more nodes to explore. -- Failed to solve -- ");
+                    break;
+                }
+
+                // Dump to debug
+                Debug.WriteLine("Current Node: " + currentNode.height + " " + currentNode.width + " " + currentNode.floor + " " + _graph.travelDistance[currentNode.floor][currentNode.height][currentNode.width]);
+
+
+                // If we've reached the exit, we're done.
+                if (_graph.getGraphValue(currentNode.floor, currentNode.height, currentNode.width) == 0)
+                {
+                    Debug.WriteLine("Exit found. -- Solved -- ");
+                    exitNode = currentNode;
+                    mazeSolved = true;
+                    break;
+                }
+
+                // Check to see if we can move north.
+                updateTravelDistance(currentNode, 1);
+                // Check to see if we can move east.
+                updateTravelDistance(currentNode, 2);
+                // Check to see if we can move south.
+                updateTravelDistance(currentNode, 3);
+                // Check to see if we can move west.
+                updateTravelDistance(currentNode, 4);
+
+                // Mark the current node as visited.
+                _graph.visited[currentNode.floor][currentNode.height][currentNode.width] = true;
             }
+
+           if (mazeSolved)
+            {
+                // If we've solved the maze, backtrack from the exit to the start to find the path.
+                pathfindingNode currentNode = exitNode;
+                while (true)
+                {
+                    _path.Add(currentNode);
+
+                    if (_graph.travelDirection[currentNode.floor][currentNode.height][currentNode.width] == -1)
+                    {
+                        break;
+                    }
+
+                    switch (_graph.travelDirection[currentNode.floor][currentNode.height][currentNode.width])
+                    {
+                        case 1:
+                            currentNode.height += 1;
+                            break;
+                        case 2:
+                            currentNode.width -= 1;
+                            break;
+                        case 3:
+                            currentNode.height -= 1;
+                            break;
+                        case 4:
+                            currentNode.width += 1;
+                            break;
+                    }
+                }
+
+                // Print out the path to debug.
+                for (int i = _path.Count - 1; i >= 0; i--)
+                {
+                    Debug.WriteLine("Path: " + _path[i].height + " " + _path[i].width + " " + _path[i].floor);
+                }
+            }
+            else
+            {
+                Debug.WriteLine("Failed to solve maze.");
+            }
+
         }
 
         public void setStart(int height, int width)
@@ -232,7 +375,7 @@ namespace Aardwolf
             }
 
             // Print out the base floor map with even spacing between each tile to debug.
-            for (int i = 0; i < _mapdata.getMapHeight(); i++)
+            /*for (int i = 0; i < _mapdata.getMapHeight(); i++)
             {
                 for (int j = 0; j < _mapdata.getMapWidth(); j++)
                 {
@@ -246,7 +389,7 @@ namespace Aardwolf
                     }                    
                 }
                 Debug.WriteLine("");
-            }
+            }*/
 
         }
 
@@ -257,8 +400,11 @@ namespace Aardwolf
             firstNodeHeight = -1;
             firstNodeWidth = -1;
 
+            mazeSolved = false;
+
             // Initialize our pathfinding graph.
             _graph = new pathfindingGraph(_mapdata.getMapWidth(), _mapdata.getMapHeight());
+            _path = new List<pathfindingNode>();
         }
     }
 }

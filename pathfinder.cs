@@ -202,7 +202,7 @@ namespace Aardwolf
 
                 int newFloor = _graph.addFloor(updateNode.floor);
 
-                // Set the travel distance and to be the same on the new floor, but the direction to be 5, to indicate we're going down a floor from here.
+                // Set the travel distance and to be the same on the new floor, but the direction to be 5, to indicate we're going down to the floor that spawned this floor.
                 _graph.travelDistance[newFloor][updateNode.height][updateNode.width] = _graph.travelDistance[currentNode.floor][currentNode.height][currentNode.width] + 1;
                 _graph.travelDirection[newFloor][updateNode.height][updateNode.width] = 5;
 

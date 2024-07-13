@@ -85,6 +85,7 @@ namespace Aardwolf
 
             // Initialize the graph with a single floor.
             graphMap = new List<int[][]>();
+            floorMap = new List<int>();
             visited = new List<bool[][]>();
             travelDistance = new List<int[][]>();
             travelDirection = new List<int[][]>();
@@ -190,21 +191,63 @@ namespace Aardwolf
 
             int travelDistance = _graph.getGraphValue(updateNode.floor, updateNode.height, updateNode.width);
 
-            // Check to see if we can travel to the new node.
-            if (travelDistance == -1)
+            if (travelDistance == -10 || travelDistance == -11) // Found a key. Elevate to a new node floor.
             {
-                return;
-            }
+                // Set the graph value to 1 to remove significance from this node, then add a new floor, and on that new floor set the gold door to 2.
+                _graph.setGraphValue(updateNode.floor, updateNode.height, updateNode.width, 1);
 
-            // If the new node has a smaller travel distance than what we're going to update it to, don't update it.
-            if (_graph.travelDistance[updateNode.floor][updateNode.height][updateNode.width] != -1 && _graph.travelDistance[updateNode.floor][updateNode.height][updateNode.width] < _graph.travelDistance[currentNode.floor][currentNode.height][currentNode.width] + travelDistance)
+                // Set the travel direction and travel distance of the key node.
+                _graph.travelDistance[updateNode.floor][updateNode.height][updateNode.width] = _graph.travelDistance[currentNode.floor][currentNode.height][currentNode.width] + 1;
+                _graph.travelDirection[updateNode.floor][updateNode.height][updateNode.width] = direction;
+
+                int newFloor = _graph.addFloor(updateNode.floor);
+
+                // Set the travel distance and to be the same on the new floor, but the direction to be 5, to indicate we're going down a floor from here.
+                _graph.travelDistance[newFloor][updateNode.height][updateNode.width] = _graph.travelDistance[currentNode.floor][currentNode.height][currentNode.width] + 1;
+                _graph.travelDirection[newFloor][updateNode.height][updateNode.width] = 5;
+
+                if (travelDistance == -10)
+                {
+                    // Look for the gold door and set it to 2.
+                    for (int i = 0; i < _mapdata.getMapHeight(); i++)
+                    {
+                        for (int j = 0; j < _mapdata.getMapWidth(); j++)
+                        {
+                            if (_graph.getGraphValue(updateNode.floor, i, j) == -2)
+                            {
+                                _graph.setGraphValue(newFloor, i, j, 2);
+                            }
+                        }
+                    }
+                }
+                else 
+                {
+                    // Look for the silver door and set it to 2.
+                    for (int i = 0; i < _mapdata.getMapHeight(); i++)
+                    {
+                        for (int j = 0; j < _mapdata.getMapWidth(); j++)
+                        {
+                            if (_graph.getGraphValue(updateNode.floor, i, j) == -3)
+                            {
+                                _graph.setGraphValue(newFloor, i, j, 2);
+                            }
+                        }
+                    }
+                }
+            }
+            else if (travelDistance > -1) // Found a floor tile. Update the travel distance and direction.
             {
-                return;
-            }
 
-            // Update the travel distance of the new node along with the direction we traveled to get there.
-            _graph.travelDistance[updateNode.floor][updateNode.height][updateNode.width] = _graph.travelDistance[currentNode.floor][currentNode.height][currentNode.width] + travelDistance;
-            _graph.travelDirection[updateNode.floor][updateNode.height][updateNode.width] = direction;
+                // If the new node has a smaller travel distance than what we're going to update it to, don't update it.
+                if (_graph.travelDistance[updateNode.floor][updateNode.height][updateNode.width] != -1 && _graph.travelDistance[updateNode.floor][updateNode.height][updateNode.width] < _graph.travelDistance[currentNode.floor][currentNode.height][currentNode.width] + travelDistance)
+                {
+                    return;
+                }
+
+                // Update the travel distance of the new node along with the direction we traveled to get there.
+                _graph.travelDistance[updateNode.floor][updateNode.height][updateNode.width] = _graph.travelDistance[currentNode.floor][currentNode.height][currentNode.width] + travelDistance;
+                _graph.travelDirection[updateNode.floor][updateNode.height][updateNode.width] = direction;
+            }
         }
 
         public bool isTileOnPath(int height, int width)
@@ -292,6 +335,9 @@ namespace Aardwolf
                         case 4:
                             currentNode.width += 1;
                             break;
+                        case 5: // Going down to the floor that spawned this floor.
+                            currentNode.floor = _graph.floorMap[currentNode.floor];
+                            break;
                     }
                 }
 
@@ -371,6 +417,16 @@ namespace Aardwolf
                             {
                                 _graph.setGraphValue(0, i, j, 0);
                             }
+                        }
+
+                        // Check for keys and set the graph value to -4 if a key is found.
+                        if (_mapdata.getStaticObjectID(i, j) == 43)
+                        {   // This is a gold key.
+                            _graph.setGraphValue(0, i, j, -10);
+                        }
+                        else if (_mapdata.getStaticObjectID(i, j) == 44)
+                        {   // This is a silver key.
+                            _graph.setGraphValue(0, i, j, -11);
                         }
                     }
                 }

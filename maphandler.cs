@@ -220,6 +220,20 @@ namespace Aardwolf
 
             return false;
         }
+
+        public int getStaticObjectID(int height, int width)
+        {
+            foreach (staticMapObject obj in staticMapObjects)
+            {
+                if (obj.poswidth == width && obj.posheight == height)
+                {
+                    return obj.objectID;
+                }
+            }
+
+            return 0;
+        }
+
         public bool isTilePushable(int height, int width)
         {
             foreach (dynamicMapObject obj in dynamicMapObjects)

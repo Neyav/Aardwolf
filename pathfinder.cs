@@ -5,6 +5,7 @@ namespace Aardwolf
     internal class pathfindingGraph
     {
         public List<int[][]> graphMap;
+        public List<int> floorMap;
         public List<bool[][]> visited;
         public List<int[][]> travelDistance;
         public List<int[][]> travelDirection;
@@ -43,6 +44,7 @@ namespace Aardwolf
             }
 
             graphMap.Add(newFloor);
+            floorMap.Add(baseFloor); // Keep track of the floor we came from.
 
             // Create a new blank visited template.
             bool[][] newVisited = new bool[_Height][];
@@ -189,7 +191,7 @@ namespace Aardwolf
             int travelDistance = _graph.getGraphValue(updateNode.floor, updateNode.height, updateNode.width);
 
             // Check to see if we can travel to the new node.
-            if (travelDistance < 0)
+            if (travelDistance == -1)
             {
                 return;
             }
@@ -352,7 +354,7 @@ namespace Aardwolf
                         }
                         else if (isPushwall)
                         {
-                            _graph.setGraphValue(0, i, j, 5);
+                            _graph.setGraphValue(0, i, j, -5);
                         }
                     }
                     else

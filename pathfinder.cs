@@ -126,6 +126,9 @@ namespace Aardwolf
         {
             pathfindingNode smallestNode = new pathfindingNode(-1, -1, -1);
 
+            // Sort the queue by travelDistance
+            _graph.pathfindingQueue = new Queue<pathfindingNode>(_graph.pathfindingQueue.OrderBy(x => _graph.travelDistance[x.floor][x.height][x.width]));
+
             if (_graph.pathfindingQueue.Count == 0)
             {
                 return smallestNode;

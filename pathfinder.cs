@@ -5,7 +5,9 @@ namespace Aardwolf
     internal class pathfindingGraph
     {
         public List<int[][]> graphMap;
-        public List<int> floorMap;        
+        public List<int> floorMap;
+        public List<int> treasuresRemaining;
+        public List<int> secretsRemaining;
         public List<bool[][]> visited;
         public List<int[][]> travelDistance;
         public List<int[][]> travelDirection;
@@ -47,6 +49,9 @@ namespace Aardwolf
             graphMap.Add(newFloor);
             floorMap.Add(baseFloor); // Keep track of the floor we came from.
 
+            treasuresRemaining.Add(0);
+            secretsRemaining.Add(0);
+
             // Create a new blank visited template.
             bool[][] newVisited = new bool[_Height][];
             for (int i = 0; i < _Height; i++)
@@ -87,6 +92,8 @@ namespace Aardwolf
             // Initialize the graph with a single floor.
             graphMap = new List<int[][]>();
             floorMap = new List<int>();
+            treasuresRemaining = new List<int>();
+            secretsRemaining = new List<int>();
             visited = new List<bool[][]>();
             travelDistance = new List<int[][]>();
             travelDirection = new List<int[][]>();
@@ -120,6 +127,8 @@ namespace Aardwolf
         bool mazeSolved;
         public bool mazeFailed;
         public bool ignorePushWalls;
+        public bool allSecrets;
+        int biggestQueue;
 
         pathfindingNode findsmallestunexploredNode()
         {
@@ -127,6 +136,11 @@ namespace Aardwolf
 
             // Sort the queue by travelDistance
             _graph.pathfindingQueue = new Queue<pathfindingNode>(_graph.pathfindingQueue.OrderBy(x => _graph.travelDistance[x.floor][x.height][x.width]));
+
+            if (_graph.pathfindingQueue.Count > biggestQueue)
+            {
+                biggestQueue = _graph.pathfindingQueue.Count;
+            }
 
             if (_graph.pathfindingQueue.Count == 0)
             {
@@ -248,6 +262,23 @@ namespace Aardwolf
                     _graph.travelDistance[newFloor][currentNode.height][currentNode.width] = _graph.travelDistance[currentNode.floor][currentNode.height][currentNode.width] + 5;
                     _graph.travelDirection[newFloor][currentNode.height][currentNode.width] = 5;
 
+                    _graph.treasuresRemaining[newFloor] = _graph.treasuresRemaining[updateNode.floor];
+                    _graph.secretsRemaining[newFloor] = _graph.secretsRemaining[updateNode.floor];
+
+                    if (allSecrets)
+                    {
+                        _graph.secretsRemaining[newFloor]--;
+
+                        // Dump it to debug.
+                        Debug.WriteLine("Secrets remaining: " + _graph.secretsRemaining[newFloor] + " on floor " + newFloor);
+
+                        // If we're looking for all secrets, and we've found all secrets and items, let the exit return.
+                        if (_graph.treasuresRemaining[newFloor] == 0 && _graph.secretsRemaining[newFloor] == 0)
+                        {
+                            reinitalizeExits(newFloor);
+                        }
+                    }
+
                     // add this node to the queue
                     _graph.pathfindingQueue.Enqueue(new pathfindingNode(currentNode.height, currentNode.width, newFloor));
 
@@ -256,6 +287,21 @@ namespace Aardwolf
             }
 
             return pushwallCanMove;
+        }
+
+        private void reinitalizeExits(int floor)
+        {
+            // Go through the floor map and find any -15 exits and set them to 0.
+            for (int i = 0; i < _mapdata.getMapHeight(); i++)
+            {
+                for (int j = 0; j < _mapdata.getMapWidth(); j++)
+                {
+                    if (_graph.getGraphValue(floor, i, j) == -15)
+                    {
+                        _graph.setGraphValue(floor, i, j, 0);
+                    }
+                }
+            }
         }
 
         private void updateTravelDistance(pathfindingNode currentNode, int direction)
@@ -293,7 +339,7 @@ namespace Aardwolf
 
             int travelDistance = _graph.getGraphValue(updateNode.floor, updateNode.height, updateNode.width);
 
-            if (travelDistance == -10 || travelDistance == -11) // Found a key. Elevate to a new node floor.
+            if (travelDistance == -10 || travelDistance == -11 || travelDistance == -16) // Found a key or a treasure.. Elevate to a new node floor.
             {
                 // Set the graph value to 1 to remove significance from this node, then add a new floor, and on that new floor set the gold door to 2.
                 _graph.setGraphValue(updateNode.floor, updateNode.height, updateNode.width, 1);
@@ -303,6 +349,24 @@ namespace Aardwolf
                 _graph.travelDirection[updateNode.floor][updateNode.height][updateNode.width] = direction;
 
                 int newFloor = _graph.addFloor(updateNode.floor);
+
+                _graph.treasuresRemaining[newFloor] = _graph.treasuresRemaining[updateNode.floor];
+                _graph.secretsRemaining[newFloor] = _graph.secretsRemaining[updateNode.floor];
+
+                if (allSecrets)
+                {
+                    if (travelDistance == -16)
+                    {
+                        _graph.treasuresRemaining[newFloor]--;
+                        // Dump it to debug.
+                        Debug.WriteLine("Treasures remaining: " + _graph.treasuresRemaining[newFloor] + "/" + _graph.treasuresRemaining[0] + " Secrets: " + _graph.secretsRemaining[newFloor] + "/" + _graph.secretsRemaining[0] + " on floor " + newFloor);
+                    }
+                    // If we're looking for all secrets, and we've found all secrets and items, let the exit return.
+                    if (_graph.treasuresRemaining[newFloor] == 0 && _graph.secretsRemaining[newFloor] == 0)
+                    {
+                        reinitalizeExits(newFloor);
+                    }
+                }
 
                 // Set the travel distance and to be the same on the new floor, but the direction to be 5, to indicate we're going down to the floor that spawned this floor.
                 _graph.travelDistance[newFloor][updateNode.height][updateNode.width] = _graph.travelDistance[currentNode.floor][currentNode.height][currentNode.width] + 1;
@@ -378,6 +442,37 @@ namespace Aardwolf
             _graph.travelDistance[0][firstNodeHeight][firstNodeWidth] = 0;
             // Travel direction of -1 is the start point. 1-4 are the directions of N, E, S, W. 4 + floor number is the travel floor.
             _graph.travelDirection[0][firstNodeHeight][firstNodeWidth] = -1;
+
+            if (allSecrets)
+            {
+                // Scan the ground floor map. We need to count the number of secrets and treasures on the map.
+                // Replace the 0 floor exit with -15, and set all treasures to -16.
+
+                for (int i = 0; i < _mapdata.getMapHeight(); i++)
+                {
+                    for (int j = 0; j < _mapdata.getMapWidth(); j++)
+                    {
+                        if (_graph.graphMap[0][i][j] == 0)
+                        {
+                            _graph.setGraphValue(0, i, j, -15);
+                        }
+                        else if (_mapdata.getStaticObjectID(i, j) >= 52 && _mapdata.getStaticObjectID(i,j) <= 55)
+                        {
+                            _graph.setGraphValue(0, i, j, -16);
+                            _graph.treasuresRemaining[0]++;
+                        }
+
+                        if (_mapdata.isTilePushable(i, j))
+                        {
+                            _graph.secretsRemaining[0]++;
+                        }
+                    }
+                }
+
+                // Debug how many secrets and treasures we have.
+                Debug.WriteLine("Treasures remaining: " + _graph.treasuresRemaining[0]);
+                Debug.WriteLine("Secrets remaining: " + _graph.secretsRemaining[0]);
+            }
 
             // Add this node to the queue.
             _graph.pathfindingQueue.Enqueue(new pathfindingNode(firstNodeHeight, firstNodeWidth, 0));
@@ -475,6 +570,8 @@ namespace Aardwolf
         {
             // Check tile by tile of the mapdata. If it's a wall, set the graph value to -1. If it's a floor set it to 1, and if it's a door set it to 2.
             // If it's a locked door set it to -2. If it's a pushwall set it to 4.
+            biggestQueue = 0;
+
             for (int i = 0; i < _mapdata.getMapHeight(); i++)
             {
                 for (int j = 0; j < _mapdata.getMapWidth(); j++)
@@ -552,9 +649,12 @@ namespace Aardwolf
             firstNodeHeight = -1;
             firstNodeWidth = -1;
 
+            biggestQueue = 0;
+
             mazeSolved = false;
             mazeFailed = false;
             ignorePushWalls = false;
+            allSecrets = false;
 
             // Initialize our pathfinding graph.
             _graph = new pathfindingGraph(_mapdata.getMapWidth(), _mapdata.getMapHeight());

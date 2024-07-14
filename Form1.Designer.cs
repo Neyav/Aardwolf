@@ -42,6 +42,8 @@
             button3 = new Button();
             checkBox2 = new CheckBox();
             checkBox1 = new CheckBox();
+            progressBar1 = new ProgressBar();
+            checkBox3 = new CheckBox();
             ((System.ComponentModel.ISupportInitialize)pictureBox1).BeginInit();
             ((System.ComponentModel.ISupportInitialize)pictureBox2).BeginInit();
             groupBox1.SuspendLayout();
@@ -150,6 +152,7 @@
             // 
             // groupBox1
             // 
+            groupBox1.Controls.Add(checkBox3);
             groupBox1.Controls.Add(button3);
             groupBox1.Controls.Add(checkBox2);
             groupBox1.Controls.Add(checkBox1);
@@ -193,11 +196,30 @@
             checkBox1.UseVisualStyleBackColor = true;
             checkBox1.CheckedChanged += checkBox1_CheckedChanged;
             // 
+            // progressBar1
+            // 
+            progressBar1.Location = new Point(12, 922);
+            progressBar1.Name = "progressBar1";
+            progressBar1.Size = new Size(533, 41);
+            progressBar1.TabIndex = 11;
+            // 
+            // checkBox3
+            // 
+            checkBox3.AutoSize = true;
+            checkBox3.Location = new Point(6, 65);
+            checkBox3.Name = "checkBox3";
+            checkBox3.Size = new Size(149, 19);
+            checkBox3.TabIndex = 3;
+            checkBox3.Text = "100% Secrets and Items";
+            checkBox3.UseVisualStyleBackColor = true;
+            checkBox3.CheckedChanged += checkBox3_CheckedChanged;
+            // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(1513, 975);
+            Controls.Add(progressBar1);
             Controls.Add(groupBox1);
             Controls.Add(button2);
             Controls.Add(pictureBox2);
@@ -237,5 +259,7 @@
         private CheckBox checkBox1;
         private CheckBox checkBox2;
         private Button button3;
+        private ProgressBar progressBar1;
+        private CheckBox checkBox3;
     }
 }

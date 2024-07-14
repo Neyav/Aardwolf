@@ -228,6 +228,11 @@ namespace Aardwolf
                 else
                     finder.ignorePushWalls = false;
 
+                if (checkBox3.Checked)
+                    finder.allSecrets = true;
+                else
+                    finder.allSecrets = false;
+
                 finder.prepareBaseFloor();
                 finder.setStart(playerSpawnHeight, playerSpawnWidth);
                 finder.solveMaze();
@@ -313,6 +318,11 @@ namespace Aardwolf
             {
                 fullSizeImage.Save("level.png");
             }
+        }
+
+        private void checkBox3_CheckedChanged(object sender, EventArgs e)
+        {
+
         }
     }
 }

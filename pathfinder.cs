@@ -47,9 +47,6 @@ namespace Aardwolf
             graphMap.Add(newFloor);
             floorMap.Add(baseFloor); // Keep track of the floor we came from.
 
-            // Debug print out a floor was created and from where.
-            Debug.WriteLine("Floor " + (graphMap.Count - 1) + " created from floor " + baseFloor);
-
             // Create a new blank visited template.
             bool[][] newVisited = new bool[_Height][];
             for (int i = 0; i < _Height; i++)
@@ -121,6 +118,8 @@ namespace Aardwolf
         int firstNodeWidth;
         int firstNodeHeight;
         bool mazeSolved;
+        public bool mazeFailed;
+        public bool ignorePushWalls;
 
         pathfindingNode findsmallestunexploredNode()
         {
@@ -240,10 +239,6 @@ namespace Aardwolf
             {
                 if (pushwallCanMove)
                 {
-                    // Debug text the pushwall location that lead to this new floor.
-                    Debug.WriteLine("Pushwall found at: " + updateNode.height + " " + updateNode.width + " " + updateNode.floor);
-                    Debug.WriteLine("From: " + currentNode.height + " " + currentNode.width + " " + currentNode.floor);
-
                     // Clone a new floor and move us to that floor.
                     int newFloor = _graph.addFloor(currentNode.floor);
                     _graph.setGraphValue(newFloor, updateNode.height, updateNode.width, -1);
@@ -391,21 +386,12 @@ namespace Aardwolf
             {
                 pathfindingNode currentNode = findsmallestunexploredNode();
 
-                // Print size of the queue to debug.
-                //Debug.WriteLine("Queue size: " + _graph.pathfindingQueue.Count);
-                // print node grabbed from it.
-                //Debug.WriteLine("Node grabbed: " + currentNode.height + " " + currentNode.width + " " + currentNode.floor);
-
                 if (currentNode.height == -1)
                 {
                     // If we can't find any more nodes to explore, we're done.
                     Debug.WriteLine("No more nodes to explore. -- Failed to solve -- ");
                     break;
                 }
-
-                // Dump to debug
-                //Debug.WriteLine("Current Node: " + currentNode.height + " " + currentNode.width + " " + currentNode.floor + " " + _graph.travelDistance[currentNode.floor][currentNode.height][currentNode.width]);
-
 
                 // If we've reached the exit, we're done.
                 if (_graph.getGraphValue(currentNode.floor, currentNode.height, currentNode.width) == 0)
@@ -428,6 +414,10 @@ namespace Aardwolf
                 // Mark the current node as visited.
                 _graph.visited[currentNode.floor][currentNode.height][currentNode.width] = true;
 
+                if (ignorePushWalls)
+                {
+                    continue;
+                }
                 // Check to see if there is a pushwall nearby.
                 detectNearPushwall(currentNode, 1, true);
                 detectNearPushwall(currentNode, 2, true);
@@ -467,16 +457,11 @@ namespace Aardwolf
                             break;
                     }
                 }
-
-                // Print out the path to debug.
-                for (int i = _path.Count - 1; i >= 0; i--)
-                {
-                    Debug.WriteLine("Path: " + _path[i].height + " " + _path[i].width + " " + _path[i].floor);
-                }
             }
             else
             {
                 Debug.WriteLine("Failed to solve maze.");
+                mazeFailed = true;
             }
 
         }
@@ -558,24 +543,6 @@ namespace Aardwolf
                     }
                 }
             }
-
-            // Print out the base floor map with even spacing between each tile to debug.
-            /*for (int i = 0; i < _mapdata.getMapHeight(); i++)
-            {
-                for (int j = 0; j < _mapdata.getMapWidth(); j++)
-                {
-                    if (_graph.getGraphValue(0, i, j) == -1)
-                    {
-                        Debug.Write("X ");
-                    }
-                    else
-                    {
-                        Debug.Write(_graph.getGraphValue(0, i, j) + " ");
-                    }                    
-                }
-                Debug.WriteLine("");
-            }*/
-
         }
 
         public pathfinder(ref maphandler mapdata)
@@ -586,6 +553,8 @@ namespace Aardwolf
             firstNodeWidth = -1;
 
             mazeSolved = false;
+            mazeFailed = false;
+            ignorePushWalls = false;
 
             // Initialize our pathfinding graph.
             _graph = new pathfindingGraph(_mapdata.getMapWidth(), _mapdata.getMapHeight());

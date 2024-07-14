@@ -38,8 +38,12 @@
             comboBox2 = new ComboBox();
             pictureBox2 = new PictureBox();
             button2 = new Button();
+            groupBox1 = new GroupBox();
+            checkBox2 = new CheckBox();
+            checkBox1 = new CheckBox();
             ((System.ComponentModel.ISupportInitialize)pictureBox1).BeginInit();
             ((System.ComponentModel.ISupportInitialize)pictureBox2).BeginInit();
+            groupBox1.SuspendLayout();
             SuspendLayout();
             // 
             // button1
@@ -143,11 +147,45 @@
             button2.UseVisualStyleBackColor = true;
             button2.Click += button2_Click;
             // 
+            // groupBox1
+            // 
+            groupBox1.Controls.Add(checkBox2);
+            groupBox1.Controls.Add(checkBox1);
+            groupBox1.Location = new Point(347, 55);
+            groupBox1.Name = "groupBox1";
+            groupBox1.Size = new Size(176, 132);
+            groupBox1.TabIndex = 10;
+            groupBox1.TabStop = false;
+            groupBox1.Text = "Map View Controls";
+            // 
+            // checkBox2
+            // 
+            checkBox2.AutoSize = true;
+            checkBox2.Location = new Point(6, 43);
+            checkBox2.Name = "checkBox2";
+            checkBox2.Size = new Size(120, 19);
+            checkBox2.TabIndex = 1;
+            checkBox2.Text = "Ignore Push Walls";
+            checkBox2.UseVisualStyleBackColor = true;
+            checkBox2.CheckedChanged += checkBox2_CheckedChanged;
+            // 
+            // checkBox1
+            // 
+            checkBox1.AutoSize = true;
+            checkBox1.Location = new Point(6, 22);
+            checkBox1.Name = "checkBox1";
+            checkBox1.Size = new Size(137, 19);
+            checkBox1.TabIndex = 0;
+            checkBox1.Text = "Display Shortest Path";
+            checkBox1.UseVisualStyleBackColor = true;
+            checkBox1.CheckedChanged += checkBox1_CheckedChanged;
+            // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(1513, 975);
+            Controls.Add(groupBox1);
             Controls.Add(button2);
             Controls.Add(pictureBox2);
             Controls.Add(comboBox2);
@@ -164,6 +202,8 @@
             Text = "Aardwolf Test Application";
             ((System.ComponentModel.ISupportInitialize)pictureBox1).EndInit();
             ((System.ComponentModel.ISupportInitialize)pictureBox2).EndInit();
+            groupBox1.ResumeLayout(false);
+            groupBox1.PerformLayout();
             ResumeLayout(false);
             PerformLayout();
         }
@@ -180,5 +220,8 @@
         private ComboBox comboBox2;
         private PictureBox pictureBox2;
         private Button button2;
+        private GroupBox groupBox1;
+        private CheckBox checkBox1;
+        private CheckBox checkBox2;
     }
 }

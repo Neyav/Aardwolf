@@ -218,31 +218,40 @@ namespace Aardwolf
                 }
             }
 
-            pathfinder finder = new pathfinder(ref mapdata);
-
-            finder.prepareBaseFloor();
-            finder.setStart(playerSpawnHeight, playerSpawnWidth);
-            finder.solveMaze();
-
-            // Draw the pathfinder solution.
-            for (int x = 0; x < mapdata.getMapWidth(); x++)
+            if (checkBox1.Checked)
             {
-                for (int y = 0; y < mapdata.getMapHeight(); y++)
-                {
-                    if (finder.isTileOnPath(y, x))
-                    {
-                        int tileWidth = (int)((float)sizeWidth / mapdata.getMapWidth());
-                        int tileHeight = (int)((float)sizeHeight / mapdata.getMapHeight());
-                        int drawX = x * tileWidth;
-                        int drawY = y * tileHeight;
+                pathfinder finder = new pathfinder(ref mapdata);
 
-                        using (Graphics g = Graphics.FromImage(bitmap))
+                if (checkBox2.Checked)
+                    finder.ignorePushWalls = true;
+                else
+                    finder.ignorePushWalls = false;
+
+                finder.prepareBaseFloor();
+                finder.setStart(playerSpawnHeight, playerSpawnWidth);
+                finder.solveMaze();
+
+                // Draw the pathfinder solution.
+                for (int x = 0; x < mapdata.getMapWidth(); x++)
+                {
+                    for (int y = 0; y < mapdata.getMapHeight(); y++)
+                    {
+                        if (finder.isTileOnPath(y, x))
                         {
-                            g.FillRectangle(new SolidBrush(Color.FromArgb(60, 0, 255, 0)), drawX, drawY, tileWidth, tileHeight);
+                            int tileWidth = (int)((float)sizeWidth / mapdata.getMapWidth());
+                            int tileHeight = (int)((float)sizeHeight / mapdata.getMapHeight());
+                            int drawX = x * tileWidth;
+                            int drawY = y * tileHeight;
+
+                            using (Graphics g = Graphics.FromImage(bitmap))
+                            {
+                                g.FillRectangle(new SolidBrush(Color.FromArgb(60, 0, 255, 0)), drawX, drawY, tileWidth, tileHeight);
+                            }
                         }
                     }
                 }
             }
+
 
             return bitmap;
         }
@@ -255,10 +264,10 @@ namespace Aardwolf
 
             // Save a copy so we can look at it. Make it fullsized so it's BEAUTFIUL. ;)
             // The garbage collector likes to take its sweet time freeing this memory, so let's tell it that we only need it for this statement.
-            using (Image fullSizeImage = this.rendercurrentLevel(4096, 4096))
-            {
-                fullSizeImage.Save("level.png");
-            }            
+            //using (Image fullSizeImage = this.rendercurrentLevel(4096, 4096))
+            //{
+            //    fullSizeImage.Save("level.png");
+            //}
 
             // Enable the Render 3D button now that a level has been selected.
             button2.Enabled = true;
@@ -288,6 +297,16 @@ namespace Aardwolf
         }
 
         private void button2_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void checkBox1_CheckedChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void checkBox2_CheckedChanged(object sender, EventArgs e)
         {
 
         }

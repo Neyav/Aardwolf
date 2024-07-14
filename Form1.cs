@@ -24,6 +24,7 @@ namespace Aardwolf
         {
             comboBox1.Items.Clear();
             comboBox2.Items.Clear();
+            button3.Enabled = false;
 
             dh = new dataHandler();
 
@@ -262,12 +263,7 @@ namespace Aardwolf
             pictureBox1.SizeMode = PictureBoxSizeMode.StretchImage;
             pictureBox1.Refresh();
 
-            // Save a copy so we can look at it. Make it fullsized so it's BEAUTFIUL. ;)
-            // The garbage collector likes to take its sweet time freeing this memory, so let's tell it that we only need it for this statement.
-            //using (Image fullSizeImage = this.rendercurrentLevel(4096, 4096))
-            //{
-            //    fullSizeImage.Save("level.png");
-            //}
+            button3.Enabled = true;
 
             // Enable the Render 3D button now that a level has been selected.
             button2.Enabled = true;
@@ -309,6 +305,14 @@ namespace Aardwolf
         private void checkBox2_CheckedChanged(object sender, EventArgs e)
         {
 
+        }
+
+        private void button3_Click(object sender, EventArgs e)
+        {
+            using (Image fullSizeImage = this.rendercurrentLevel(4096, 4096))
+            {
+                fullSizeImage.Save("level.png");
+            }
         }
     }
 }

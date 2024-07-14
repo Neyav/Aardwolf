@@ -39,6 +39,7 @@
             pictureBox2 = new PictureBox();
             button2 = new Button();
             groupBox1 = new GroupBox();
+            button3 = new Button();
             checkBox2 = new CheckBox();
             checkBox1 = new CheckBox();
             ((System.ComponentModel.ISupportInitialize)pictureBox1).BeginInit();
@@ -149,6 +150,7 @@
             // 
             // groupBox1
             // 
+            groupBox1.Controls.Add(button3);
             groupBox1.Controls.Add(checkBox2);
             groupBox1.Controls.Add(checkBox1);
             groupBox1.Location = new Point(347, 55);
@@ -157,6 +159,17 @@
             groupBox1.TabIndex = 10;
             groupBox1.TabStop = false;
             groupBox1.Text = "Map View Controls";
+            // 
+            // button3
+            // 
+            button3.Enabled = false;
+            button3.Location = new Point(6, 91);
+            button3.Name = "button3";
+            button3.Size = new Size(164, 35);
+            button3.TabIndex = 2;
+            button3.Text = "Save Fullsize Image";
+            button3.UseVisualStyleBackColor = true;
+            button3.Click += button3_Click;
             // 
             // checkBox2
             // 
@@ -223,5 +236,6 @@
         private GroupBox groupBox1;
         private CheckBox checkBox1;
         private CheckBox checkBox2;
+        private Button button3;
     }
 }

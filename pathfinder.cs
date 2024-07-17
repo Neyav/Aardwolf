@@ -4,7 +4,7 @@ namespace Aardwolf
 {
     internal class pathfindingGraph
     {
-        private List<int[][]> graphMap;
+        private Dictionary<pathfindingNode, Int16> graphMap;
         public List<int> floorMap;
         public List<int> treasuresRemaining;
         public List<int> secretsRemaining;
@@ -15,38 +15,27 @@ namespace Aardwolf
         private int _Width;
         private int _Height;
 
-        public void setGraphValue(int floor, int height, int width, int value)
+        public void setGraphValue(int floor, int height, int width, Int16 value)
         {
-            graphMap[floor][height][width] = value;
+            pathfindingNode node = new pathfindingNode(height, width, floor);
+
+            graphMap[node] = value;
         }
 
-        public int getGraphValue(int floor, int height, int width)
+        public Int16 getGraphValue(int floor, int height, int width)
         {
-            return graphMap[floor][height][width];
+            pathfindingNode searchNode = new pathfindingNode(height, width, floor);
+            Int16 value = -1;
+
+            while (!graphMap.TryGetValue(searchNode, out value))
+                searchNode.floor = floorMap[searchNode.floor]; // Descend floors till we find where this block changed.
+
+            return value;
         }
 
         public int addFloor(int baseFloor)
         {
-            int[][] newFloor = new int[_Height][];
-
-            for (int i = 0; i < _Height; i++)
-            {
-                newFloor[i] = new int[_Width];
-            }
-
-            // If we have a base floor, copy it over.
-            if (baseFloor != -1)
-            {
-                for (int i = 0; i < _Height; i++)
-                {
-                    for (int j = 0; j < _Width; j++)
-                    {
-                        newFloor[i][j] = graphMap[baseFloor][i][j];
-                    }
-                }
-            }
-
-            graphMap.Add(newFloor);
+            
             floorMap.Add(baseFloor); // Keep track of the floor we came from.
 
             treasuresRemaining.Add(0);
@@ -82,7 +71,7 @@ namespace Aardwolf
 
             travelDirection.Add(newTravelDirection);
 
-            return graphMap.Count - 1;
+            return floorMap.Count - 1;
         }
         public pathfindingGraph(int graphWidth, int graphHeight)
         {
@@ -90,7 +79,7 @@ namespace Aardwolf
             _Height = graphHeight;
 
             // Initialize the graph with a single floor.
-            graphMap = new List<int[][]>();
+            graphMap = new Dictionary<pathfindingNode, Int16>();
             floorMap = new List<int>();
             treasuresRemaining = new List<int>();
             secretsRemaining = new List<int>();

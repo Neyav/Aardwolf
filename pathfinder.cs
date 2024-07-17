@@ -4,7 +4,7 @@ namespace Aardwolf
 {
     internal class pathfindingGraph
     {
-        public List<int[][]> graphMap;
+        private List<int[][]> graphMap;
         public List<int> floorMap;
         public List<int> treasuresRemaining;
         public List<int> secretsRemaining;
@@ -135,7 +135,7 @@ namespace Aardwolf
             pathfindingNode smallestNode = new pathfindingNode(-1, -1, -1);
 
             // Sort the queue by travelDistance
-            _graph.pathfindingQueue = new Queue<pathfindingNode>(_graph.pathfindingQueue.OrderBy(x => _graph.travelDistance[x.floor][x.height][x.width]));
+            //_graph.pathfindingQueue = new Queue<pathfindingNode>(_graph.pathfindingQueue.OrderBy(x => _graph.travelDistance[x.floor][x.height][x.width]));
 
             if (_graph.pathfindingQueue.Count > biggestQueue)
             {
@@ -359,7 +359,7 @@ namespace Aardwolf
                     {
                         _graph.treasuresRemaining[newFloor]--;
                         // Dump it to debug.
-                        Debug.WriteLine("Treasures remaining: " + _graph.treasuresRemaining[newFloor] + "/" + _graph.treasuresRemaining[0] + " Secrets: " + _graph.secretsRemaining[newFloor] + "/" + _graph.secretsRemaining[0] + " on floor " + newFloor);
+                        Debug.WriteLine("[" + _graph.travelDistance[updateNode.floor][updateNode.height][updateNode.width] + "]: Treasures remaining: " + _graph.treasuresRemaining[newFloor] + "/" + _graph.treasuresRemaining[0] + " Secrets: " + _graph.secretsRemaining[newFloor] + "/" + _graph.secretsRemaining[0] + " on floor " + newFloor);
                     }
                     // If we're looking for all secrets, and we've found all secrets and items, let the exit return.
                     if (_graph.treasuresRemaining[newFloor] == 0 && _graph.secretsRemaining[newFloor] == 0)
@@ -452,7 +452,7 @@ namespace Aardwolf
                 {
                     for (int j = 0; j < _mapdata.getMapWidth(); j++)
                     {
-                        if (_graph.graphMap[0][i][j] == 0)
+                        if (_graph.getGraphValue(0,i,j) == 0)
                         {
                             _graph.setGraphValue(0, i, j, -15);
                         }

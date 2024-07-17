@@ -73,6 +73,15 @@ namespace Aardwolf
 
             return floorMap.Count - 1;
         }
+
+        public int returnScore(pathfindingNode node)
+        {
+            // The score is how average steps between each treasure and secret found.
+            int optionals = treasuresRemaining[0] + secretsRemaining[0] - treasuresRemaining[node.floor] - secretsRemaining[node.floor];
+            int steps = travelDistance[node.floor][node.height][node.width];
+
+            return steps / (optionals + 1); 
+        }
         public pathfindingGraph(int graphWidth, int graphHeight)
         {
             _Width = graphWidth;
@@ -126,14 +135,62 @@ namespace Aardwolf
             // Sort the queue by travelDistance
             //_graph.pathfindingQueue = new Queue<pathfindingNode>(_graph.pathfindingQueue.OrderBy(x => _graph.travelDistance[x.floor][x.height][x.width]));
 
-            if (_graph.pathfindingQueue.Count > biggestQueue)
-            {
-                biggestQueue = _graph.pathfindingQueue.Count;
-            }
+            //if (_graph.pathfindingQueue.Count > biggestQueue)
+            //{
+            //    biggestQueue = _graph.pathfindingQueue.Count;
+            //}
 
             if (_graph.pathfindingQueue.Count == 0)
             {
                 return smallestNode;
+            }
+            else if (allSecrets)
+            {
+                // If biggestqueue is divisable by 50, sort it based on returnScore
+                if (biggestQueue > 200000)
+                {
+                    biggestQueue = 0;
+                    Debug.WriteLine("Sorting queue by return score.");
+                    // sort it so the highest score is the first item in the queue.
+
+
+
+                    _graph.pathfindingQueue = new Queue<pathfindingNode>(_graph.pathfindingQueue.OrderByDescending(x => _graph.returnScore(x)));
+
+                    Queue<pathfindingNode> tempQueue = new Queue<pathfindingNode>();
+                    // Move pathfindingQueue to tempQueue, but only items that have a returnScore of at least half of the first entry.
+                    // Dump the treasure and secrets and travel distance of each node, along with whether it gets nuked or not?
+                    int biggestScore = 0;
+
+                    biggestScore = _graph.returnScore(_graph.pathfindingQueue.Peek());
+                    Debug.WriteLine("Biggest Score: " +  biggestScore);
+
+
+                    /*for (int i = 0; i < _graph.pathfindingQueue.Count; i++)
+                    {
+                        // If the score of this entry is less than quarter of biggestScore, break, otherwise add it to tempqueue
+
+                        int localScore = _graph.returnScore(_graph.pathfindingQueue.Peek());
+
+                        if (localScore < biggestScore / 4)
+                        {
+                            // output how many nodes we're nuking.
+                            Debug.WriteLine("Nuking " + _graph.pathfindingQueue.Count + " nodes.");
+                            break;
+                        }
+
+                        pathfindingNode node = _graph.pathfindingQueue.Dequeue();
+                        tempQueue.Enqueue(node);
+                    }
+                    
+                    // Swap them.
+                    _graph.pathfindingQueue = tempQueue;*/
+
+                }
+                else
+                    biggestQueue++;
+
+                smallestNode = _graph.pathfindingQueue.Dequeue();
             }
             else
             {

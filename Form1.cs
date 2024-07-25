@@ -8,6 +8,8 @@ using OpenTK.Graphics;
 using OpenTK.Graphics.OpenGL;
 using OpenTK.Input;
 using OpenTK.Windowing.Desktop;
+using OpenTK.Windowing.Common;
+
 
 namespace Aardwolf
 {
@@ -299,7 +301,41 @@ namespace Aardwolf
 
         private void button2_Click(object sender, EventArgs e)
         {
+            var nativeWindowSettings = new NativeWindowSettings()
+            {
+                Size = new OpenTK.Mathematics.Vector2i(800, 600),
+                Title = "OpenTK Window"
+            };
 
+            using (var game = new GameWindow(GameWindowSettings.Default, nativeWindowSettings))
+            {
+                game.Load += () =>
+                {
+                    // setup settings, load textures, sounds
+                    game.VSync = VSyncMode.On;
+                };
+
+                game.Resize += (ResizeEventArgs args) =>
+                {
+                    GL.Viewport(0, 0, game.Size.X, game.Size.Y);
+                };
+
+                game.UpdateFrame += (FrameEventArgs args) =>
+                {
+                    // add game logic, input handling
+                };
+
+                game.RenderFrame += (FrameEventArgs args) =>
+                {
+                    // render graphics
+                    GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
+
+                    game.SwapBuffers();
+                };
+
+                // Run the game at 60 updates per second
+                game.Run();
+            }
         }
 
         private void checkBox1_CheckedChanged(object sender, EventArgs e)

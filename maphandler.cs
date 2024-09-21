@@ -104,7 +104,7 @@ namespace Aardwolf
                     byte tilebyte = rawMapData[(i * mapHeight + j) * 2];
 
                     // We're only storing tiles that are floors. If we decide to use the sound prop tiles we'll store them elsewhere.
-                    if (tilebyte <= 101)
+                    if (tilebyte < 90)
                         levelTileMap[i][j] = tilebyte;
 
                     if (tilebyte >= 90 && tilebyte <= 101)
@@ -279,6 +279,9 @@ namespace Aardwolf
 
         public byte getTileData(int Height, int Width)
         {
+            if (Height < 0 || Height >= _mapHeight || Width < 0 || Width >= _mapWidth)
+                return 255;
+
             if (_isLoaded)
             {
                 return levelTileMap[Height][Width];

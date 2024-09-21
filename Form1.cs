@@ -9,6 +9,7 @@ using OpenTK.Graphics.OpenGL;
 using OpenTK.Input;
 using OpenTK.Windowing.Desktop;
 using OpenTK.Windowing.Common;
+using OpenTK.Mathematics;
 
 
 namespace Aardwolf
@@ -225,6 +226,28 @@ namespace Aardwolf
             {
                 pathfinder finder = new pathfinder(ref mapdata);
 
+                finder.preparePathFinder();
+
+                for (int x = 0; x < mapdata.getMapWidth(); x++)
+                {
+                    for (int y = 0; y < mapdata.getMapHeight(); y++)
+                    {
+                        if (finder.tileNodeWorthy(y, x))
+                        {
+                            int tileWidth = (int)((float)sizeWidth / mapdata.getMapWidth());
+                            int tileHeight = (int)((float)sizeHeight / mapdata.getMapHeight());
+                            int drawX = x * tileWidth;
+                            int drawY = y * tileHeight;
+
+                            using (Graphics g = Graphics.FromImage(bitmap))
+                            {
+                                g.FillRectangle(new SolidBrush(Color.FromArgb(60, 0, 255, 0)), drawX, drawY, tileWidth, tileHeight);
+                            }
+                        }
+                    }
+                }
+                /*pathfinder finder = new pathfinder(ref mapdata);
+
                 if (checkBox2.Checked)
                     finder.ignorePushWalls = true;
                 else
@@ -257,7 +280,7 @@ namespace Aardwolf
                             }
                         }
                     }
-                }
+                }*/
             }
 
 
@@ -299,6 +322,8 @@ namespace Aardwolf
 
         }
 
+        private float _angle;
+
         private void button2_Click(object sender, EventArgs e)
         {
             var nativeWindowSettings = new NativeWindowSettings()
@@ -323,12 +348,28 @@ namespace Aardwolf
                 game.UpdateFrame += (FrameEventArgs args) =>
                 {
                     // add game logic, input handling
+                    _angle += 0.01f;
                 };
 
                 game.RenderFrame += (FrameEventArgs args) =>
                 {
                     // render graphics
                     GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
+
+                    GL.MatrixMode(MatrixMode.Modelview);
+                    GL.LoadIdentity();
+                    GL.Rotate(_angle, Vector3.UnitZ);
+
+                    GL.Begin(PrimitiveType.Triangles);
+
+                    GL.Color3(Color.Red);
+                    GL.Vertex2(-0.5f, -0.5f);
+                    GL.Color3(Color.Green);
+                    GL.Vertex2(0.5f, -0.5f);
+                    GL.Color3(Color.Blue);
+                    GL.Vertex2(0.0f, 0.5f);
+
+                    GL.End();
 
                     game.SwapBuffers();
                 };

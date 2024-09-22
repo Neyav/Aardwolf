@@ -86,22 +86,32 @@ namespace Aardwolf
             if (cornerBlockedcode == 0)
                 return false;
 
-            // If two tiles adjacent to this tile have the same cornerBlocked code, this tile cannot be a node.
-            // Check E/W
-            if (cornerBlocked(heightPosition, widthPosition - 1) == cornerBlockedcode && cornerBlocked(heightPosition, widthPosition + 1) == cornerBlockedcode)
-                return false;
-
-            // Check N/S
-            if (cornerBlocked(heightPosition - 1, widthPosition) == cornerBlockedcode && cornerBlocked(heightPosition + 1, widthPosition) == cornerBlockedcode)
-                return false;
-
-
             return true;
+        }
+        public pathNode returnNode(int heightPosition, int widthPosition)
+        {
+            foreach (pathNode node in _nodes)
+            {
+                if (node.heightPosition == heightPosition && node.widthPosition == widthPosition)
+                    return node;
+            }
+
+            return null;
         }
 
         public void preparePathFinder()
         {
-            
+            // Anything that might be node worthy gets a node.
+            for (int heightPosition = 0; heightPosition < _mapdata.getMapHeight(); heightPosition++)
+            {
+                for (int widthPosition = 0; widthPosition < _mapdata.getMapWidth(); widthPosition++)
+                {
+                    if (tileNodeWorthy(heightPosition, widthPosition))
+                    {
+                        _nodes.Add(new pathNode(heightPosition, widthPosition));
+                    }
+                }
+            } 
         }
         public pathfinder (ref maphandler mapdata)
         {

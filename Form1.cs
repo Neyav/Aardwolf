@@ -68,6 +68,8 @@ namespace Aardwolf
             bool _isSOD = false;
             int playerSpawnHeight = 0;
             int playerSpawnWidth = 0;
+            VSWAPHeader VSWAPHead = dh.getVSWAPHeader;
+            byte doorWall = (byte)(VSWAPHead.spriteStart - 8);
 
             if (radioButton2.Checked)
                 _isSOD = true;
@@ -91,7 +93,7 @@ namespace Aardwolf
                 for (int y = 0; y < mapdata.getMapHeight(); y++)
                 {
                     byte leveldata = mapdata.getTileData(y, x);
-                    int texture = 0;
+                    int texture = -1;
                     // Setup render location and size for any future drawing.
                     int tileWidth = (int)((float)sizeWidth / mapdata.getMapWidth());
                     int tileHeight = (int)((float)sizeHeight / mapdata.getMapHeight());
@@ -100,54 +102,17 @@ namespace Aardwolf
                     Bitmap texturedata = null;
 
                     if (leveldata > 0)
+                        texture = (leveldata - 1) * 2;
+
+                    if (mapdata.isDoorOpenable(y, x, false, false))               
+                        texture = doorWall;
+                    else if (mapdata.isDoorOpenable(y, x, true, false))
+                        texture = doorWall + 6;
+                    else if (mapdata.isDoorOpenable(y, x, false, true))
+                        texture = doorWall + 6;
+
+                    if (texture >= 0)
                     {
-                        if (leveldata >= 90 && leveldata <= 101)
-                        {  // This is a door.
-                            VSWAPHeader VSWAPHead = dh.getVSWAPHeader;
-                            byte doorType = 0;
-                            byte doorWall = (byte)(VSWAPHead.spriteStart - 8);
-
-                            switch (leveldata)
-                            {
-                                case 90:
-                                case 92:
-                                case 94:
-                                case 96:
-                                case 98:
-                                case 100:
-                                    doorType = (byte)((leveldata - 90) / 2);
-                                    break;
-                                case 91:
-                                case 93:
-                                case 95:
-                                case 97:
-                                case 99:
-                                case 101:
-                                    doorType = (byte)((leveldata - 91) / 2);
-                                    break;
-                            }
-
-                            switch (doorType)
-                            {
-                                case 0:
-                                    texture = doorWall;
-                                    break;
-                                case 1:
-                                case 2:
-                                case 3:
-                                case 4:
-                                    texture = doorWall + 6;
-                                    break;
-                                case 5:
-                                    texture = doorWall + 4;
-                                    break;
-                            }
-
-                        }
-                        else
-                            texture = (leveldata - 1) * 2;
-
-                        // Now load the appropriate texture.
                         texturedata = dh.getTexture(texture);
                     }
 
@@ -232,7 +197,7 @@ namespace Aardwolf
                 {
                     for (int y = 0; y < mapdata.getMapHeight(); y++)
                     {
-                        if (finder.tileNodeWorthy(y, x))
+                        if (finder.returnNode(y,x) != null)
                         {
                             int tileWidth = (int)((float)sizeWidth / mapdata.getMapWidth());
                             int tileHeight = (int)((float)sizeHeight / mapdata.getMapHeight());

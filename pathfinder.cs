@@ -7,24 +7,41 @@ namespace Aardwolf
         public readonly int heightPosition;
         public readonly int widthPosition;
 
-        private Dictionary<pathNode, int> connectedNodes;
+        private Dictionary<pathNode, float> _connectedNodes;
+        private Dictionary<pathNode, int> _nodeBlockStatus;
 
-        public void connectNode (ref pathNode node)
+        public void connectNode(pathNode node, int blockStatus, float distance)
         {
-            // Calculate the distance between this node and the connecting node.
-            int distance = Math.Abs(heightPosition - node.heightPosition) + Math.Abs(widthPosition - node.widthPosition);
+            // Validate that these nodes are not already connected.
+            if (_connectedNodes.ContainsKey(node))
+                return;
+
+            _connectedNodes.Add(node, distance);            
+            _nodeBlockStatus.Add(node, blockStatus);
+        }
+        public void calculateAndConnectNode (pathNode node, int blockedStatus)
+        {
+            // Calculate the distance between this node and the connecting node.            
+            float distance = (float)Math.Sqrt(Math.Pow(heightPosition - node.heightPosition, 2) + Math.Pow(widthPosition - node.widthPosition, 2));
 
             // Add the connecting node to the list of connected nodes.
-            connectedNodes.Add(node, distance);
+            connectNode(this, blockedStatus, distance);
+            connectNode(node, blockedStatus, distance);
 
             Debug.WriteLine("Node at " + heightPosition + ", " + widthPosition + " connected to node at " + node.heightPosition + ", " + node.widthPosition + " with distance " + distance);
+        }
+
+        public List<pathNode> returnConnectedNodes()
+        {
+            return _connectedNodes.Keys.ToList();
         }
         public pathNode (int heightPosition, int widthPosition)
         {
             this.heightPosition = heightPosition;
             this.widthPosition = widthPosition;
 
-            connectedNodes = new Dictionary<pathNode, int>();
+            _connectedNodes = new Dictionary<pathNode, float>();
+            _nodeBlockStatus = new Dictionary<pathNode, int>();
 
             Debug.WriteLine("Node created at " + heightPosition + ", " + widthPosition);
         }
@@ -36,7 +53,6 @@ namespace Aardwolf
         private bool _tileGenerated;
         private maphandler _mapdata;
         private List<pathNode> _nodes;
-
 
         private bool tileBlocked(int heightPosition, int widthPosition)
         {
@@ -114,6 +130,69 @@ namespace Aardwolf
 
             return null;
         }
+
+        private int nodeConnectObstruction(pathNode startNode, pathNode endNode)
+        {
+            int dx = Math.Abs(startNode.heightPosition - endNode.heightPosition);
+            int dy = Math.Abs(startNode.widthPosition - endNode.widthPosition);
+            int sx = startNode.heightPosition < endNode.heightPosition ? 1 : -1;
+            int sy = startNode.widthPosition < endNode.widthPosition ? 1 : -1;
+            int err = dx - dy;
+            int moveX = startNode.heightPosition;
+            int moveY = startNode.widthPosition;
+            int keyRequired = 0;
+
+            while (true)
+            {
+                if (tileBlocked(moveX, moveY))
+                    return 1;
+
+                if (moveX == endNode.heightPosition && moveY == endNode.widthPosition)
+                    break;
+
+                if (_mapdata.isDoorOpenable(moveX, moveY, true, false))
+                    keyRequired = 2;  // Gold key required for this path
+                else if (_mapdata.isDoorOpenable(moveX, moveY, false, true))
+                    keyRequired = 3;  // Silver key required for this path
+
+                int e2 = 2 * err;
+                if (e2 > -dy)
+                {
+                    err = err - dy;
+                    moveX = moveX + sx;
+                }
+                if (e2 < dx)
+                {
+                    err = err + dx;
+                    moveY = moveY + sy;
+                }
+            }
+
+            return keyRequired;
+        }
+
+        private void connectNodes()
+        {
+            // Go through the list of nodes.
+            foreach (pathNode basenode in _nodes)
+            {
+                foreach (pathNode trynode in _nodes)
+                {                    
+                    // Don't test the same node against itself.
+                    if (basenode == trynode)
+                        continue;
+
+                    // We need to figure out if the nodes are connected without obstructions.
+                    int blockStatus = nodeConnectObstruction(basenode, trynode);
+
+                    if (blockStatus != 1)
+                    {
+                        basenode.calculateAndConnectNode(trynode, blockStatus);
+                    }
+                }
+            }
+        }
+        
         public void generateFloorNodes()
         {
             // Anything that might be node worthy gets a node.
@@ -127,6 +206,8 @@ namespace Aardwolf
                     }
                 }
             }
+
+            connectNodes();
         }
 
         public pathfinderFloor (ref maphandler mapdata)
@@ -161,6 +242,11 @@ namespace Aardwolf
         public pathNode returnNode(int heightPosition, int widthPosition)
         {
             return _pathfinderFloors[0].returnNode(heightPosition, widthPosition);
+        }
+
+        public List<pathNode> returnConnectedNodes(int heightPosition, int widthPosition)
+        {
+            return _pathfinderFloors[0].returnNode(heightPosition, widthPosition).returnConnectedNodes();
         }
 
         public void preparePathFinder()

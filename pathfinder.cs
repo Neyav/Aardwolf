@@ -7,6 +7,10 @@ namespace Aardwolf
         public readonly int heightPosition;
         public readonly int widthPosition;
 
+        public bool traveled;
+        public float travelDistance;
+        pathNode traveledNode;
+
         private Dictionary<pathNode, float> _connectedNodes;
         private Dictionary<pathNode, int> _nodeBlockStatus;
 
@@ -42,6 +46,10 @@ namespace Aardwolf
 
             _connectedNodes = new Dictionary<pathNode, float>();
             _nodeBlockStatus = new Dictionary<pathNode, int>();
+
+            travelDistance = -1;
+            traveled = false;
+            traveledNode = null;
 
             Debug.WriteLine("Node created at " + heightPosition + ", " + widthPosition);
         }
@@ -206,6 +214,9 @@ namespace Aardwolf
                     }
                 }
             }
+
+            // Add the player spawn point as a node.
+            _nodes.Add(new pathNode(_mapdata.playerSpawnHeight, _mapdata.playerSpawnWidth));
 
             connectNodes();
         }

@@ -8,6 +8,7 @@ namespace Aardwolf
         none = 0,
         goldKey = 1,
         silverKey = 2,
+        bothKeys = 3
     };
     internal class pathNode
     {
@@ -21,10 +22,20 @@ namespace Aardwolf
 
         public bool traveled;
         public float travelDistance;
-        pathNode traveledNode;
+        public pathNode traveledNode;
 
         private Dictionary<pathNode, float> _connectedNodes;
         private Dictionary<pathNode, int> _nodeBlockStatus;
+
+        public float returnDistance(pathNode node)
+        {
+            return _connectedNodes[node];
+        }
+
+        public int returnBlockStatus(pathNode node)
+        {
+            return _nodeBlockStatus[node];
+        }
 
         public void connectNode(pathNode node, int blockStatus, float distance)
         {
@@ -142,6 +153,20 @@ namespace Aardwolf
 
             return true;
         }
+
+        public List<pathNode> returnUntraveledNodes()
+        {
+            List<pathNode> pathNodes = new List<pathNode>();
+
+            foreach (pathNode node in _nodes)
+            {
+                if (!node.traveled)
+                    pathNodes.Add(node);
+            }
+
+            return pathNodes;
+        }
+
         public pathNode returnNode(int heightPosition, int widthPosition)
         {
             foreach (pathNode node in _nodes)
@@ -314,6 +339,7 @@ namespace Aardwolf
         private maphandler _mapdata;
         private List<pathfinderFloor> _pathfinderFloors;
         private pathNode _startNode;
+        private pathNode _endNode;
 
         public pathNode returnNode(int heightPosition, int widthPosition)
         {
@@ -325,6 +351,91 @@ namespace Aardwolf
             return _pathfinderFloors[0].returnNode(heightPosition, widthPosition).returnConnectedNodes();
         }
 
+        public List<pathNode> returnRoute()
+        {
+            List<pathNode> route = new List<pathNode>();
+            pathNode currentNode = _endNode;
+
+            while (currentNode != null)
+            {
+                Debug.WriteLine("Route node at " + currentNode.heightPosition + ", " + currentNode.widthPosition);
+                route.Add(currentNode);
+                currentNode = currentNode.traveledNode;
+            }
+
+            // Reverse route.
+            route.Reverse();
+
+            return route;
+        }
+
+        public bool solveMaze()
+        {
+            pathNode currentNode = _startNode;
+            _startNode.travelDistance = 0;
+
+            while (true)
+            {
+                currentNode.traveled = true;
+
+                if (currentNode.endPoint)
+                {
+                    Debug.WriteLine("Exit found at " + currentNode.heightPosition + ", " + currentNode.widthPosition + " " + currentNode.travelDistance + " " + currentNode.importantNodeStatus);
+                    _endNode = currentNode;
+                    
+                    return true;
+                }
+
+                // Get the list of connected nodes.
+                List<pathNode> connectedNodes = currentNode.returnConnectedNodes();
+
+                foreach (pathNode node in connectedNodes)
+                {
+                    if (node.traveled)
+                        continue;
+
+                    if (node.travelDistance == -1 || node.travelDistance > currentNode.travelDistance + currentNode.returnDistance(node))
+                    {
+                        node.travelDistance = currentNode.travelDistance + currentNode.returnDistance(node);
+                        node.traveledNode = currentNode;
+                        node.importantNodeStatus = currentNode.importantNodeStatus;
+                    }
+                }
+
+                // Make a master node list of all nodes from all floors that haven't been traveled to yet..
+                List<pathNode> allNodes = new List<pathNode>();
+                foreach (pathfinderFloor floor in _pathfinderFloors)
+                {
+                    List<pathNode> aggrigate = floor.returnUntraveledNodes();
+                    foreach (pathNode node in aggrigate)
+                    {
+                        allNodes.Add(node);
+                    }
+                }
+
+                // Find the lowest travel distance node that hasn't been traveled, if there aren't any return false.
+                pathNode lowestNode = null;
+                foreach (pathNode node in allNodes)
+                {
+                    if (node.traveled)
+                        continue;
+
+                    if (node.travelDistance == -1)
+                        continue;
+
+                    if (lowestNode == null)
+                        lowestNode = node;
+                    else if (node.travelDistance < lowestNode.travelDistance)
+                        lowestNode = node;
+                }
+
+                if (lowestNode == null)
+                    return false;
+
+                currentNode = lowestNode;
+            }
+        }
+        
         public void preparePathFinder()
         {
             // Add the base floor.
@@ -338,6 +449,7 @@ namespace Aardwolf
             _mapdata = mapdata;
             _pathfinderFloors = new List<pathfinderFloor>();
             _startNode = null;
+            _endNode = null;
         }
     }
 }

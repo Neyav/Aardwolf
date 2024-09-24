@@ -84,7 +84,7 @@ namespace Aardwolf
         private int _mapHeight;
         private int _mapWidth;
 
-        Dictionary<byte, staticObjectInteraction> staticObjectClassification;        
+        Dictionary<byte, staticObjectInteraction> staticObjectClassification;
 
         public void importMapData(byte[] rawMapData, int mapHeight, int mapWidth)
         {
@@ -110,7 +110,7 @@ namespace Aardwolf
                     if (tilebyte >= 90 && tilebyte <= 101)
                     {   // It's a door, spawn a dynamic object for it so we can track it.
                         spawnDoorObject(tilebyte, i, j);
-                    }                    
+                    }
                 }
             }
 
@@ -232,6 +232,14 @@ namespace Aardwolf
             }
 
             return 0;
+        }
+
+        public Tuple<List<staticMapObject>, List<dynamicMapObject>> getFilteredMapObjects()
+        {
+            List<staticMapObject> filteredStaticObjects = new List<staticMapObject>();
+            List<dynamicMapObject> filteredDynamicObjects = new List<dynamicMapObject>();
+
+            return new Tuple<List<staticMapObject>, List<dynamicMapObject>>(filteredStaticObjects, filteredDynamicObjects);
         }
 
         public bool isTilePushable(int height, int width)

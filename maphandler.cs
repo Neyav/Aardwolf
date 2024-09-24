@@ -77,12 +77,14 @@ namespace Aardwolf
     internal class maphandler
     {
         private byte[][] levelTileMap;
-        List<dynamicMapObject> dynamicMapObjects;
-        List<staticMapObject> staticMapObjects;
+        private List<dynamicMapObject> dynamicMapObjects;
+        private List<staticMapObject> staticMapObjects;
         private bool _isLoaded = false;
         private bool _isSoD = false;
         private int _mapHeight;
         private int _mapWidth;
+        public int playerSpawnHeight { get; private set; }
+        public int playerSpawnWidth { get; private set; }
 
         Dictionary<byte, staticObjectInteraction> staticObjectClassification;
 
@@ -177,6 +179,11 @@ namespace Aardwolf
                 newObject.posheight = height;
                 dynamicMapObjects.Add(newObject);
             }
+            else if (objNumber >= 19 && objNumber <= 22)
+            { // It's a player spawn.
+                playerSpawnHeight = height;
+                playerSpawnWidth = width;
+            }
             else if (objNumber >= 23 && (objNumber <= 70 || (_isSoD && objNumber <= 74)))
             { // It's a static object.
                 staticMapObject newObject = new staticMapObject();
@@ -232,7 +239,7 @@ namespace Aardwolf
             }
 
             return 0;
-        }
+        }              
 
         public Tuple<List<staticMapObject>, List<dynamicMapObject>> getFilteredMapObjects()
         {
@@ -318,6 +325,9 @@ namespace Aardwolf
             _isSoD = a_isSoD;
             _mapHeight = 0;
             _mapWidth = 0;
+
+            playerSpawnHeight = 0;
+            playerSpawnWidth = 0;
 
             // Manually add blocking map objects.
             // These are the common objects. We'll add the SoD/non-SoD specifics after.

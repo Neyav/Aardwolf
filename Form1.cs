@@ -192,6 +192,15 @@ namespace Aardwolf
                 pathfinder finder = new pathfinder(ref mapdata);
 
                 finder.preparePathFinder();
+                if (!finder.solveMaze())
+                {
+                    // Draw a BIG X over the map to indicate path failure.
+                    using (Graphics g = Graphics.FromImage(bitmap))
+                    {
+                        g.DrawLine(new Pen(Color.Red, 5), 0, 0, sizeWidth, sizeHeight);
+                        g.DrawLine(new Pen(Color.Red, 5), sizeWidth, 0, 0, sizeHeight);
+                    }
+                }
 
                 for (int x = 0; x < mapdata.getMapWidth(); x++)
                 {
@@ -226,6 +235,29 @@ namespace Aardwolf
 
                     }
                 }
+
+                // Draw the pathfinder solution.
+                List<pathNode> shortestRoute = finder.returnRoute();
+
+                Debug.WriteLine("Shortest route length: " + shortestRoute.Count);
+
+                for (int i = 0; i < shortestRoute.Count - 1; i++)
+                {
+                    pathNode node = shortestRoute[i];
+                    pathNode nextNode = shortestRoute[i + 1];
+
+                    // Draw a thick red line between the center of the current tile and the center of the connected tile.
+                    int drawX = node.widthPosition * (int)((float)sizeWidth / mapdata.getMapWidth()) + ((int)((float)sizeWidth / mapdata.getMapWidth()) / 2);
+                    int drawY = node.heightPosition * (int)((float)sizeHeight / mapdata.getMapHeight()) + ((int)((float)sizeHeight / mapdata.getMapHeight()) / 2);
+                    int drawX2 = nextNode.widthPosition * (int)((float)sizeWidth / mapdata.getMapWidth()) + ((int)((float)sizeWidth / mapdata.getMapWidth()) / 2);
+                    int drawY2 = nextNode.heightPosition * (int)((float)sizeHeight / mapdata.getMapHeight()) + ((int)((float)sizeHeight / mapdata.getMapHeight()) / 2);
+
+                    using (Graphics g = Graphics.FromImage(bitmap))
+                    {
+                        g.DrawLine(new Pen(Color.FromArgb(255, 0, 0), 5), drawX, drawY, drawX2, drawY2);
+                    }
+                }
+
                 /*pathfinder finder = new pathfinder(ref mapdata);
 
                 if (checkBox2.Checked)

@@ -208,7 +208,22 @@ namespace Aardwolf
                             {
                                 g.FillRectangle(new SolidBrush(Color.FromArgb(60, 0, 255, 0)), drawX, drawY, tileWidth, tileHeight);
                             }
+
+                            List<pathNode> pathNodes = finder.returnConnectedNodes(y, x);
+
+                            // Draw a line between the center of the current tile and the center of the connected tile.
+                            foreach (pathNode node in pathNodes)
+                            {
+                                int drawX2 = node.widthPosition * tileWidth + (tileWidth / 2);
+                                int drawY2 = node.heightPosition * tileHeight + (tileHeight / 2);
+
+                                using (Graphics g = Graphics.FromImage(bitmap))
+                                {
+                                    g.DrawLine(new Pen(Color.FromArgb(60, 0, 255, 0)), drawX + (tileWidth / 2), drawY + (tileHeight / 2), drawX2, drawY2);
+                                }
+                            }
                         }
+
                     }
                 }
                 /*pathfinder finder = new pathfinder(ref mapdata);

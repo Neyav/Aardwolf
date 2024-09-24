@@ -228,6 +228,21 @@ namespace Aardwolf
             return false;
         }
 
+        public bool isTileAnExit(int height, int width)
+        {
+            if (height <= 0 || height >= _mapHeight - 1 || width <= 0 || width >= _mapWidth - 1)
+            {
+                return false;
+            }
+
+            if (levelTileMap[height][width] == 21)
+            {
+                return true;
+            }
+
+            return false;
+        }
+
         public int getStaticObjectID(int height, int width)
         {
             foreach (staticMapObject obj in staticMapObjects)

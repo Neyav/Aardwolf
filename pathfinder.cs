@@ -2,10 +2,22 @@
 
 namespace Aardwolf
 {
+
+    enum nodeStatus
+    {
+        none = 0,
+        goldKey = 1,
+        silverKey = 2,
+    };
     internal class pathNode
     {
         public readonly int heightPosition;
         public readonly int widthPosition;
+
+        public bool startPoint;
+        public bool endPoint;
+
+        public nodeStatus importantNodeStatus;
 
         public bool traveled;
         public float travelDistance;
@@ -46,6 +58,8 @@ namespace Aardwolf
 
             _connectedNodes = new Dictionary<pathNode, float>();
             _nodeBlockStatus = new Dictionary<pathNode, int>();
+
+            importantNodeStatus = nodeStatus.none;
 
             travelDistance = -1;
             traveled = false;
@@ -158,10 +172,10 @@ namespace Aardwolf
                 if (moveX == endNode.heightPosition && moveY == endNode.widthPosition)
                     break;
 
-                if (_mapdata.isDoorOpenable(moveX, moveY, true, false))
-                    keyRequired = 2;  // Gold key required for this path
-                else if (_mapdata.isDoorOpenable(moveX, moveY, false, true))
-                    keyRequired = 3;  // Silver key required for this path
+                if (_mapdata.isDoorOpenable(moveX, moveY, true, false) && keyRequired != 2 && keyRequired !=5)
+                    keyRequired += 2;  // Gold key required for this path
+                else if (_mapdata.isDoorOpenable(moveX, moveY, false, true) && keyRequired != 3 && keyRequired != 5)
+                    keyRequired += 3;  // Silver key required for this path
 
                 int e2 = 2 * err;
                 if (e2 > -dy)
@@ -200,7 +214,22 @@ namespace Aardwolf
                 }
             }
         }
-        
+
+        private void insertUniqueNode(pathNode pathNode)
+        {
+            // If a node at this location exists, delete it.
+            foreach (pathNode node in _nodes)
+            {
+                if (node.heightPosition == pathNode.heightPosition && node.widthPosition == pathNode.widthPosition)
+                {
+                    _nodes.Remove(node);
+                    break;
+                }
+            }
+
+            _nodes.Add(pathNode);
+        }
+
         public void generateFloorNodes()
         {
             // Anything that might be node worthy gets a node.
@@ -210,15 +239,50 @@ namespace Aardwolf
                 {
                     if (tileNodeWorthy(heightPosition, widthPosition))
                     {
-                        _nodes.Add(new pathNode(heightPosition, widthPosition));
+                        insertUniqueNode(new pathNode(heightPosition, widthPosition));
+                    } // Are we beside an exit tile?
+                    else if (_mapdata.isTileAnExit(heightPosition, widthPosition - 1) || _mapdata.isTileAnExit(heightPosition, widthPosition + 1))
+                    {
+                        if (!tileBlocked(heightPosition, widthPosition))
+                        {
+                            insertUniqueNode(new pathNode(heightPosition, widthPosition));
+
+                            _nodes[_nodes.Count - 1].endPoint = true;
+                        }
+                    }
+
+                    if (_mapdata.getStaticObjectID(heightPosition, widthPosition) == 43)
+                    {
+                        insertUniqueNode(new pathNode(heightPosition, widthPosition));
+
+                        _nodes[_nodes.Count - 1].importantNodeStatus = nodeStatus.goldKey;
+                    }
+                    else if (_mapdata.getStaticObjectID(heightPosition, widthPosition) == 44)
+                    {
+                        insertUniqueNode(new pathNode(heightPosition, widthPosition));
+
+                        _nodes[_nodes.Count - 1].importantNodeStatus = nodeStatus.silverKey;
                     }
                 }
             }
 
             // Add the player spawn point as a node.
-            _nodes.Add(new pathNode(_mapdata.playerSpawnHeight, _mapdata.playerSpawnWidth));
+            insertUniqueNode(new pathNode(_mapdata.playerSpawnHeight, _mapdata.playerSpawnWidth));
+
+            _nodes[_nodes.Count - 1].startPoint = true;
 
             connectNodes();
+        }
+
+        public pathNode returnStartNode()
+        {
+            foreach (pathNode node in _nodes)
+            {
+                if (node.startPoint)
+                    return node;
+            }
+
+            return null;
         }
 
         public pathfinderFloor (ref maphandler mapdata)
@@ -249,6 +313,7 @@ namespace Aardwolf
     {
         private maphandler _mapdata;
         private List<pathfinderFloor> _pathfinderFloors;
+        private pathNode _startNode;
 
         public pathNode returnNode(int heightPosition, int widthPosition)
         {
@@ -265,11 +330,14 @@ namespace Aardwolf
             // Add the base floor.
             _pathfinderFloors.Add(new pathfinderFloor(ref _mapdata));
             _pathfinderFloors[0].generateFloorNodes();
+            _startNode = _pathfinderFloors[0].returnStartNode();
+
         }
         public pathfinder (ref maphandler mapdata)
         {
             _mapdata = mapdata;
             _pathfinderFloors = new List<pathfinderFloor>();
+            _startNode = null;
         }
     }
 }

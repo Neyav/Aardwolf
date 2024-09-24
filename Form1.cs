@@ -219,7 +219,7 @@ namespace Aardwolf
 
                                 using (Graphics g = Graphics.FromImage(bitmap))
                                 {
-                                    g.DrawLine(new Pen(Color.FromArgb(60, 0, 255, 0)), drawX + (tileWidth / 2), drawY + (tileHeight / 2), drawX2, drawY2);
+                                    g.DrawLine(new Pen(Color.FromArgb(10, 0, 255, 0)), drawX + (tileWidth / 2), drawY + (tileHeight / 2), drawX2, drawY2);
                                 }
                             }
                         }

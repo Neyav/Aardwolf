@@ -254,7 +254,7 @@ namespace Aardwolf
 
                     using (Graphics g = Graphics.FromImage(bitmap))
                     {
-                        g.DrawLine(new Pen(Color.FromArgb(255, 0, 0), 5), drawX, drawY, drawX2, drawY2);
+                        g.DrawLine(new Pen(Color.FromArgb(100, 0, 0), 5), drawX, drawY, drawX2, drawY2);
                     }
                 }
 

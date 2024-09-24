@@ -30,13 +30,23 @@ namespace Aardwolf
         }
     }
 
-    internal class pathfinder
+    internal class pathfinderFloor
     {
+        private int[][] _floortiles;
+        private bool _tileGenerated;
         private maphandler _mapdata;
         private List<pathNode> _nodes;
 
+
         private bool tileBlocked(int heightPosition, int widthPosition)
         {
+            if (heightPosition < 0 || heightPosition >= _mapdata.getMapHeight() || widthPosition < 0 || widthPosition >= _mapdata.getMapWidth())
+                return true;
+
+            if (_tileGenerated)
+                if (_floortiles[heightPosition][widthPosition] == 0)
+                    return true;
+
             if (_mapdata.getTileData(heightPosition, widthPosition) != 0)
                 return true;
 
@@ -52,20 +62,26 @@ namespace Aardwolf
             int code = 0;
             // Check NE corner.
             if (tileBlocked(heightPosition - 1, widthPosition - 1))
-                code = code + 1;
+            {
+                if (!(tileBlocked(heightPosition - 1, widthPosition) || tileBlocked(heightPosition, widthPosition - 1)))
+                    code = code + 1;
+            }
             // Check SE corner.
             if (tileBlocked(heightPosition + 1, widthPosition - 1))
-                code = code + 10;
+                if (!(tileBlocked(heightPosition + 1, widthPosition) || tileBlocked(heightPosition, widthPosition - 1)))
+                    code = code + 10;
             // Check SW corner.
             if (tileBlocked(heightPosition + 1, widthPosition + 1))
-                code = code + 100;
+                if (!(tileBlocked(heightPosition + 1, widthPosition) || tileBlocked(heightPosition, widthPosition + 1)))
+                    code = code + 100;
             // Check NW corner.
             if (tileBlocked(heightPosition - 1, widthPosition + 1))
-                code = code + 1000;
+                if (!(tileBlocked(heightPosition - 1, widthPosition) || tileBlocked(heightPosition, widthPosition + 1)))
+                    code = code + 1000;
 
             return code;
         }
-        public bool tileNodeWorthy(int heightPosition, int widthPosition)
+        private bool tileNodeWorthy(int heightPosition, int widthPosition)
         {
             int cornerBlockedcode = 0;
 
@@ -98,8 +114,7 @@ namespace Aardwolf
 
             return null;
         }
-
-        public void preparePathFinder()
+        public void generateFloorNodes()
         {
             // Anything that might be node worthy gets a node.
             for (int heightPosition = 0; heightPosition < _mapdata.getMapHeight(); heightPosition++)
@@ -111,12 +126,53 @@ namespace Aardwolf
                         _nodes.Add(new pathNode(heightPosition, widthPosition));
                     }
                 }
-            } 
+            }
+        }
+
+        public pathfinderFloor (ref maphandler mapdata)
+        {
+            _mapdata = mapdata;
+            _tileGenerated = false;
+            _nodes = new List<pathNode>();
+
+            _floortiles = new int[_mapdata.getMapHeight()][];
+            for (int i = 0; i < _mapdata.getMapHeight(); i++)
+            {
+                _floortiles[i] = new int[_mapdata.getMapWidth()];
+
+                for (int j = 0; j < _mapdata.getMapWidth(); j++)
+                {
+                    if (tileBlocked(i,j))
+                        _floortiles[i][j] = 0;
+                    else
+                        _floortiles[i][j] = 1;
+                }
+            }
+
+            _tileGenerated = true;
+        }
+    }
+
+    internal class pathfinder
+    {
+        private maphandler _mapdata;
+        private List<pathfinderFloor> _pathfinderFloors;
+
+        public pathNode returnNode(int heightPosition, int widthPosition)
+        {
+            return _pathfinderFloors[0].returnNode(heightPosition, widthPosition);
+        }
+
+        public void preparePathFinder()
+        {
+            // Add the base floor.
+            _pathfinderFloors.Add(new pathfinderFloor(ref _mapdata));
+            _pathfinderFloors[0].generateFloorNodes();
         }
         public pathfinder (ref maphandler mapdata)
         {
             _mapdata = mapdata;
-            _nodes = new List<pathNode>();
+            _pathfinderFloors = new List<pathfinderFloor>();
         }
     }
 }

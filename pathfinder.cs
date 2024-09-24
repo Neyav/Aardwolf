@@ -160,7 +160,7 @@ namespace Aardwolf
 
             foreach (pathNode node in _nodes)
             {
-                if (!node.traveled)
+                if (!node.traveled && node.travelDistance >= 0)
                     pathNodes.Add(node);
             }
 
@@ -197,10 +197,13 @@ namespace Aardwolf
                 if (moveX == endNode.heightPosition && moveY == endNode.widthPosition)
                     break;
 
-                if (_mapdata.isDoorOpenable(moveX, moveY, true, false) && keyRequired != 2 && keyRequired !=5)
-                    keyRequired += 2;  // Gold key required for this path
-                else if (_mapdata.isDoorOpenable(moveX, moveY, false, true) && keyRequired != 3 && keyRequired != 5)
-                    keyRequired += 3;  // Silver key required for this path
+                if (!_mapdata.isDoorOpenable(moveX, moveY, false, false))
+                {
+                    if (_mapdata.isDoorOpenable(moveX, moveY, true, false) && keyRequired != 2 && keyRequired != 5)
+                        keyRequired += 2;  // Gold key required for this path
+                    else if (_mapdata.isDoorOpenable(moveX, moveY, false, true) && keyRequired != 3 && keyRequired != 5)
+                        keyRequired += 3;  // Silver key required for this path
+                }
 
                 int e2 = 2 * err;
                 if (e2 > -dy)
@@ -255,7 +258,7 @@ namespace Aardwolf
             _nodes.Add(pathNode);
         }
 
-        public void generateFloorNodes()
+        public void generateFloorNodes(pathNode carryOverNode)
         {
             // Anything that might be node worthy gets a node.
             for (int heightPosition = 0; heightPosition < _mapdata.getMapHeight(); heightPosition++)
@@ -289,6 +292,11 @@ namespace Aardwolf
                         _nodes[_nodes.Count - 1].importantNodeStatus = nodeStatus.silverKey;
                     }
                 }
+            }
+
+            if (carryOverNode != null)
+            {
+                insertUniqueNode(carryOverNode); // Copy this node to the new graph.
             }
 
             // Add the player spawn point as a node.
@@ -396,9 +404,37 @@ namespace Aardwolf
 
                     if (node.travelDistance == -1 || node.travelDistance > currentNode.travelDistance + currentNode.returnDistance(node))
                     {
+                        if (currentNode.importantNodeStatus != nodeStatus.bothKeys)
+                        {
+                            int nodeBlock = currentNode.returnBlockStatus(node);
+
+                            if (nodeBlock == 5)
+                                continue; // Route needs both keys, you don't have them.
+
+                            // In both these cases the door you need is blocked by a key you don't have.
+                            if (currentNode.importantNodeStatus != nodeStatus.goldKey && nodeBlock == 2)
+                                continue;
+                            if (currentNode.importantNodeStatus != nodeStatus.silverKey && nodeBlock == 3)
+                                continue;
+                        }
+
+                        // If this picks us up a key, we need  to move to a new floor.
+                        if (node.importantNodeStatus != nodeStatus.none && node.importantNodeStatus != currentNode.importantNodeStatus)
+                        {
+                            if (node.importantNodeStatus == nodeStatus.goldKey && currentNode.importantNodeStatus == nodeStatus.silverKey)
+                                node.importantNodeStatus = nodeStatus.bothKeys;
+                            if (node.importantNodeStatus == nodeStatus.silverKey && currentNode.importantNodeStatus == nodeStatus.goldKey)
+                                node.importantNodeStatus = nodeStatus.bothKeys;
+
+                            pathfinderFloor newFloor = new pathfinderFloor(ref _mapdata);
+                            newFloor.generateFloorNodes(node);
+                            _pathfinderFloors.Add(newFloor);
+                        }
+
                         node.travelDistance = currentNode.travelDistance + currentNode.returnDistance(node);
                         node.traveledNode = currentNode;
-                        node.importantNodeStatus = currentNode.importantNodeStatus;
+                        if (node.importantNodeStatus == nodeStatus.none)
+                            node.importantNodeStatus = currentNode.importantNodeStatus;
                     }
                 }
 
@@ -440,7 +476,7 @@ namespace Aardwolf
         {
             // Add the base floor.
             _pathfinderFloors.Add(new pathfinderFloor(ref _mapdata));
-            _pathfinderFloors[0].generateFloorNodes();
+            _pathfinderFloors[0].generateFloorNodes(null);
             _startNode = _pathfinderFloors[0].returnStartNode();
 
         }

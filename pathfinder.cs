@@ -101,9 +101,12 @@ namespace Aardwolf
             if (heightPosition < 0 || heightPosition >= _mapdata.getMapHeight() || widthPosition < 0 || widthPosition >= _mapdata.getMapWidth())
                 return true;
 
+            // If we have a reference tile map use it before testing the original map data.
             if (_tileGenerated)
                 if (_floortiles[heightPosition][widthPosition] == 1)
                     return true;
+                else
+                    return false;
 
             if (_mapdata.getTileData(heightPosition, widthPosition) != 0)
                 return true;
@@ -220,6 +223,10 @@ namespace Aardwolf
                     err = err - dy;
                     moveX = moveX + sx;
                 }
+
+                if (tileBlocked(moveX, moveY))
+                    return 1;
+
                 if (e2 < dx)
                 {
                     err = err + dx;
@@ -406,12 +413,12 @@ namespace Aardwolf
 
         public pathNode returnNode(int heightPosition, int widthPosition)
         {
-            return _pathfinderFloors[0].returnNode(heightPosition, widthPosition);
+            return _pathfinderFloors[_pathfinderFloors.Count() - 1].returnNode(heightPosition, widthPosition);
         }
 
         public List<pathNode> returnConnectedNodes(int heightPosition, int widthPosition)
         {
-            return _pathfinderFloors[0].returnNode(heightPosition, widthPosition).returnConnectedNodes();
+            return _pathfinderFloors[_pathfinderFloors.Count() - 1].returnNode(heightPosition, widthPosition).returnConnectedNodes();
         }
 
         public List<pathNode> returnRoute()
@@ -449,6 +456,19 @@ namespace Aardwolf
                     _endNode = currentNode;
                     
                     return true;
+                }
+
+                // If this picks us up a key, we need  to move to a new floor.
+                if (currentNode.importantNodeStatus != nodeStatus.none && currentNode.importantNodeStatus != currentNode.traveledNode.importantNodeStatus)
+                {
+                    if (currentNode.importantNodeStatus == nodeStatus.goldKey && currentNode.traveledNode.importantNodeStatus == nodeStatus.silverKey)
+                        currentNode.importantNodeStatus = nodeStatus.bothKeys;
+                    if (currentNode.importantNodeStatus == nodeStatus.silverKey && currentNode.traveledNode.importantNodeStatus == nodeStatus.goldKey)
+                        currentNode.importantNodeStatus = nodeStatus.bothKeys;
+
+                    pathfinderFloor newFloor = new pathfinderFloor(ref _mapdata, currentNode.floor, ignorePushWalls, allSecretsTreasures);
+                    newFloor.generateFloorNodes(currentNode);
+                    _pathfinderFloors.Add(newFloor);
                 }
 
                 if (!ignorePushWalls)
@@ -540,22 +560,7 @@ namespace Aardwolf
                                 continue;
                             if (currentNode.importantNodeStatus != nodeStatus.silverKey && nodeBlock == 3)
                                 continue;
-                        }
-
-                        // If this picks us up a key, we need  to move to a new floor.
-                        if (node.importantNodeStatus != nodeStatus.none && node.importantNodeStatus != currentNode.importantNodeStatus)
-                        {
-                            if (node.importantNodeStatus == nodeStatus.goldKey && currentNode.importantNodeStatus == nodeStatus.silverKey)
-                                node.importantNodeStatus = nodeStatus.bothKeys;
-                            if (node.importantNodeStatus == nodeStatus.silverKey && currentNode.importantNodeStatus == nodeStatus.goldKey)
-                                node.importantNodeStatus = nodeStatus.bothKeys;
-
-                            pathfinderFloor newFloor = new pathfinderFloor(ref _mapdata, node.floor,ignorePushWalls, allSecretsTreasures);
-                            newFloor.generateFloorNodes(node);
-                            _pathfinderFloors.Add(newFloor);
-                        }
-
-                        
+                        }                        
 
                         node.travelDistance = currentNode.travelDistance + currentNode.returnDistance(node);
                         node.traveledNode = currentNode;

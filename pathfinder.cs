@@ -306,19 +306,19 @@ namespace Aardwolf
 
                     if (!_ignorePushWalls)
                     {
-                        if (_mapdata.isTilePushable(heightPosition - 1, widthPosition))
+                        if (_mapdata.isTilePushable(heightPosition - 1, widthPosition) && tileBlocked(heightPosition -1, widthPosition))
                         {
                             insertUniqueNode(new pathNode(heightPosition, widthPosition, this));
                         }
-                        else if (_mapdata.isTilePushable(heightPosition + 1, widthPosition))
+                        else if (_mapdata.isTilePushable(heightPosition + 1, widthPosition) && tileBlocked(heightPosition + 1, widthPosition))
                         {
                             insertUniqueNode(new pathNode(heightPosition, widthPosition, this));
                         }
-                        else if (_mapdata.isTilePushable(heightPosition, widthPosition - 1))
+                        else if (_mapdata.isTilePushable(heightPosition, widthPosition - 1) && tileBlocked(heightPosition, widthPosition - 1))
                         {
                             insertUniqueNode(new pathNode(heightPosition, widthPosition, this));
                         }
-                        else if (_mapdata.isTilePushable(heightPosition, widthPosition + 1))
+                        else if (_mapdata.isTilePushable(heightPosition, widthPosition + 1) && tileBlocked(heightPosition, widthPosition + 1))
                         {
                             insertUniqueNode(new pathNode(heightPosition, widthPosition, this));
                         }

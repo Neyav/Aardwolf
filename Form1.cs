@@ -191,6 +191,9 @@ namespace Aardwolf
             {
                 pathfinder finder = new pathfinder(ref mapdata);
 
+                if (checkBox2.Checked)
+                    finder.ignorePushWalls = true;
+
                 finder.preparePathFinder();
                 if (!finder.solveMaze())
                 {
@@ -201,7 +204,7 @@ namespace Aardwolf
                         g.DrawLine(new Pen(Color.Red, 5), sizeWidth, 0, 0, sizeHeight);
                     }
                 }
-
+                
                 for (int x = 0; x < mapdata.getMapWidth(); x++)
                 {
                     for (int y = 0; y < mapdata.getMapHeight(); y++)

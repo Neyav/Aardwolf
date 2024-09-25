@@ -103,10 +103,12 @@ namespace Aardwolf
 
             // If we have a reference tile map use it before testing the original map data.
             if (_tileGenerated)
+            {
                 if (_floortiles[heightPosition][widthPosition] == 1)
                     return true;
                 else
                     return false;
+            }
 
             if (_mapdata.getTileData(heightPosition, widthPosition) != 0)
                 return true;
@@ -470,6 +472,7 @@ namespace Aardwolf
                     newFloor.generateFloorNodes(currentNode);
                     _pathfinderFloors.Add(newFloor);
                 }
+
 
                 if (!ignorePushWalls)
                 {

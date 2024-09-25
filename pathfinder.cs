@@ -1,4 +1,6 @@
 ﻿using System.Diagnostics;
+using System.Security.Cryptography.X509Certificates;
+using System.Xml.Linq;
 
 namespace Aardwolf
 {
@@ -10,6 +12,7 @@ namespace Aardwolf
         silverKey = 2,
         bothKeys = 3
     };
+
     internal class pathNode
     {
         public readonly int heightPosition;
@@ -19,6 +22,7 @@ namespace Aardwolf
         public bool endPoint;
 
         public nodeStatus importantNodeStatus;
+        public pathfinderFloor floor;
 
         public bool traveled;
         public float travelDistance;
@@ -55,17 +59,19 @@ namespace Aardwolf
             connectNode(this, blockedStatus, distance);
             connectNode(node, blockedStatus, distance);
 
-            Debug.WriteLine("Node at " + heightPosition + ", " + widthPosition + " connected to node at " + node.heightPosition + ", " + node.widthPosition + " with distance " + distance);
+            //Debug.WriteLine("Node at " + heightPosition + ", " + widthPosition + " connected to node at " + node.heightPosition + ", " + node.widthPosition + " with distance " + distance);
         }
 
         public List<pathNode> returnConnectedNodes()
         {
             return _connectedNodes.Keys.ToList();
         }
-        public pathNode (int heightPosition, int widthPosition)
+        public pathNode (int heightPosition, int widthPosition, pathfinderFloor spawnFloor)
         {
             this.heightPosition = heightPosition;
             this.widthPosition = widthPosition;
+
+            floor = spawnFloor;
 
             _connectedNodes = new Dictionary<pathNode, float>();
             _nodeBlockStatus = new Dictionary<pathNode, int>();
@@ -76,7 +82,7 @@ namespace Aardwolf
             traveled = false;
             traveledNode = null;
 
-            Debug.WriteLine("Node created at " + heightPosition + ", " + widthPosition);
+            //Debug.WriteLine("Node created at " + heightPosition + ", " + widthPosition);
         }
     }
 
@@ -87,13 +93,16 @@ namespace Aardwolf
         private maphandler _mapdata;
         private List<pathNode> _nodes;
 
-        private bool tileBlocked(int heightPosition, int widthPosition)
+        private bool _ignorePushWalls;
+        private bool _allSecretsTreasures;
+
+        public bool tileBlocked(int heightPosition, int widthPosition)
         {
             if (heightPosition < 0 || heightPosition >= _mapdata.getMapHeight() || widthPosition < 0 || widthPosition >= _mapdata.getMapWidth())
                 return true;
 
             if (_tileGenerated)
-                if (_floortiles[heightPosition][widthPosition] == 0)
+                if (_floortiles[heightPosition][widthPosition] == 1)
                     return true;
 
             if (_mapdata.getTileData(heightPosition, widthPosition) != 0)
@@ -243,8 +252,12 @@ namespace Aardwolf
             }
         }
 
-        private void insertUniqueNode(pathNode pathNode)
+        private bool insertUniqueNode(pathNode pathNode)
         {
+            // If this tile is blocked, don't add it.
+            if (tileBlocked(pathNode.heightPosition, pathNode.widthPosition))
+                return false;
+
             // If a node at this location exists, delete it.
             foreach (pathNode node in _nodes)
             {
@@ -256,6 +269,18 @@ namespace Aardwolf
             }
 
             _nodes.Add(pathNode);
+
+            return true;
+        }
+
+        public void overrideMapTile(int heightPosition, int widthPosition, int tileData)
+        {
+            _floortiles[heightPosition][widthPosition] = tileData;
+        }
+
+        public int returnMapTile(int heightPosition, int widthPosition)
+        {
+            return _floortiles[heightPosition][widthPosition];
         }
 
         public void generateFloorNodes(pathNode carryOverNode)
@@ -267,29 +292,47 @@ namespace Aardwolf
                 {
                     if (tileNodeWorthy(heightPosition, widthPosition))
                     {
-                        insertUniqueNode(new pathNode(heightPosition, widthPosition));
+                        insertUniqueNode(new pathNode(heightPosition, widthPosition, this));
                     } // Are we beside an exit tile?
                     else if (_mapdata.isTileAnExit(heightPosition, widthPosition - 1) || _mapdata.isTileAnExit(heightPosition, widthPosition + 1))
                     {
                         if (!tileBlocked(heightPosition, widthPosition))
                         {
-                            insertUniqueNode(new pathNode(heightPosition, widthPosition));
+                            insertUniqueNode(new pathNode(heightPosition, widthPosition, this));
 
                             _nodes[_nodes.Count - 1].endPoint = true;
                         }
                     }
 
+                    if (!_ignorePushWalls)
+                    {
+                        if (_mapdata.isTilePushable(heightPosition - 1, widthPosition))
+                        {
+                            insertUniqueNode(new pathNode(heightPosition, widthPosition, this));
+                        }
+                        else if (_mapdata.isTilePushable(heightPosition + 1, widthPosition))
+                        {
+                            insertUniqueNode(new pathNode(heightPosition, widthPosition, this));
+                        }
+                        else if (_mapdata.isTilePushable(heightPosition, widthPosition - 1))
+                        {
+                            insertUniqueNode(new pathNode(heightPosition, widthPosition, this));
+                        }
+                        else if (_mapdata.isTilePushable(heightPosition, widthPosition + 1))
+                        {
+                            insertUniqueNode(new pathNode(heightPosition, widthPosition, this));
+                        }
+                    }
+
                     if (_mapdata.getStaticObjectID(heightPosition, widthPosition) == 43)
                     {
-                        insertUniqueNode(new pathNode(heightPosition, widthPosition));
-
-                        _nodes[_nodes.Count - 1].importantNodeStatus = nodeStatus.goldKey;
+                        if (insertUniqueNode(new pathNode(heightPosition, widthPosition, this)))
+                            _nodes[_nodes.Count - 1].importantNodeStatus = nodeStatus.goldKey;
                     }
                     else if (_mapdata.getStaticObjectID(heightPosition, widthPosition) == 44)
                     {
-                        insertUniqueNode(new pathNode(heightPosition, widthPosition));
-
-                        _nodes[_nodes.Count - 1].importantNodeStatus = nodeStatus.silverKey;
+                        if (insertUniqueNode(new pathNode(heightPosition, widthPosition, this)))
+                            _nodes[_nodes.Count - 1].importantNodeStatus = nodeStatus.silverKey;
                     }
                 }
             }
@@ -300,9 +343,8 @@ namespace Aardwolf
             }
 
             // Add the player spawn point as a node.
-            insertUniqueNode(new pathNode(_mapdata.playerSpawnHeight, _mapdata.playerSpawnWidth));
-
-            _nodes[_nodes.Count - 1].startPoint = true;
+            if (insertUniqueNode(new pathNode(_mapdata.playerSpawnHeight, _mapdata.playerSpawnWidth, this)))
+                _nodes[_nodes.Count - 1].startPoint = true;
 
             connectNodes();
         }
@@ -318,7 +360,7 @@ namespace Aardwolf
             return null;
         }
 
-        public pathfinderFloor (ref maphandler mapdata)
+        public pathfinderFloor (ref maphandler mapdata, pathfinderFloor sourceFloor, bool ignorePushWalls, bool allSecretsTreasures)
         {
             _mapdata = mapdata;
             _tileGenerated = false;
@@ -331,14 +373,24 @@ namespace Aardwolf
 
                 for (int j = 0; j < _mapdata.getMapWidth(); j++)
                 {
-                    if (tileBlocked(i,j))
-                        _floortiles[i][j] = 0;
+                    if (sourceFloor == null)
+                    {
+                        if (tileBlocked(i, j))
+                            _floortiles[i][j] = 1;
+                        else
+                            _floortiles[i][j] = 0;
+                    }
                     else
-                        _floortiles[i][j] = 1;
+                    {
+                        _floortiles[i][j] = sourceFloor.returnMapTile(i,j);
+                    }
                 }
             }
 
             _tileGenerated = true;
+
+            _ignorePushWalls = ignorePushWalls;
+            _allSecretsTreasures = allSecretsTreasures;
         }
     }
 
@@ -348,6 +400,9 @@ namespace Aardwolf
         private List<pathfinderFloor> _pathfinderFloors;
         private pathNode _startNode;
         private pathNode _endNode;
+
+        public bool ignorePushWalls;
+        public bool allSecretsTreasures;    
 
         public pathNode returnNode(int heightPosition, int widthPosition)
         {
@@ -380,11 +435,13 @@ namespace Aardwolf
         public bool solveMaze()
         {
             pathNode currentNode = _startNode;
-            _startNode.travelDistance = 0;
+            _startNode.travelDistance = 0;            
 
             while (true)
             {
                 currentNode.traveled = true;
+
+                Debug.WriteLine("Traveling to " + currentNode.heightPosition + ", " + currentNode.widthPosition + " " + currentNode.travelDistance + " " + currentNode.importantNodeStatus);
 
                 if (currentNode.endPoint)
                 {
@@ -392,6 +449,73 @@ namespace Aardwolf
                     _endNode = currentNode;
                     
                     return true;
+                }
+
+                if (!ignorePushWalls)
+                {
+                    int moveHeight = 0;
+                    int moveWidth = 0;
+                    int testHeight = currentNode.heightPosition;
+                    int testWidth = currentNode.widthPosition;
+                    bool moveable = false;
+
+                    Debug.WriteLine("Checking for pushable tiles at " + currentNode.heightPosition + ", " + currentNode.widthPosition);
+
+                    if (_mapdata.isTilePushable(currentNode.heightPosition - 1, currentNode.widthPosition) && currentNode.floor.tileBlocked(currentNode.heightPosition - 1, currentNode.widthPosition))
+                    {
+                        moveHeight = -1;
+                    }
+                    else if (_mapdata.isTilePushable(currentNode.heightPosition + 1, currentNode.widthPosition) && currentNode.floor.tileBlocked(currentNode.heightPosition + 1, currentNode.widthPosition))
+                    {
+                        moveHeight = 1;
+                    }
+                    else if (_mapdata.isTilePushable(currentNode.heightPosition, currentNode.widthPosition - 1) && currentNode.floor.tileBlocked(currentNode.heightPosition, currentNode.widthPosition - 1))
+                    {
+                        moveWidth = -1;
+                    }
+                    else if (_mapdata.isTilePushable(currentNode.heightPosition, currentNode.widthPosition + 1) && currentNode.floor.tileBlocked(currentNode.heightPosition, currentNode.widthPosition + 1))
+                    {
+                        moveWidth = 1;
+                    }
+
+                    if (moveHeight != 0 || moveWidth != 0)
+                    {
+                        testHeight = testHeight + moveHeight;
+                        testWidth = testWidth + moveWidth;
+
+                        Debug.WriteLine("Pushable tile at " + currentNode.heightPosition + ", " + currentNode.widthPosition + " " + testHeight + ", " + testWidth);
+
+                        // See if we can move the pushable tile.
+                        if (!currentNode.floor.tileBlocked(testHeight + moveHeight, testWidth + moveWidth))
+                        {
+                            testHeight = testHeight + moveHeight;
+                            testWidth = testWidth + moveWidth;                            
+                        }
+
+                        // Can we move it two blocks?
+                        if (!currentNode.floor.tileBlocked(testHeight + moveHeight, testWidth + moveWidth))
+                        {
+                            testHeight = testHeight + moveHeight;
+                            testWidth = testWidth + moveWidth;
+                            moveable = true;
+                        }
+                        
+                        Debug.WriteLine("Pushable tile at " + currentNode.heightPosition + ", " + currentNode.widthPosition + " " + testHeight + ", " + testWidth);
+
+                        if (moveable)
+                        {
+                            Debug.WriteLine("Tile pushed at " + currentNode.heightPosition + ", " + currentNode.widthPosition + " " + testHeight + ", " + testWidth + " " + moveHeight + ", " + moveWidth);
+
+                            // We can move the tile, so generate a new floor and move it.
+                            pathfinderFloor newFloor = new pathfinderFloor(ref _mapdata, currentNode.floor, ignorePushWalls, allSecretsTreasures);
+                            newFloor.overrideMapTile(currentNode.heightPosition + moveHeight, currentNode.widthPosition + moveWidth, 0);
+                            newFloor.overrideMapTile(testHeight, testWidth, 1);
+                            newFloor.generateFloorNodes(currentNode);
+                            _pathfinderFloors.Add(newFloor);
+                        }
+
+                    }
+
                 }
 
                 // Get the list of connected nodes.
@@ -426,10 +550,12 @@ namespace Aardwolf
                             if (node.importantNodeStatus == nodeStatus.silverKey && currentNode.importantNodeStatus == nodeStatus.goldKey)
                                 node.importantNodeStatus = nodeStatus.bothKeys;
 
-                            pathfinderFloor newFloor = new pathfinderFloor(ref _mapdata);
+                            pathfinderFloor newFloor = new pathfinderFloor(ref _mapdata, node.floor,ignorePushWalls, allSecretsTreasures);
                             newFloor.generateFloorNodes(node);
                             _pathfinderFloors.Add(newFloor);
                         }
+
+                        
 
                         node.travelDistance = currentNode.travelDistance + currentNode.returnDistance(node);
                         node.traveledNode = currentNode;
@@ -475,7 +601,7 @@ namespace Aardwolf
         public void preparePathFinder()
         {
             // Add the base floor.
-            _pathfinderFloors.Add(new pathfinderFloor(ref _mapdata));
+            _pathfinderFloors.Add(new pathfinderFloor(ref _mapdata, null, ignorePushWalls, allSecretsTreasures));
             _pathfinderFloors[0].generateFloorNodes(null);
             _startNode = _pathfinderFloors[0].returnStartNode();
 
@@ -486,6 +612,9 @@ namespace Aardwolf
             _pathfinderFloors = new List<pathfinderFloor>();
             _startNode = null;
             _endNode = null;
+
+            allSecretsTreasures = false;
+            ignorePushWalls = false;
         }
     }
 }

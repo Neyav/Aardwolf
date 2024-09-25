@@ -204,38 +204,41 @@ namespace Aardwolf
                         g.DrawLine(new Pen(Color.Red, 5), sizeWidth, 0, 0, sizeHeight);
                     }
                 }
-                
-                for (int x = 0; x < mapdata.getMapWidth(); x++)
+
+                if (!true) // Display the nodes and their connections for debugging.
                 {
-                    for (int y = 0; y < mapdata.getMapHeight(); y++)
+                    for (int x = 0; x < mapdata.getMapWidth(); x++)
                     {
-                        if (finder.returnNode(y,x) != null)
+                        for (int y = 0; y < mapdata.getMapHeight(); y++)
                         {
-                            int tileWidth = (int)((float)sizeWidth / mapdata.getMapWidth());
-                            int tileHeight = (int)((float)sizeHeight / mapdata.getMapHeight());
-                            int drawX = x * tileWidth;
-                            int drawY = y * tileHeight;
-
-                            using (Graphics g = Graphics.FromImage(bitmap))
+                            if (finder.returnNode(y, x) != null)
                             {
-                                g.FillRectangle(new SolidBrush(Color.FromArgb(60, 0, 255, 0)), drawX, drawY, tileWidth, tileHeight);
-                            }
-
-                            List<pathNode> pathNodes = finder.returnConnectedNodes(y, x);
-
-                            // Draw a line between the center of the current tile and the center of the connected tile.
-                            foreach (pathNode node in pathNodes)
-                            {
-                                int drawX2 = node.widthPosition * tileWidth + (tileWidth / 2);
-                                int drawY2 = node.heightPosition * tileHeight + (tileHeight / 2);
+                                int tileWidth = (int)((float)sizeWidth / mapdata.getMapWidth());
+                                int tileHeight = (int)((float)sizeHeight / mapdata.getMapHeight());
+                                int drawX = x * tileWidth;
+                                int drawY = y * tileHeight;
 
                                 using (Graphics g = Graphics.FromImage(bitmap))
                                 {
-                                    g.DrawLine(new Pen(Color.FromArgb(10, 0, 255, 0)), drawX + (tileWidth / 2), drawY + (tileHeight / 2), drawX2, drawY2);
+                                    g.FillRectangle(new SolidBrush(Color.FromArgb(60, 0, 255, 0)), drawX, drawY, tileWidth, tileHeight);
+                                }
+
+                                List<pathNode> pathNodes = finder.returnConnectedNodes(y, x);
+
+                                // Draw a line between the center of the current tile and the center of the connected tile.
+                                foreach (pathNode node in pathNodes)
+                                {
+                                    int drawX2 = node.widthPosition * tileWidth + (tileWidth / 2);
+                                    int drawY2 = node.heightPosition * tileHeight + (tileHeight / 2);
+
+                                    using (Graphics g = Graphics.FromImage(bitmap))
+                                    {
+                                        g.DrawLine(new Pen(Color.FromArgb(10, 0, 255, 0)), drawX + (tileWidth / 2), drawY + (tileHeight / 2), drawX2, drawY2);
+                                    }
                                 }
                             }
-                        }
 
+                        }
                     }
                 }
 

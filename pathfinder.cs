@@ -168,17 +168,25 @@ namespace Aardwolf
             return true;
         }
 
-        public List<pathNode> returnUntraveledNodes()
+        public pathNode returnSmallerNode(pathNode currentNode)
         {
-            List<pathNode> pathNodes = new List<pathNode>();
+            pathNode pathNode = currentNode;
 
             foreach (pathNode node in _nodes)
             {
-                if (!node.traveled && node.travelDistance >= 0)
-                    pathNodes.Add(node);
+                if (node.traveled)
+                    continue;
+
+                if (node.travelDistance == -1)
+                    continue;
+
+                if (pathNode == null)
+                    pathNode = node;
+                else if (node.travelDistance < pathNode.travelDistance)
+                    pathNode = node;
             }
 
-            return pathNodes;
+            return pathNode;
         }
 
         public pathNode returnNode(int heightPosition, int widthPosition)
@@ -482,7 +490,7 @@ namespace Aardwolf
                     int testWidth = currentNode.widthPosition;
                     bool moveable = false;
 
-                    Debug.WriteLine("Checking for pushable tiles at " + currentNode.heightPosition + ", " + currentNode.widthPosition);
+                    //Debug.WriteLine("Checking for pushable tiles at " + currentNode.heightPosition + ", " + currentNode.widthPosition);
 
                     if (_mapdata.isTilePushable(currentNode.heightPosition - 1, currentNode.widthPosition) && currentNode.floor.tileBlocked(currentNode.heightPosition - 1, currentNode.widthPosition))
                     {
@@ -506,7 +514,7 @@ namespace Aardwolf
                         testHeight = testHeight + moveHeight;
                         testWidth = testWidth + moveWidth;
 
-                        Debug.WriteLine("Pushable tile at " + currentNode.heightPosition + ", " + currentNode.widthPosition + " " + testHeight + ", " + testWidth);
+                        //Debug.WriteLine("Pushable tile at " + currentNode.heightPosition + ", " + currentNode.widthPosition + " " + testHeight + ", " + testWidth);
 
                         // See if we can move the pushable tile.
                         if (!currentNode.floor.tileBlocked(testHeight + moveHeight, testWidth + moveWidth))
@@ -523,11 +531,11 @@ namespace Aardwolf
                             moveable = true;
                         }
                         
-                        Debug.WriteLine("Pushable tile at " + currentNode.heightPosition + ", " + currentNode.widthPosition + " " + testHeight + ", " + testWidth);
+                        //Debug.WriteLine("Pushable tile at " + currentNode.heightPosition + ", " + currentNode.widthPosition + " " + testHeight + ", " + testWidth);
 
                         if (moveable)
                         {
-                            Debug.WriteLine("Tile pushed at " + currentNode.heightPosition + ", " + currentNode.widthPosition + " " + testHeight + ", " + testWidth + " " + moveHeight + ", " + moveWidth);
+                            //Debug.WriteLine("Tile pushed at " + currentNode.heightPosition + ", " + currentNode.widthPosition + " " + testHeight + ", " + testWidth + " " + moveHeight + ", " + moveWidth);
 
                             // We can move the tile, so generate a new floor and move it.
                             pathfinderFloor newFloor = new pathfinderFloor(ref _mapdata, currentNode.floor, ignorePushWalls, allSecretsTreasures);
@@ -572,31 +580,11 @@ namespace Aardwolf
                     }
                 }
 
-                // Make a master node list of all nodes from all floors that haven't been traveled to yet..
-                List<pathNode> allNodes = new List<pathNode>();
+                pathNode lowestNode = null;
+
                 foreach (pathfinderFloor floor in _pathfinderFloors)
                 {
-                    List<pathNode> aggrigate = floor.returnUntraveledNodes();
-                    foreach (pathNode node in aggrigate)
-                    {
-                        allNodes.Add(node);
-                    }
-                }
-
-                // Find the lowest travel distance node that hasn't been traveled, if there aren't any return false.
-                pathNode lowestNode = null;
-                foreach (pathNode node in allNodes)
-                {
-                    if (node.traveled)
-                        continue;
-
-                    if (node.travelDistance == -1)
-                        continue;
-
-                    if (lowestNode == null)
-                        lowestNode = node;
-                    else if (node.travelDistance < lowestNode.travelDistance)
-                        lowestNode = node;
+                    lowestNode = floor.returnSmallerNode(lowestNode);
                 }
 
                 if (lowestNode == null)

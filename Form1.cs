@@ -205,7 +205,7 @@ namespace Aardwolf
                     }
                 }
 
-                if (!true) // Display the nodes and their connections for debugging.
+                if (true) // Display the nodes and their connections for debugging.
                 {
                     for (int x = 0; x < mapdata.getMapWidth(); x++)
                     {

@@ -39,11 +39,12 @@
             pictureBox2 = new PictureBox();
             button2 = new Button();
             groupBox1 = new GroupBox();
+            checkBox3 = new CheckBox();
             button3 = new Button();
             checkBox2 = new CheckBox();
             checkBox1 = new CheckBox();
             progressBar1 = new ProgressBar();
-            checkBox3 = new CheckBox();
+            checkBox4 = new CheckBox();
             ((System.ComponentModel.ISupportInitialize)pictureBox1).BeginInit();
             ((System.ComponentModel.ISupportInitialize)pictureBox2).BeginInit();
             groupBox1.SuspendLayout();
@@ -102,7 +103,7 @@
             // label1
             // 
             label1.AutoSize = true;
-            label1.Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point);
+            label1.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
             label1.Location = new Point(11, 102);
             label1.Name = "label1";
             label1.Size = new Size(92, 15);
@@ -112,7 +113,7 @@
             // label2
             // 
             label2.AutoSize = true;
-            label2.Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point);
+            label2.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
             label2.Location = new Point(11, 146);
             label2.Name = "label2";
             label2.Size = new Size(106, 15);
@@ -152,16 +153,29 @@
             // 
             // groupBox1
             // 
+            groupBox1.Controls.Add(checkBox4);
             groupBox1.Controls.Add(checkBox3);
             groupBox1.Controls.Add(button3);
             groupBox1.Controls.Add(checkBox2);
             groupBox1.Controls.Add(checkBox1);
-            groupBox1.Location = new Point(347, 55);
+            groupBox1.Location = new Point(169, 55);
             groupBox1.Name = "groupBox1";
-            groupBox1.Size = new Size(176, 132);
+            groupBox1.Size = new Size(354, 132);
             groupBox1.TabIndex = 10;
             groupBox1.TabStop = false;
             groupBox1.Text = "Map View Controls";
+            // 
+            // checkBox3
+            // 
+            checkBox3.AutoSize = true;
+            checkBox3.Enabled = false;
+            checkBox3.Location = new Point(6, 65);
+            checkBox3.Name = "checkBox3";
+            checkBox3.Size = new Size(149, 19);
+            checkBox3.TabIndex = 3;
+            checkBox3.Text = "100% Secrets and Items";
+            checkBox3.UseVisualStyleBackColor = true;
+            checkBox3.CheckedChanged += checkBox3_CheckedChanged;
             // 
             // button3
             // 
@@ -177,6 +191,7 @@
             // checkBox2
             // 
             checkBox2.AutoSize = true;
+            checkBox2.Enabled = false;
             checkBox2.Location = new Point(6, 43);
             checkBox2.Name = "checkBox2";
             checkBox2.Size = new Size(120, 19);
@@ -203,16 +218,16 @@
             progressBar1.Size = new Size(533, 41);
             progressBar1.TabIndex = 11;
             // 
-            // checkBox3
+            // checkBox4
             // 
-            checkBox3.AutoSize = true;
-            checkBox3.Location = new Point(6, 65);
-            checkBox3.Name = "checkBox3";
-            checkBox3.Size = new Size(149, 19);
-            checkBox3.TabIndex = 3;
-            checkBox3.Text = "100% Secrets and Items";
-            checkBox3.UseVisualStyleBackColor = true;
-            checkBox3.CheckedChanged += checkBox3_CheckedChanged;
+            checkBox4.AutoSize = true;
+            checkBox4.Location = new Point(178, 22);
+            checkBox4.Name = "checkBox4";
+            checkBox4.Size = new Size(118, 19);
+            checkBox4.TabIndex = 4;
+            checkBox4.Text = "View Node Graph";
+            checkBox4.UseVisualStyleBackColor = true;
+            checkBox4.CheckedChanged += checkBox4_CheckedChanged;
             // 
             // Form1
             // 
@@ -261,5 +276,6 @@
         private Button button3;
         private ProgressBar progressBar1;
         private CheckBox checkBox3;
+        private CheckBox checkBox4;
     }
 }

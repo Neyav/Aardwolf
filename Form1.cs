@@ -104,7 +104,7 @@ namespace Aardwolf
                     if (leveldata > 0)
                         texture = (leveldata - 1) * 2;
 
-                    if (mapdata.isDoorOpenable(y, x, false, false))               
+                    if (mapdata.isDoorOpenable(y, x, false, false))
                         texture = doorWall;
                     else if (mapdata.isDoorOpenable(y, x, true, false))
                         texture = doorWall + 6;
@@ -187,7 +187,7 @@ namespace Aardwolf
                 }
             }
 
-            if (checkBox1.Checked)
+            if (checkBox1.Checked || checkBox4.Checked )
             {
                 pathfinder finder = new pathfinder(ref mapdata);
 
@@ -195,17 +195,21 @@ namespace Aardwolf
                     finder.ignorePushWalls = true;
 
                 finder.preparePathFinder();
-                if (!finder.solveMaze())
+
+                if (checkBox1.Checked)
                 {
-                    // Draw a BIG X over the map to indicate path failure.
-                    using (Graphics g = Graphics.FromImage(bitmap))
+                    if (!finder.solveMaze())
                     {
-                        g.DrawLine(new Pen(Color.Red, 5), 0, 0, sizeWidth, sizeHeight);
-                        g.DrawLine(new Pen(Color.Red, 5), sizeWidth, 0, 0, sizeHeight);
+                        // Draw a BIG X over the map to indicate path failure.
+                        using (Graphics g = Graphics.FromImage(bitmap))
+                        {
+                            g.DrawLine(new Pen(Color.Red, 5), 0, 0, sizeWidth, sizeHeight);
+                            g.DrawLine(new Pen(Color.Red, 5), sizeWidth, 0, 0, sizeHeight);
+                        }
                     }
                 }
 
-                if (true) // Display the nodes and their connections for debugging.
+                if (checkBox4.Checked) // Display the nodes and their connections for debugging.
                 {
                     for (int x = 0; x < mapdata.getMapWidth(); x++)
                     {
@@ -233,7 +237,7 @@ namespace Aardwolf
 
                                     using (Graphics g = Graphics.FromImage(bitmap))
                                     {
-                                        g.DrawLine(new Pen(Color.FromArgb(10, 0, 255, 0)), drawX + (tileWidth / 2), drawY + (tileHeight / 2), drawX2, drawY2);
+                                        g.DrawLine(new Pen(Color.FromArgb(50, 0, 255, 0)), drawX + (tileWidth / 2), drawY + (tileHeight / 2), drawX2, drawY2);
                                     }
                                 }
                             }
@@ -399,7 +403,18 @@ namespace Aardwolf
 
         private void checkBox1_CheckedChanged(object sender, EventArgs e)
         {
-
+            if (checkBox1.Checked)
+            {
+                checkBox2.Enabled = true;
+                checkBox3.Enabled = true;
+            }
+            else
+            {
+                checkBox2.Checked = false;
+                checkBox3.Checked = false;
+                checkBox2.Enabled = false;
+                checkBox3.Enabled = false;
+            }
         }
 
         private void checkBox2_CheckedChanged(object sender, EventArgs e)
@@ -418,6 +433,11 @@ namespace Aardwolf
         private void checkBox3_CheckedChanged(object sender, EventArgs e)
         {
 
+        }
+
+        private void checkBox4_CheckedChanged(object sender, EventArgs e)
+        {
+            
         }
     }
 }

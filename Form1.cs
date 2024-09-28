@@ -246,6 +246,51 @@ namespace Aardwolf
                     }
                 }
 
+                if (checkBox5.Checked)
+                {
+                    List<pathNode> traversableNodes = finder.returnTraversableNodes();
+                    bool completed = false;
+
+                    // For each Node draw a red circle at the center of the tile.
+                    foreach (pathNode node in traversableNodes)
+                    {
+                        int tileWidth = (int)((float)sizeWidth / mapdata.getMapWidth());
+                        int tileHeight = (int)((float)sizeHeight / mapdata.getMapHeight());
+                        int drawX = node.widthPosition * tileWidth + (tileWidth / 2);
+                        int drawY = node.heightPosition * tileHeight + (tileHeight / 2);                        
+
+                        using (Graphics g = Graphics.FromImage(bitmap))
+                        {
+                            g.FillEllipse(new SolidBrush(Color.FromArgb(100, 255, 0, 0)), drawX - 15, drawY - 15, 30, 30);
+
+                            if (node.endPoint)
+                                completed = true;                            
+
+                            // Get the connected nodes for this node.
+                            List<pathNode> connectedNodes = finder.returnConnectedNodes(node.heightPosition, node.widthPosition);
+
+                            // Draw a line between the center of the current tile and the center of the connected tile.
+                            foreach (pathNode connectedNode in connectedNodes)
+                            {
+                                int drawX2 = connectedNode.widthPosition * tileWidth + (tileWidth / 2);
+                                int drawY2 = connectedNode.heightPosition * tileHeight + (tileHeight / 2);
+
+                                g.DrawLine(new Pen(Color.FromArgb(100, 255, 0, 0), 2), drawX, drawY, drawX2, drawY2);
+                            }
+                        }
+                    }
+
+                    if (completed)
+                    {
+                        // Write confirmed in all black on the top left of the image.
+                        using (Graphics g = Graphics.FromImage(bitmap))
+                        {
+                            g.DrawString("Confirmed", new Font("Arial", 24), new SolidBrush(Color.Yellow), 0, 0);
+                        }
+
+                    }
+                }
+
                 // Draw the pathfinder solution.
                 List<pathNode> shortestRoute = finder.returnRoute();
 
@@ -437,7 +482,15 @@ namespace Aardwolf
 
         private void checkBox4_CheckedChanged(object sender, EventArgs e)
         {
-            
+            if (checkBox4.Checked)
+            {
+                checkBox5.Enabled = true;
+            }
+            else
+            {
+                checkBox5.Enabled = false;
+                checkBox5.Checked = false;
+            }
         }
     }
 }

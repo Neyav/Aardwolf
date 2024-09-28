@@ -20,6 +20,7 @@ namespace Aardwolf
 
         public bool startPoint;
         public bool endPoint;
+        public bool pushWallTrigger;
 
         public nodeStatus importantNodeStatus;
         public pathfinderFloor floor;
@@ -31,6 +32,11 @@ namespace Aardwolf
         private Dictionary<pathNode, float> _connectedNodes;
         private Dictionary<pathNode, int> _nodeBlockStatus;
 
+        public void wipeConnections()
+        {
+            _connectedNodes.Clear();
+            _nodeBlockStatus.Clear();
+        }
         public float returnDistance(pathNode node)
         {
             return _connectedNodes[node];
@@ -77,6 +83,10 @@ namespace Aardwolf
             _nodeBlockStatus = new Dictionary<pathNode, int>();
 
             importantNodeStatus = nodeStatus.none;
+
+            pushWallTrigger = false;
+            startPoint = false;
+            endPoint = false;
 
             travelDistance = -1;
             traveled = false;
@@ -326,18 +336,22 @@ namespace Aardwolf
                         if (_mapdata.isTilePushable(heightPosition - 1, widthPosition) && tileBlocked(heightPosition -1, widthPosition))
                         {
                             insertUniqueNode(new pathNode(heightPosition, widthPosition, this));
+                            _nodes[_nodes.Count - 1].pushWallTrigger = true;
                         }
                         else if (_mapdata.isTilePushable(heightPosition + 1, widthPosition) && tileBlocked(heightPosition + 1, widthPosition))
                         {
                             insertUniqueNode(new pathNode(heightPosition, widthPosition, this));
+                            _nodes[_nodes.Count - 1].pushWallTrigger = true;
                         }
                         else if (_mapdata.isTilePushable(heightPosition, widthPosition - 1) && tileBlocked(heightPosition, widthPosition - 1))
                         {
                             insertUniqueNode(new pathNode(heightPosition, widthPosition, this));
+                            _nodes[_nodes.Count - 1].pushWallTrigger = true;
                         }
                         else if (_mapdata.isTilePushable(heightPosition, widthPosition + 1) && tileBlocked(heightPosition, widthPosition + 1))
                         {
                             insertUniqueNode(new pathNode(heightPosition, widthPosition, this));
+                            _nodes[_nodes.Count - 1].pushWallTrigger = true;
                         }
                     }
 
@@ -364,6 +378,82 @@ namespace Aardwolf
                 _nodes[_nodes.Count - 1].startPoint = true;
 
             connectNodes();
+
+            int nodeCount = _nodes.Count();
+
+            while (!true)    // Optimize till done. Needs work.
+            {
+                pruneRedundantNodes();
+
+                connectNodes(); // Connect the nodes again after pruning.
+
+                if (nodeCount == _nodes.Count())
+                    break;
+
+                nodeCount = _nodes.Count();
+            }
+        }
+
+        public void pruneRedundantNodes()
+        {
+            List<pathNode> newNodesList = new List<pathNode>();
+
+            // Add all of the nodes to newNodesList.      
+
+
+            foreach (pathNode node in _nodes)
+            {
+                if (node.returnConnectedNodes().Count() == 0)
+                {
+                    continue;
+                }
+
+                newNodesList.Add(node);
+
+                // IDDQD: Nodes that have some importance cannot be pruned.
+                if (node.importantNodeStatus != nodeStatus.none)
+                    continue;
+                if (node.endPoint)
+                    continue;
+                if (node.startPoint)
+                    continue;
+                if (node.pushWallTrigger)
+                    continue;
+
+                // Find any nodes that have ALL the connections this node has, but more.
+                foreach (pathNode testNode in _nodes)
+                {
+                    if (testNode == node)
+                        continue;
+
+                    if (testNode.returnConnectedNodes().Count() <= node.returnConnectedNodes().Count())
+                        continue;
+
+                    bool match = true;
+
+                    foreach (pathNode connectedNode in node.returnConnectedNodes())
+                    {
+                        if (!testNode.returnConnectedNodes().Contains(connectedNode))
+                        {
+                            match = false;
+                            break;
+                        }
+                    }
+
+                    if (match)
+                    {
+                        newNodesList.Remove(node);
+                        break;
+                    }
+                }
+            }
+
+            _nodes = newNodesList;
+
+            foreach (pathNode node in _nodes)
+            {
+                node.wipeConnections();
+            }
         }
 
         public pathNode returnStartNode()
@@ -448,7 +538,7 @@ namespace Aardwolf
 
             return route;
         }
-
+                
         public bool solveMaze()
         {
             pathNode currentNode = _startNode;
@@ -593,7 +683,41 @@ namespace Aardwolf
                 currentNode = lowestNode;
             }
         }
-        
+
+        public List<pathNode> returnTraversableNodes()
+        {
+            List<pathNode> pathNodes = new List<pathNode>();
+
+            // Start at the start node.
+            pathNode currentNode = _startNode;
+            pathNodes.Add(currentNode);
+            int NodeIndex = 0;
+
+            // Fill the list with all the nodes we can reach.
+
+            while (true)
+            {
+                // Grab the next element from the List.
+                currentNode = pathNodes[NodeIndex];
+
+                // Get the list of connected nodes.
+                List<pathNode> connectedNodes = currentNode.returnConnectedNodes();
+
+                // Add all unique nodes to the master list.
+                foreach (pathNode node in connectedNodes)
+                {
+                    if (!pathNodes.Contains(node))
+                        pathNodes.Add(node);
+                }
+
+                NodeIndex++;
+                if (NodeIndex == pathNodes.Count())
+                    break;
+            }
+
+            return pathNodes;
+        }
+
         public void preparePathFinder()
         {
             // Add the base floor.

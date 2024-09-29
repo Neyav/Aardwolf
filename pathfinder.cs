@@ -57,9 +57,6 @@ namespace Aardwolf
 
             _connectedNodes.Add(node, distance);            
             _nodeBlockStatus.Add(node, blockStatus);
-
-            node._connectedNodes.Add(this, distance);
-            node._nodeBlockStatus.Add(this, blockStatus);
         }
 
         public void disconnectNode(pathNode node)
@@ -77,6 +74,7 @@ namespace Aardwolf
 
             // Add the connecting node to the list of connected nodes.            
             connectNode(node, blockedStatus, distance);
+            connectNode(this, blockedStatus, distance);
 
             //Debug.WriteLine("Node at " + heightPosition + ", " + widthPosition + " connected to node at " + node.heightPosition + ", " + node.widthPosition + " with distance " + distance);
         }
@@ -218,7 +216,7 @@ namespace Aardwolf
         {
             foreach (pathNode node in _nodes)
             {
-                if (node.heightPosition == heightPosition && node.widthPosition == widthPosition)
+                if (node.heightPosition == heightPosition && node.widthPosition == widthPosition && !node.markedForDeletion)
                     return node;
             }
 
@@ -396,7 +394,7 @@ namespace Aardwolf
 
             int nodeCount = _nodes.Count();
 
-            while (true)    // Optimize till done. Needs work.
+            while (!true)    // Optimize till done. Needs work.
             {
                 pruneRedundantNodes();
 
@@ -431,6 +429,7 @@ namespace Aardwolf
 
                     if (node.returnConnectedNodes().All(cn => testNode.returnConnectedNodes().Contains(cn)))
                     {
+                        Debug.WriteLine("Node at " + node.heightPosition + ", " + node.widthPosition + " is redundant.");
                         isRedundant = true;
                         break;
                     }
@@ -442,6 +441,7 @@ namespace Aardwolf
                 }
                 else
                 {
+                    node.markedForDeletion = true;
                     foreach (var connectedNode in node.returnConnectedNodes())
                     {
                         connectedNode.disconnectNode(node);
@@ -450,6 +450,26 @@ namespace Aardwolf
             }
 
             _nodes = nodesToKeep;
+
+            // Go through the list to find any connections that aren't valid.
+            foreach (var node in _nodes)
+            {
+                var connectedNodes = node.returnConnectedNodes();
+                var nodesToRemove = new List<pathNode>();
+
+                foreach (var connectedNode in connectedNodes)
+                {
+                    if (connectedNode.markedForDeletion)
+                    {
+                        nodesToRemove.Add(connectedNode);
+                    }
+                }
+
+                foreach (var nodeToRemove in nodesToRemove)
+                {
+                    node.disconnectNode(nodeToRemove);
+                }
+            }
         }
 
 
@@ -545,7 +565,7 @@ namespace Aardwolf
             {
                 currentNode.traveled = true;
 
-                Debug.WriteLine("Traveling to " + currentNode.heightPosition + ", " + currentNode.widthPosition + " " + currentNode.travelDistance + " " + currentNode.importantNodeStatus);
+                //Debug.WriteLine("Traveling to " + currentNode.heightPosition + ", " + currentNode.widthPosition + " " + currentNode.travelDistance + " " + currentNode.importantNodeStatus);
 
                 if (currentNode.endPoint)
                 {

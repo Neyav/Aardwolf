@@ -22,6 +22,8 @@ namespace Aardwolf
         public bool endPoint;
         public bool pushWallTrigger;
 
+        public bool markedForDeletion;
+
         public nodeStatus importantNodeStatus;
         public pathfinderFloor floor;
 
@@ -55,14 +57,25 @@ namespace Aardwolf
 
             _connectedNodes.Add(node, distance);            
             _nodeBlockStatus.Add(node, blockStatus);
+
+            node._connectedNodes.Add(this, distance);
+            node._nodeBlockStatus.Add(this, blockStatus);
+        }
+
+        public void disconnectNode(pathNode node)
+        {
+            if (_connectedNodes.ContainsKey(node))
+            {
+                _connectedNodes.Remove(node);
+                _nodeBlockStatus.Remove(node);
+            }
         }
         public void calculateAndConnectNode (pathNode node, int blockedStatus)
         {
             // Calculate the distance between this node and the connecting node.            
             float distance = (float)Math.Sqrt(Math.Pow(heightPosition - node.heightPosition, 2) + Math.Pow(widthPosition - node.widthPosition, 2));
 
-            // Add the connecting node to the list of connected nodes.
-            connectNode(this, blockedStatus, distance);
+            // Add the connecting node to the list of connected nodes.            
             connectNode(node, blockedStatus, distance);
 
             //Debug.WriteLine("Node at " + heightPosition + ", " + widthPosition + " connected to node at " + node.heightPosition + ", " + node.widthPosition + " with distance " + distance);
@@ -83,6 +96,8 @@ namespace Aardwolf
             _nodeBlockStatus = new Dictionary<pathNode, int>();
 
             importantNodeStatus = nodeStatus.none;
+
+            markedForDeletion = false;
 
             pushWallTrigger = false;
             startPoint = false;
@@ -381,11 +396,9 @@ namespace Aardwolf
 
             int nodeCount = _nodes.Count();
 
-            while (!true)    // Optimize till done. Needs work.
+            while (true)    // Optimize till done. Needs work.
             {
                 pruneRedundantNodes();
-
-                connectNodes(); // Connect the nodes again after pruning.
 
                 if (nodeCount == _nodes.Count())
                     break;
@@ -396,65 +409,49 @@ namespace Aardwolf
 
         public void pruneRedundantNodes()
         {
-            List<pathNode> newNodesList = new List<pathNode>();
+            var nodesToKeep = new List<pathNode>();
 
-            // Add all of the nodes to newNodesList.      
-
-
-            foreach (pathNode node in _nodes)
+            foreach (var node in _nodes)
             {
-                if (node.returnConnectedNodes().Count() == 0)
+                // IDDQD: If the node has no connections, is an important node, or is an endpoint, keep it.
+                if (node.returnConnectedNodes().Count == 0 ||
+                    node.importantNodeStatus != nodeStatus.none ||
+                    node.endPoint || node.startPoint || node.pushWallTrigger)
                 {
+                    nodesToKeep.Add(node);
                     continue;
                 }
 
-                newNodesList.Add(node);
+                bool isRedundant = false;
 
-                // IDDQD: Nodes that have some importance cannot be pruned.
-                if (node.importantNodeStatus != nodeStatus.none)
-                    continue;
-                if (node.endPoint)
-                    continue;
-                if (node.startPoint)
-                    continue;
-                if (node.pushWallTrigger)
-                    continue;
-
-                // Find any nodes that have ALL the connections this node has, but more.
-                foreach (pathNode testNode in _nodes)
+                foreach (var testNode in _nodes)
                 {
-                    if (testNode == node)
+                    if (testNode == node || testNode.returnConnectedNodes().Count <= node.returnConnectedNodes().Count)
                         continue;
 
-                    if (testNode.returnConnectedNodes().Count() <= node.returnConnectedNodes().Count())
-                        continue;
-
-                    bool match = true;
-
-                    foreach (pathNode connectedNode in node.returnConnectedNodes())
+                    if (node.returnConnectedNodes().All(cn => testNode.returnConnectedNodes().Contains(cn)))
                     {
-                        if (!testNode.returnConnectedNodes().Contains(connectedNode))
-                        {
-                            match = false;
-                            break;
-                        }
-                    }
-
-                    if (match)
-                    {
-                        newNodesList.Remove(node);
+                        isRedundant = true;
                         break;
                     }
                 }
+
+                if (!isRedundant)
+                {
+                    nodesToKeep.Add(node);
+                }
+                else
+                {
+                    foreach (var connectedNode in node.returnConnectedNodes())
+                    {
+                        connectedNode.disconnectNode(node);
+                    }
+                }
             }
 
-            _nodes = newNodesList;
-
-            foreach (pathNode node in _nodes)
-            {
-                node.wipeConnections();
-            }
+            _nodes = nodesToKeep;
         }
+
 
         public pathNode returnStartNode()
         {

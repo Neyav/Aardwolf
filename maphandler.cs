@@ -230,7 +230,7 @@ namespace Aardwolf
 
         public bool isTileAnExit(int height, int width)
         {
-            if (height <= 0 || height >= _mapHeight - 1 || width <= 0 || width >= _mapWidth - 1)
+            if (height < 0 || height > _mapHeight - 1 || width < 0 || width > _mapWidth - 1)
             {
                 return false;
             }

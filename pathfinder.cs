@@ -22,7 +22,7 @@ namespace Aardwolf
         public bool endPoint;
         public bool pushWallTrigger;
 
-        public bool markedForDeletion;
+        public bool preserve;
 
         public nodeStatus importantNodeStatus;
         public pathfinderFloor floor;
@@ -34,6 +34,22 @@ namespace Aardwolf
         private Dictionary<pathNode, float> _connectedNodes;
         private Dictionary<pathNode, int> _nodeBlockStatus;
 
+        public bool isImportant()
+        {
+            if (importantNodeStatus != nodeStatus.none)
+                return true;
+
+            if (pushWallTrigger)
+                return true;
+
+            if (startPoint)
+                return true;
+
+            if (endPoint)
+                return true;
+
+            return false;
+        }
         public void wipeConnections()
         {
             _connectedNodes.Clear();
@@ -95,7 +111,7 @@ namespace Aardwolf
 
             importantNodeStatus = nodeStatus.none;
 
-            markedForDeletion = false;
+            preserve = false;
 
             pushWallTrigger = false;
             startPoint = false;
@@ -216,7 +232,7 @@ namespace Aardwolf
         {
             foreach (pathNode node in _nodes)
             {
-                if (node.heightPosition == heightPosition && node.widthPosition == widthPosition && !node.markedForDeletion)
+                if (node.heightPosition == heightPosition && node.widthPosition == widthPosition)
                     return node;
             }
 
@@ -393,83 +409,132 @@ namespace Aardwolf
             connectNodes();
 
             int nodeCount = _nodes.Count();
+        }
 
-            while (!true)    // Optimize till done. Needs work.
+        public void copyNodeGraph(pathfinderFloor sourceFloor, pathNode carryOverNode)
+        {
+            foreach (pathNode node in sourceFloor._nodes)
             {
-                pruneRedundantNodes();
+                insertUniqueNode(new pathNode(node.heightPosition, node.widthPosition, this));
+            }
 
-                if (nodeCount == _nodes.Count())
-                    break;
+            if (carryOverNode != null)
+            {
+                insertUniqueNode(carryOverNode); // Copy this node to the new graph.
+            }
 
-                nodeCount = _nodes.Count();
+            connectNodes();
+        }
+
+        public void resetTraveled()
+        {
+            foreach (pathNode node in _nodes)
+            {
+                node.traveled = false;
+                node.travelDistance = -1;
+                node.traveledNode = null;
             }
         }
 
-        public void pruneRedundantNodes()
+        public void updateConnectionsTravelDistance(pathNode node)
         {
-            var nodesToKeep = new List<pathNode>();
-
-            foreach (var node in _nodes)
+            foreach (pathNode connectedNode in node.returnConnectedNodes())
             {
-                // IDDQD: If the node has no connections, is an important node, or is an endpoint, keep it.
-                if (node.returnConnectedNodes().Count == 0 ||
-                    node.importantNodeStatus != nodeStatus.none ||
-                    node.endPoint || node.startPoint || node.pushWallTrigger)
+                //if (connectedNode.traveled)
+                //    continue;
+
+                if (connectedNode.travelDistance == -1 || connectedNode.travelDistance > node.travelDistance + node.returnDistance(connectedNode))
                 {
-                    nodesToKeep.Add(node);
-                    continue;
+                    connectedNode.travelDistance = node.travelDistance + node.returnDistance(connectedNode);
+                    connectedNode.traveledNode = node;
                 }
+            }
+        }
 
-                bool isRedundant = false;
+        public void markPathPreserve(pathNode node)
+        {
+            pathNode travelNode = node;
 
-                foreach (var testNode in _nodes)
+            while (travelNode.traveledNode != null)
+            {                
+                travelNode.preserve = true;
+
+                travelNode = travelNode.traveledNode;
+            }
+
+            travelNode.preserve = true;
+        }
+
+        public void traceToImportant(pathNode startNode)
+        {
+            // Execute a trace to all important nodes.
+            startNode.travelDistance = 0;
+            startNode.traveled = true;
+            
+            updateConnectionsTravelDistance(startNode);
+
+            while (true)
+            {
+                float travelDistance = -1;
+                pathNode currentNode = null;
+
+                foreach (pathNode node in _nodes)
                 {
-                    if (testNode == node || testNode.returnConnectedNodes().Count <= node.returnConnectedNodes().Count)
+                    if (node.traveled)
                         continue;
 
-                    if (node.returnConnectedNodes().All(cn => testNode.returnConnectedNodes().Contains(cn)))
+                    if (node.travelDistance != -1 && (travelDistance == -1 || node.travelDistance < travelDistance))
                     {
-                        Debug.WriteLine("Node at " + node.heightPosition + ", " + node.widthPosition + " is redundant.");
-                        isRedundant = true;
-                        break;
+                        travelDistance = node.travelDistance;
+                        currentNode = node;
                     }
                 }
 
-                if (!isRedundant)
+                if (currentNode == null)
+                    break;
+
+                currentNode.traveled = true;
+
+                if (currentNode.isImportant())
                 {
-                    nodesToKeep.Add(node);
+                    markPathPreserve(currentNode);                    
+                    updateConnectionsTravelDistance(currentNode);
                 }
                 else
                 {
-                    node.markedForDeletion = true;
-                    foreach (var connectedNode in node.returnConnectedNodes())
-                    {
-                        connectedNode.disconnectNode(node);
-                    }
+                    updateConnectionsTravelDistance(currentNode);
                 }
             }
+        }
+        public void pruneRedundantNodes()
+        {
+            List<pathNode> newNodeList = new List<pathNode>();
 
-            _nodes = nodesToKeep;
+            Debug.WriteLine("Pruning redundant nodes.");
 
-            // Go through the list to find any connections that aren't valid.
-            foreach (var node in _nodes)
+            foreach (pathNode node in _nodes)
             {
-                var connectedNodes = node.returnConnectedNodes();
-                var nodesToRemove = new List<pathNode>();
-
-                foreach (var connectedNode in connectedNodes)
+                // If this node contains an important node, we need to see what it's connected to.
+                if (node.isImportant())
                 {
-                    if (connectedNode.markedForDeletion)
-                    {
-                        nodesToRemove.Add(connectedNode);
-                    }
+                    resetTraveled();
+                    traceToImportant(node);                    
                 }
+            }            
 
-                foreach (var nodeToRemove in nodesToRemove)
+            foreach (pathNode node in _nodes)
+            {
+                if (node.preserve || node.isImportant())
                 {
-                    node.disconnectNode(nodeToRemove);
+                    node.wipeConnections(); 
+                    newNodeList.Add(node);
                 }
             }
+
+            _nodes = newNodeList;
+
+            resetTraveled();
+            connectNodes();
         }
 
 
@@ -584,7 +649,7 @@ namespace Aardwolf
                         currentNode.importantNodeStatus = nodeStatus.bothKeys;
 
                     pathfinderFloor newFloor = new pathfinderFloor(ref _mapdata, currentNode.floor, ignorePushWalls, allSecretsTreasures);
-                    newFloor.generateFloorNodes(currentNode);
+                    newFloor.copyNodeGraph(currentNode.floor, currentNode);
                     _pathfinderFloors.Add(newFloor);
                 }
 
@@ -648,7 +713,7 @@ namespace Aardwolf
                             pathfinderFloor newFloor = new pathfinderFloor(ref _mapdata, currentNode.floor, ignorePushWalls, allSecretsTreasures);
                             newFloor.overrideMapTile(currentNode.heightPosition + moveHeight, currentNode.widthPosition + moveWidth, 0);
                             newFloor.overrideMapTile(testHeight, testWidth, 1);
-                            newFloor.generateFloorNodes(currentNode);
+                            newFloor.copyNodeGraph(currentNode.floor, currentNode);
                             _pathfinderFloors.Add(newFloor);
                         }
 

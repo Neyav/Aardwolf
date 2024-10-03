@@ -94,6 +94,28 @@ namespace Aardwolf
 
         public nodeStatus hasKey;
 
+        public mapTile getAdjacentTile(direction dir)
+        {
+            if (dir == direction.north)
+            {
+                return North;
+            }
+            else if (dir == direction.east)
+            {
+                return East;
+            }
+            else if (dir == direction.south)
+            {
+                return South;
+            }
+            else if (dir == direction.west)
+            {
+                return West;
+            }
+
+            return null;
+        }
+
         public mapTile(int heightPosition, int widthPosition)
         {
             this.position = new coord2D(heightPosition, widthPosition);
@@ -184,6 +206,58 @@ namespace Aardwolf
                     }
                 }
             }
+        }
+
+        private direction returnClockwiseAdjacent(direction dir)
+        {
+            if (dir == direction.north)
+            {
+                return direction.east;
+            }
+            else if (dir == direction.east)
+            {
+                return direction.south;
+            }
+            else if (dir == direction.south)
+            {
+                return direction.west;
+            }
+            else if (dir == direction.west)
+            {
+                return direction.north;
+            }
+
+            return direction.north;
+        }
+
+        private direction returnCounterClockwiseAdjacent(direction dir)
+        {
+            if (dir == direction.north)
+            {
+                return direction.west;
+            }
+            else if (dir == direction.east)
+            {
+                return direction.north;
+            }
+            else if (dir == direction.south)
+            {
+                return direction.east;
+            }
+            else if (dir == direction.west)
+            {
+                return direction.south;
+            }
+
+            return direction.north;
+        }
+
+
+        private List<mapTile> calculateVisibility(mapTile startTile)
+        {
+            List<mapTile> visibilityMap = new List<mapTile>();
+
+            return visibilityMap;
         }
 
         public pathNode returnNode(int heightPosition, int widthPosition)

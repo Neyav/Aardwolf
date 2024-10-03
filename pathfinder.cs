@@ -88,6 +88,12 @@ namespace Aardwolf
         public mapTile North;
         public mapTile South;
 
+        public bool blocked;
+        public bool isDoor;
+        public nodeStatus locked;
+
+        public nodeStatus hasKey;
+
         public mapTile(int heightPosition, int widthPosition)
         {
             this.position = new coord2D(heightPosition, widthPosition);
@@ -109,8 +115,85 @@ namespace Aardwolf
 
         public bool ignorePushWalls;
 
+        private mapTile[,] _mapTiles;
+
+        private void generateMapTileset()
+        {
+            for (int heightPos = 0; heightPos < _mapdata.getMapHeight(); heightPos++)
+            {
+                for (int widthPos = 0; widthPos < _mapdata.getMapWidth(); widthPos++)
+                {
+                    _mapTiles[heightPos, widthPos] = new mapTile(heightPos, widthPos);
+
+                    _mapTiles[heightPos, widthPos].North = heightPos > 0 ? _mapTiles[heightPos - 1, widthPos] : null;
+                    _mapTiles[heightPos, widthPos].West = widthPos > 0 ? _mapTiles[heightPos, widthPos - 1] : null;
+
+                    if (heightPos > 0)
+                    {
+                        _mapTiles[heightPos - 1, widthPos].South = _mapTiles[heightPos, widthPos];
+                    }
+
+                    if (widthPos > 0)
+                    {
+                        _mapTiles[heightPos, widthPos - 1].East = _mapTiles[heightPos, widthPos];
+                    }
+
+                    if (_mapdata.isTileBlocked(heightPos, widthPos))
+                    {
+                        _mapTiles[heightPos, widthPos].blocked = true;
+                    }
+                    else if (_mapdata.getTileData(heightPos, widthPos) != 0)
+                    {
+                        _mapTiles[heightPos, widthPos].blocked = true;
+                    }
+                    else
+                    {
+                        _mapTiles[heightPos, widthPos].blocked = false;
+                    }
+
+                    if (_mapdata.isDoorOpenable(heightPos, widthPos, false, false))
+                    {
+                        _mapTiles[heightPos, widthPos].isDoor = true;
+                    }
+                    else if (_mapdata.isDoorOpenable(heightPos, widthPos, true, false))
+                    {
+                        _mapTiles[heightPos, widthPos].isDoor = true;
+                        _mapTiles[heightPos, widthPos].locked = nodeStatus.goldKey;
+                    }
+                    else if (_mapdata.isDoorOpenable(heightPos, widthPos, false, true))
+                    {
+                        _mapTiles[heightPos, widthPos].isDoor = true;
+                        _mapTiles[heightPos, widthPos].locked = nodeStatus.silverKey;
+                    }
+                    else
+                    {
+                        _mapTiles[heightPos, widthPos].isDoor = false;
+                    }
+
+                    if (_mapdata.getStaticObjectID(heightPos, widthPos) == 43)
+                    {
+                        _mapTiles[heightPos, widthPos].hasKey = nodeStatus.goldKey;
+                    }
+                    else if (_mapdata.getStaticObjectID(heightPos, widthPos) == 44)
+                    {
+                        _mapTiles[heightPos, widthPos].hasKey = nodeStatus.silverKey;
+                    }
+                    else
+                    {
+                        _mapTiles[heightPos, widthPos].hasKey = nodeStatus.none;
+                    }
+                }
+            }
+        }
+
         public pathNode returnNode(int heightPosition, int widthPosition)
         {
+            if (_mapTiles[heightPosition, widthPosition].blocked)
+            {
+                return null;
+            }
+            else return new pathNode();
+
             return null;
         }
 
@@ -142,12 +225,15 @@ namespace Aardwolf
 
         public void preparePathFinder()
         {
-            lineofSightOffset los = new lineofSightOffset();
+            lineofSightOffset precalculatedLosOffset = new lineofSightOffset();
 
+            generateMapTileset();
         }
         public pathfinder(ref maphandler mapdata)
         {
             _mapdata = mapdata;
+
+            _mapTiles = new mapTile[_mapdata.getMapHeight(), _mapdata.getMapWidth()];
 
         }
     }   

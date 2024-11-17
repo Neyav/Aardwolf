@@ -5,7 +5,7 @@ VisualStudioVersion = 17.7.34221.43
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Aardwolf", "Aardwolf.csproj", "{31FCAAB1-1093-429B-B086-FC5308BF6210}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AardwolfDependences", "..\AardwolfDependiences\AardwolfDependences.csproj", "{80E68D8A-C2FC-4D83-A425-0047BC75C21B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AardwolfCore", "..\AardwolfDependiences\AardwolfCore.csproj", "{80E68D8A-C2FC-4D83-A425-0047BC75C21B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

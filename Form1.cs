@@ -20,7 +20,7 @@ namespace Aardwolf
     {
         dataHandler dh = new dataHandler();
         private int _shaderprogram;
-        private int framebuffer, vao, vbo;
+        private int framebuffer, vao, vbo, ebo,  texture;
 
         public Form1()
         {
@@ -399,23 +399,39 @@ namespace Aardwolf
         {
             string vertexShaderSource = @"
     #version 330 core
-    layout(location = 0) in vec2 position;
-    layout(location = 1) in vec3 color;
-    out vec3 vertexColor;
-    void main()
-    {
-        gl_Position = vec4(position, 0.0, 1.0);
-        vertexColor = color;
-    }";
+
+layout(location = 0) in vec3 aPos;       // The position variable has attribute position 0
+layout(location = 1) in vec3 aColor;     // The color variable has attribute position 1
+layout(location = 2) in vec2 aTexCoord;  // The texture coordinate attribute has position 2
+
+out vec3 ourColor;      // Output a color to the fragment shader
+out vec2 TexCoord;      // Output the texture coordinates to the fragment shader
+
+uniform mat4 model;
+uniform mat4 view;
+uniform mat4 projection;
+
+void main()
+{
+    gl_Position = projection * view * model * vec4(aPos, 1.0);
+    ourColor = aColor;
+    TexCoord = aTexCoord;
+}";
 
             string fragmentShaderSource = @"
     #version 330 core
-    in vec3 vertexColor;
-    out vec4 color;
-    void main()
-    {
-        color = vec4(vertexColor, 1.0);
-    }";
+
+out vec4 FragColor;
+
+in vec3 ourColor;
+in vec2 TexCoord;
+
+uniform sampler2D ourTexture;
+
+void main()
+{
+    FragColor = texture(ourTexture, TexCoord) * vec4(ourColor, 1.0);
+}";
 
             int vertexShader = GL.CreateShader(ShaderType.VertexShader);
             GL.ShaderSource(vertexShader, vertexShaderSource);
@@ -479,11 +495,34 @@ namespace Aardwolf
                 Title = "OpenTK Window"
             };
 
+            void LoadTexture(Bitmap bitmap)
+            {
+                texture = GL.GenTexture();
+                GL.BindTexture(TextureTarget.Texture2D, texture);
+
+                GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat);
+                GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat);
+                GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear);
+                GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
+
+                var data = bitmap.LockBits(new System.Drawing.Rectangle(0, 0, bitmap.Width, bitmap.Height),
+                                           System.Drawing.Imaging.ImageLockMode.ReadOnly, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
+
+                GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, bitmap.Width, bitmap.Height, 0,
+                              PixelFormat.Bgra, PixelType.UnsignedByte, data.Scan0);
+
+                bitmap.UnlockBits(data);
+
+                GL.GenerateMipmap(GenerateMipmapTarget.Texture2D);
+            }
+
+            // Usage in your Load event
             using (var game = new GameWindow(GameWindowSettings.Default, nativeWindowSettings))
             {
-
                 game.Load += () =>
                 {
+                    GL.Enable(EnableCap.DepthTest);
+
                     // Shader program
                     _shaderprogram = CreateShaderProgram();
 
@@ -506,10 +545,45 @@ namespace Aardwolf
                     GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
 
                     float[] vertices = {
-    // Positions        // Colors
-    -0.5f, -0.5f,       1.0f, 0.0f, 0.0f,  // Bottom left, red
-     0.5f, -0.5f,       0.0f, 1.0f, 0.0f,  // Bottom right, green
-     0.0f,  0.5f,       0.0f, 0.0f, 1.0f   // Top, blue
+    // Positions          // Colors          // Texture Coords
+    -0.5f, -0.5f, -0.5f,   1.0f, 1.0f, 1.0f,   0.0f, 1.0f, // Front face
+     0.5f, -0.5f, -0.5f,   1.0f, 1.0f, 1.0f,   1.0f, 1.0f,
+     0.5f,  0.5f, -0.5f,   1.0f, 1.0f, 1.0f,   1.0f, 0.0f,
+    -0.5f,  0.5f, -0.5f,   1.0f, 1.0f, 1.0f,   0.0f, 0.0f,
+
+    -0.5f, -0.5f,  0.5f,   1.0f, 0.0f, 0.0f,   0.0f, 1.0f, // Back face
+     0.5f, -0.5f,  0.5f,   0.0f, 1.0f, 0.0f,   1.0f, 1.0f,
+     0.5f,  0.5f,  0.5f,   0.0f, 0.0f, 1.0f,   1.0f, 0.0f,
+    -0.5f,  0.5f,  0.5f,   1.0f, 1.0f, 1.0f,   0.0f, 0.0f,
+
+    -0.5f,  0.5f,  0.5f,   1.0f, 1.0f, 1.0f,   1.0f, 0.0f, // Top face
+    -0.5f,  0.5f, -0.5f,   1.0f, 1.0f, 0.0f,   1.0f, 1.0f,
+     0.5f,  0.5f, -0.5f,   0.0f, 1.0f, 1.0f,   0.0f, 1.0f,
+     0.5f,  0.5f,  0.5f,   1.0f, 0.0f, 1.0f,   0.0f, 0.0f,
+
+    -0.5f, -0.5f,  0.5f,   1.0f, 0.0f, 0.0f,   1.0f, 0.0f, // Bottom face
+    -0.5f, -0.5f, -0.5f,   0.0f, 1.0f, 0.0f,   1.0f, 1.0f,
+     0.5f, -0.5f, -0.5f,   0.0f, 0.0f, 1.0f,   0.0f, 1.0f,
+     0.5f, -0.5f,  0.5f,   1.0f, 1.0f, 1.0f,   0.0f, 0.0f,
+
+    -0.5f, -0.5f,  0.5f,   1.0f, 0.0f, 0.0f,   0.0f, 1.0f, // Left face
+    -0.5f,  0.5f,  0.5f,   0.0f, 1.0f, 0.0f,   1.0f, 1.0f,
+    -0.5f,  0.5f, -0.5f,   0.0f, 0.0f, 1.0f,   1.0f, 0.0f,
+    -0.5f, -0.5f, -0.5f,   1.0f, 1.0f, 1.0f,   0.0f, 0.0f,
+
+     0.5f, -0.5f, -0.5f,   1.0f, 0.0f, 0.0f,   0.0f, 1.0f, // Right face
+     0.5f,  0.5f, -0.5f,   0.0f, 1.0f, 0.0f,   1.0f, 1.0f,
+     0.5f,  0.5f,  0.5f,   0.0f, 0.0f, 1.0f,   1.0f, 0.0f,
+     0.5f, -0.5f,  0.5f,   1.0f, 1.0f, 1.0f,   0.0f, 0.0f
+};
+
+                    uint[] indices = {
+    0,  1,  2,  2,  3,  0, // Front face
+    4,  5,  6,  6,  7,  4, // Back face
+    8,  9, 10, 10, 11,  8, // Top face
+    12, 13, 14, 14, 15, 12, // Bottom face
+    16, 17, 18, 18, 19, 16, // Left face
+    20, 21, 22, 22, 23, 20  // Right face
 };
 
 
@@ -520,16 +594,28 @@ namespace Aardwolf
                     GL.BindBuffer(BufferTarget.ArrayBuffer, vbo);
                     GL.BufferData(BufferTarget.ArrayBuffer, vertices.Length * sizeof(float), vertices, BufferUsageHint.StaticDraw);
 
+                    ebo = GL.GenBuffer();
+                    GL.BindBuffer(BufferTarget.ElementArrayBuffer, ebo);
+                    GL.BufferData(BufferTarget.ElementArrayBuffer, indices.Length * sizeof(uint), indices, BufferUsageHint.StaticDraw);
+
                     // Position attribute
                     GL.EnableVertexAttribArray(0);
-                    GL.VertexAttribPointer(0, 2, VertexAttribPointerType.Float, false, 5 * sizeof(float), 0);
+                    GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 8 * sizeof(float), 0);
 
                     // Color attribute
                     GL.EnableVertexAttribArray(1);
-                    GL.VertexAttribPointer(1, 3, VertexAttribPointerType.Float, false, 5 * sizeof(float), 2 * sizeof(float));
+                    GL.VertexAttribPointer(1, 3, VertexAttribPointerType.Float, false, 8 * sizeof(float), 3 * sizeof(float));
+
+                    // Texture coord attribute
+                    GL.EnableVertexAttribArray(2);
+                    GL.VertexAttribPointer(2, 2, VertexAttribPointerType.Float, false, 8 * sizeof(float), 6 * sizeof(float));
 
                     GL.BindVertexArray(0); // Unbind VAO
 
+                    using (var bitmap = dh.getTexture(10))
+                    {
+                        LoadTexture(bitmap); // Load texture from in-memory Bitmap
+                    }
 
                     CheckOpenGLError();
 
@@ -549,25 +635,43 @@ namespace Aardwolf
 
                 game.RenderFrame += (FrameEventArgs args) =>
                 {
-                    GL.ClearColor(Color.CornflowerBlue);
+                    //GL.ClearColor(Color.CornflowerBlue);
                     GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
                     GL.UseProgram(_shaderprogram);
 
-                    GL.MatrixMode(MatrixMode.Modelview);
-                    GL.LoadIdentity();
-                    GL.Rotate(_angle, 0.0f, 0.0f, 1.0f);  // Rotate around the Z-axis
+                    // Bind the texture
+                    GL.ActiveTexture(TextureUnit.Texture0);
+                    GL.BindTexture(TextureTarget.Texture2D, texture);
+
+                    // Set the texture uniform
+                    int textureLocation = GL.GetUniformLocation(_shaderprogram, "ourTexture");
+                    GL.Uniform1(textureLocation, 0);
+
+                    // Set the model, view, and projection matrices
+                    Matrix4 model = Matrix4.CreateRotationY(MathHelper.DegreesToRadians(_angle));
+                    Matrix4 view = Matrix4.LookAt(new Vector3(1.2f, 1.2f, 1.2f), Vector3.Zero, Vector3.UnitY);
+                    Matrix4 projection = Matrix4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(45.0f), game.Size.X / (float)game.Size.Y, 0.1f, 100.0f);
+
+                    int modelLoc = GL.GetUniformLocation(_shaderprogram, "model");
+                    int viewLoc = GL.GetUniformLocation(_shaderprogram, "view");
+                    int projectionLoc = GL.GetUniformLocation(_shaderprogram, "projection");
+
+                    GL.UniformMatrix4(modelLoc, false, ref model);
+                    GL.UniformMatrix4(viewLoc, false, ref view);
+                    GL.UniformMatrix4(projectionLoc, false, ref projection);
 
                     GL.BindVertexArray(vao);  // Bind VAO
-                    GL.DrawArrays(PrimitiveType.Triangles, 0, 3);
+                    GL.DrawElements(PrimitiveType.Triangles, 36, DrawElementsType.UnsignedInt, IntPtr.Zero);
                     GL.BindVertexArray(0);  // Unbind VAO
-          
-                    game.SwapBuffers();                    
+
+                    game.SwapBuffers();
                 };
 
 
-                // Run the game at 60 updates per second
                 game.Run();
             }
+
+
         }
 
         private void checkBox1_CheckedChanged(object sender, EventArgs e)

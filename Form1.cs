@@ -20,7 +20,7 @@ namespace Aardwolf
     {
         dataHandler dh = new dataHandler();
         private int _shaderprogram;
-        private int framebuffer;
+        private int framebuffer, vao, vbo;
 
         public Form1()
         {
@@ -399,18 +399,22 @@ namespace Aardwolf
         {
             string vertexShaderSource = @"
     #version 330 core
-    layout(location = 0) in vec3 position;
+    layout(location = 0) in vec2 position;
+    layout(location = 1) in vec3 color;
+    out vec3 vertexColor;
     void main()
     {
-        gl_Position = vec4(position, 1.0);
+        gl_Position = vec4(position, 0.0, 1.0);
+        vertexColor = color;
     }";
 
             string fragmentShaderSource = @"
     #version 330 core
+    in vec3 vertexColor;
     out vec4 color;
     void main()
     {
-        color = vec4(1.0, 1.0, 1.0, 1.0);
+        color = vec4(vertexColor, 1.0);
     }";
 
             int vertexShader = GL.CreateShader(ShaderType.VertexShader);
@@ -457,6 +461,14 @@ namespace Aardwolf
             }
         }
 
+        void CheckOpenGLError()
+        {
+            ErrorCode err;
+            while ((err = GL.GetError()) != ErrorCode.NoError)
+            {
+                Console.WriteLine("OpenGL Error: " + err);
+            }
+        }
 
 
         private void button2_Click(object sender, EventArgs e)
@@ -468,13 +480,14 @@ namespace Aardwolf
             };
 
             using (var game = new GameWindow(GameWindowSettings.Default, nativeWindowSettings))
-            {           
+            {
 
                 game.Load += () =>
                 {
-                    // setup settings, load textures, sounds
+                    // Shader program
                     _shaderprogram = CreateShaderProgram();
 
+                    // Framebuffer setup
                     framebuffer = GL.GenFramebuffer();
                     GL.BindFramebuffer(FramebufferTarget.Framebuffer, framebuffer);
 
@@ -483,7 +496,6 @@ namespace Aardwolf
                     GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, 800, 600, 0, PixelFormat.Rgba, PixelType.UnsignedByte, IntPtr.Zero);
                     GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear);
                     GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
-
                     GL.FramebufferTexture2D(FramebufferTarget.Framebuffer, FramebufferAttachment.ColorAttachment0, TextureTarget.Texture2D, texture, 0);
 
                     if (GL.CheckFramebufferStatus(FramebufferTarget.Framebuffer) != FramebufferErrorCode.FramebufferComplete)
@@ -492,6 +504,34 @@ namespace Aardwolf
                     }
 
                     GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
+
+                    float[] vertices = {
+    // Positions        // Colors
+    -0.5f, -0.5f,       1.0f, 0.0f, 0.0f,  // Bottom left, red
+     0.5f, -0.5f,       0.0f, 1.0f, 0.0f,  // Bottom right, green
+     0.0f,  0.5f,       0.0f, 0.0f, 1.0f   // Top, blue
+};
+
+
+                    vao = GL.GenVertexArray();
+                    GL.BindVertexArray(vao);
+
+                    vbo = GL.GenBuffer();
+                    GL.BindBuffer(BufferTarget.ArrayBuffer, vbo);
+                    GL.BufferData(BufferTarget.ArrayBuffer, vertices.Length * sizeof(float), vertices, BufferUsageHint.StaticDraw);
+
+                    // Position attribute
+                    GL.EnableVertexAttribArray(0);
+                    GL.VertexAttribPointer(0, 2, VertexAttribPointerType.Float, false, 5 * sizeof(float), 0);
+
+                    // Color attribute
+                    GL.EnableVertexAttribArray(1);
+                    GL.VertexAttribPointer(1, 3, VertexAttribPointerType.Float, false, 5 * sizeof(float), 2 * sizeof(float));
+
+                    GL.BindVertexArray(0); // Unbind VAO
+
+
+                    CheckOpenGLError();
 
                     game.VSync = VSyncMode.On;
                 };
@@ -504,39 +544,24 @@ namespace Aardwolf
                 game.UpdateFrame += (FrameEventArgs args) =>
                 {
                     // add game logic, input handling
-                    _angle += 0.01f;
+                    _angle += 1.0f;
                 };
 
                 game.RenderFrame += (FrameEventArgs args) =>
                 {
-                    Debug.WriteLine("Rendering Frame...");
-
-                    // render to custom framebuffer
-                    GL.BindFramebuffer(FramebufferTarget.Framebuffer, framebuffer);
                     GL.ClearColor(Color.CornflowerBlue);
-
                     GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
-
                     GL.UseProgram(_shaderprogram);
 
                     GL.MatrixMode(MatrixMode.Modelview);
                     GL.LoadIdentity();
-                    GL.Rotate(_angle, Vector3.UnitZ);
+                    GL.Rotate(_angle, 0.0f, 0.0f, 1.0f);  // Rotate around the Z-axis
 
-                    GL.Begin(PrimitiveType.Triangles);
-
-                    GL.Color3(Color.Red);
-                    GL.Vertex2(-0.5f, -0.5f);
-                    GL.Color3(Color.Green);
-                    GL.Vertex2(0.5f, -0.5f);
-                    GL.Color3(Color.Blue);
-                    GL.Vertex2(0.0f, 0.5f);
-
-                    GL.End();
-
-                    // Bind the default framebuffer before swapping buffers
-                    GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
-                    game.SwapBuffers();
+                    GL.BindVertexArray(vao);  // Bind VAO
+                    GL.DrawArrays(PrimitiveType.Triangles, 0, 3);
+                    GL.BindVertexArray(0);  // Unbind VAO
+          
+                    game.SwapBuffers();                    
                 };
 
 

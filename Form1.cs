@@ -648,20 +648,28 @@ void main()
                     GL.Uniform1(textureLocation, 0);
 
                     // Set the model, view, and projection matrices
-                    Matrix4 model = Matrix4.CreateRotationY(MathHelper.DegreesToRadians(_angle));
                     Matrix4 view = Matrix4.LookAt(new Vector3(1.2f, 1.2f, 1.2f), Vector3.Zero, Vector3.UnitY);
-                    Matrix4 projection = Matrix4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(45.0f), game.Size.X / (float)game.Size.Y, 0.1f, 100.0f);
-
-                    int modelLoc = GL.GetUniformLocation(_shaderprogram, "model");
+                    Matrix4 projection = Matrix4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(90.0f), game.Size.X / (float)game.Size.Y, 0.1f, 100.0f);
+                                        
                     int viewLoc = GL.GetUniformLocation(_shaderprogram, "view");
                     int projectionLoc = GL.GetUniformLocation(_shaderprogram, "projection");
 
-                    GL.UniformMatrix4(modelLoc, false, ref model);
                     GL.UniformMatrix4(viewLoc, false, ref view);
                     GL.UniformMatrix4(projectionLoc, false, ref projection);
 
                     GL.BindVertexArray(vao);  // Bind VAO
-                    GL.DrawElements(PrimitiveType.Triangles, 36, DrawElementsType.UnsignedInt, IntPtr.Zero);
+
+                    for (int i = 0; i < 3; i++)
+                    {
+                        Vector3 CubePos = new Vector3(i, 0, 0);
+                        Matrix4 model = Matrix4.CreateTranslation(CubePos) * Matrix4.CreateRotationY(MathHelper.DegreesToRadians(_angle));
+
+                        int modelLoc = GL.GetUniformLocation(_shaderprogram, "model");
+                        GL.UniformMatrix4(modelLoc, false, ref model);
+
+                        GL.DrawElements(PrimitiveType.Triangles, 36, DrawElementsType.UnsignedInt, IntPtr.Zero);
+                    }                   
+
                     GL.BindVertexArray(0);  // Unbind VAO
 
                     game.SwapBuffers();

@@ -11,6 +11,7 @@ using OpenTK.Windowing.Desktop;
 using OpenTK.Windowing.Common;
 using OpenTK.Mathematics;
 using AardwolfCore;
+using System.Drawing.Drawing2D;
 
 
 namespace Aardwolf
@@ -18,6 +19,8 @@ namespace Aardwolf
     public partial class Form1 : Form
     {
         dataHandler dh = new dataHandler();
+        private int _shaderprogram;
+        private int framebuffer;
 
         public Form1()
         {
@@ -392,6 +395,70 @@ namespace Aardwolf
 
         private float _angle;
 
+        private int CreateShaderProgram()
+        {
+            string vertexShaderSource = @"
+    #version 330 core
+    layout(location = 0) in vec3 position;
+    void main()
+    {
+        gl_Position = vec4(position, 1.0);
+    }";
+
+            string fragmentShaderSource = @"
+    #version 330 core
+    out vec4 color;
+    void main()
+    {
+        color = vec4(1.0, 1.0, 1.0, 1.0);
+    }";
+
+            int vertexShader = GL.CreateShader(ShaderType.VertexShader);
+            GL.ShaderSource(vertexShader, vertexShaderSource);
+            GL.CompileShader(vertexShader);
+            CheckShaderCompile(vertexShader);
+
+            int fragmentShader = GL.CreateShader(ShaderType.FragmentShader);
+            GL.ShaderSource(fragmentShader, fragmentShaderSource);
+            GL.CompileShader(fragmentShader);
+            CheckShaderCompile(fragmentShader);
+
+            int program = GL.CreateProgram();
+            GL.AttachShader(program, vertexShader);
+            GL.AttachShader(program, fragmentShader);
+            GL.LinkProgram(program);
+            CheckProgramLink(program);
+
+            GL.DetachShader(program, vertexShader);
+            GL.DetachShader(program, fragmentShader);
+            GL.DeleteShader(vertexShader);
+            GL.DeleteShader(fragmentShader);
+
+            return program;
+        }
+
+        void CheckShaderCompile(int shader)
+        {
+            GL.GetShader(shader, ShaderParameter.CompileStatus, out int success);
+            if (success == 0)
+            {
+                string infoLog = GL.GetShaderInfoLog(shader);
+                throw new Exception($"Shader compile error: {infoLog}");
+            }
+        }
+
+        void CheckProgramLink(int program)
+        {
+            GL.GetProgram(program, GetProgramParameterName.LinkStatus, out int success);
+            if (success == 0)
+            {
+                string infoLog = GL.GetProgramInfoLog(program);
+                throw new Exception($"Program link error: {infoLog}");
+            }
+        }
+
+
+
         private void button2_Click(object sender, EventArgs e)
         {
             var nativeWindowSettings = new NativeWindowSettings()
@@ -401,10 +468,31 @@ namespace Aardwolf
             };
 
             using (var game = new GameWindow(GameWindowSettings.Default, nativeWindowSettings))
-            {
+            {           
+
                 game.Load += () =>
                 {
                     // setup settings, load textures, sounds
+                    _shaderprogram = CreateShaderProgram();
+
+                    framebuffer = GL.GenFramebuffer();
+                    GL.BindFramebuffer(FramebufferTarget.Framebuffer, framebuffer);
+
+                    int texture = GL.GenTexture();
+                    GL.BindTexture(TextureTarget.Texture2D, texture);
+                    GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, 800, 600, 0, PixelFormat.Rgba, PixelType.UnsignedByte, IntPtr.Zero);
+                    GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear);
+                    GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
+
+                    GL.FramebufferTexture2D(FramebufferTarget.Framebuffer, FramebufferAttachment.ColorAttachment0, TextureTarget.Texture2D, texture, 0);
+
+                    if (GL.CheckFramebufferStatus(FramebufferTarget.Framebuffer) != FramebufferErrorCode.FramebufferComplete)
+                    {
+                        throw new Exception("Framebuffer is not complete!");
+                    }
+
+                    GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
+
                     game.VSync = VSyncMode.On;
                 };
 
@@ -421,8 +509,15 @@ namespace Aardwolf
 
                 game.RenderFrame += (FrameEventArgs args) =>
                 {
-                    // render graphics
+                    Debug.WriteLine("Rendering Frame...");
+
+                    // render to custom framebuffer
+                    GL.BindFramebuffer(FramebufferTarget.Framebuffer, framebuffer);
+                    GL.ClearColor(Color.CornflowerBlue);
+
                     GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
+
+                    GL.UseProgram(_shaderprogram);
 
                     GL.MatrixMode(MatrixMode.Modelview);
                     GL.LoadIdentity();
@@ -439,8 +534,11 @@ namespace Aardwolf
 
                     GL.End();
 
+                    // Bind the default framebuffer before swapping buffers
+                    GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
                     game.SwapBuffers();
                 };
+
 
                 // Run the game at 60 updates per second
                 game.Run();

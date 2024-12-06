@@ -20,7 +20,7 @@ namespace Aardwolf
     {
         dataHandler dh = new dataHandler();
         private int _shaderprogram;
-        private int framebuffer, vao, vbo, ebo,  texture;
+        private int framebuffer, vao, vbo, ebo;
 
         public Form1()
         {
@@ -485,36 +485,39 @@ void main()
                 Console.WriteLine("OpenGL Error: " + err);
             }
         }
+        int LoadTexture(Bitmap bitmap)
+        {
+            int texture = GL.GenTexture();
 
+            GL.BindTexture(TextureTarget.Texture2D, texture);
+
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
+
+            var data = bitmap.LockBits(new System.Drawing.Rectangle(0, 0, bitmap.Width, bitmap.Height),
+                                       System.Drawing.Imaging.ImageLockMode.ReadOnly, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
+
+            GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, bitmap.Width, bitmap.Height, 0,
+                          PixelFormat.Bgra, PixelType.UnsignedByte, data.Scan0);
+
+            bitmap.UnlockBits(data);
+
+            GL.GenerateMipmap(GenerateMipmapTarget.Texture2D);
+
+            return texture;
+        }
 
         private void button2_Click(object sender, EventArgs e)
         {
+            int[] textures = new int[dh.numberOfTextures()];            
+
             var nativeWindowSettings = new NativeWindowSettings()
             {
                 Size = new OpenTK.Mathematics.Vector2i(800, 600),
                 Title = "OpenTK Window"
-            };
-
-            void LoadTexture(Bitmap bitmap)
-            {
-                texture = GL.GenTexture();
-                GL.BindTexture(TextureTarget.Texture2D, texture);
-
-                GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat);
-                GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat);
-                GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear);
-                GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
-
-                var data = bitmap.LockBits(new System.Drawing.Rectangle(0, 0, bitmap.Width, bitmap.Height),
-                                           System.Drawing.Imaging.ImageLockMode.ReadOnly, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
-
-                GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, bitmap.Width, bitmap.Height, 0,
-                              PixelFormat.Bgra, PixelType.UnsignedByte, data.Scan0);
-
-                bitmap.UnlockBits(data);
-
-                GL.GenerateMipmap(GenerateMipmapTarget.Texture2D);
-            }
+            };           
 
             // Usage in your Load event
             using (var game = new GameWindow(GameWindowSettings.Default, nativeWindowSettings))
@@ -529,6 +532,11 @@ void main()
                     // Framebuffer setup
                     framebuffer = GL.GenFramebuffer();
                     GL.BindFramebuffer(FramebufferTarget.Framebuffer, framebuffer);
+
+                    for (int i = 0; i < dh.numberOfTextures(); i++)
+                    {
+                        textures[i] = LoadTexture(dh.getTexture(i));
+                    }
 
                     int texture = GL.GenTexture();
                     GL.BindTexture(TextureTarget.Texture2D, texture);
@@ -630,7 +638,7 @@ void main()
                 game.UpdateFrame += (FrameEventArgs args) =>
                 {
                     // add game logic, input handling
-                    _angle += 1.0f;
+                    _angle += 0.1f;
                 };
 
                 game.RenderFrame += (FrameEventArgs args) =>
@@ -641,14 +649,14 @@ void main()
 
                     // Bind the texture
                     GL.ActiveTexture(TextureUnit.Texture0);
-                    GL.BindTexture(TextureTarget.Texture2D, texture);
+                    GL.BindTexture(TextureTarget.Texture2D, textures[45]);
 
                     // Set the texture uniform
                     int textureLocation = GL.GetUniformLocation(_shaderprogram, "ourTexture");
                     GL.Uniform1(textureLocation, 0);
 
                     // Set the model, view, and projection matrices
-                    Matrix4 view = Matrix4.LookAt(new Vector3(1.2f, 1.2f, 1.2f), Vector3.Zero, Vector3.UnitY);
+                    Matrix4 view = Matrix4.LookAt(new Vector3(2.2f, 2.2f, 2.2f), Vector3.Zero, Vector3.UnitY);
                     Matrix4 projection = Matrix4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(90.0f), game.Size.X / (float)game.Size.Y, 0.1f, 100.0f);
                                         
                     int viewLoc = GL.GetUniformLocation(_shaderprogram, "view");
@@ -659,10 +667,10 @@ void main()
 
                     GL.BindVertexArray(vao);  // Bind VAO
 
-                    for (int i = 0; i < 3; i++)
+                    for (int i = 0; i < 6; i++)
                     {
                         Vector3 CubePos = new Vector3(i, 0, 0);
-                        Matrix4 model = Matrix4.CreateTranslation(CubePos) * Matrix4.CreateRotationY(MathHelper.DegreesToRadians(_angle));
+                        Matrix4 model = Matrix4.CreateTranslation(CubePos) * Matrix4.CreateRotationY(MathHelper.DegreesToRadians(_angle)) * Matrix4.CreateRotationX(MathHelper.DegreesToRadians(_angle / 2)); ;
 
                         int modelLoc = GL.GetUniformLocation(_shaderprogram, "model");
                         GL.UniformMatrix4(modelLoc, false, ref model);

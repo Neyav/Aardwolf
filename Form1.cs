@@ -21,6 +21,9 @@ namespace Aardwolf
         dataHandler dh = new dataHandler();
         private int _shaderprogram;
         private int framebuffer, vao, vbo, ebo;
+        int[] textures;
+
+        maphandler mapdata;
 
         public Form1()
         {
@@ -78,7 +81,7 @@ namespace Aardwolf
             if (radioButton2.Checked)
                 _isSOD = true;
 
-            maphandler mapdata = new maphandler(_isSOD);
+            mapdata = new maphandler(_isSOD);
             mapdata.importMapData(dh.getLevelData(selectedLevel), dh.levelHeight(selectedLevel), dh.levelWidth(selectedLevel));
 
             Bitmap bitmap = new Bitmap(sizeWidth, sizeHeight);
@@ -485,7 +488,7 @@ void main()
                 Console.WriteLine("OpenGL Error: " + err);
             }
         }
-        int LoadTexture(Bitmap bitmap)
+        private int LoadTexture(Bitmap bitmap)
         {
             int texture = GL.GenTexture();
 
@@ -509,9 +512,76 @@ void main()
             return texture;
         }
 
+        void render3DTexturedCube(float _x, float _y, float _z, int _tiletexture, mapDirection _doorAdjacent)
+        {
+            Vector3 CubePos = new Vector3(_x, _y, _z);
+            Matrix4 model = Matrix4.CreateTranslation(CubePos);
+
+            int modelLoc = GL.GetUniformLocation(_shaderprogram, "model");
+            GL.UniformMatrix4(modelLoc, false, ref model);
+
+            int _textureNorthSouth = _tiletexture * 2 - 1;
+            int _textureEastWest = _tiletexture * 2 - 2;
+
+            // Draw each face with its respective texture
+            for (int face = 0; face < 6; ++face)
+            {
+                int textureToBind;
+
+                // Determine the texture to bind based on the face index
+                switch (face)
+                {
+                    case 4: // Front face (north)
+                        if ((_doorAdjacent & mapDirection.DIR_NORTH) == mapDirection.DIR_NORTH)
+                        {
+                            textureToBind = 100;
+                            break;
+                        }
+                        else
+                        {
+                            textureToBind = _textureNorthSouth;
+                            break;
+                        }
+                    case 5: // Back face (south)
+                        if ((_doorAdjacent & mapDirection.DIR_SOUTH) == mapDirection.DIR_SOUTH)
+                        {
+                            textureToBind = 100;
+                            break;
+                        }
+                        else
+                        {
+                            textureToBind = _textureNorthSouth;
+                            break;
+                        }
+                        break;
+                    case 0: // Left face (east)
+                    case 1: // Right face (west)
+                        textureToBind = _textureEastWest;
+                        break;                    
+                    default:
+                        textureToBind = _textureNorthSouth; // Use the base texture for top and bottom
+                        break;
+                }
+
+                // Bind the texture
+                GL.ActiveTexture(TextureUnit.Texture0);
+                GL.BindTexture(TextureTarget.Texture2D, textures[textureToBind]);
+
+                // Set the texture uniform
+                int texLocation = GL.GetUniformLocation(_shaderprogram, "ourTexture");
+                GL.Uniform1(texLocation, 0);
+
+                // Draw the face
+                GL.DrawElements(PrimitiveType.Triangles, 6, DrawElementsType.UnsignedInt, new IntPtr(face * 6 * sizeof(uint)));
+            }
+        }
+
+
         private void button2_Click(object sender, EventArgs e)
         {
-            int[] textures = new int[dh.numberOfTextures()];            
+            textures = new int[dh.numberOfTextures()];
+            float frameView = 14.0f;
+            bool bounceV = false;
 
             var nativeWindowSettings = new NativeWindowSettings()
             {
@@ -559,29 +629,29 @@ void main()
      0.5f,  0.5f, -0.5f,   1.0f, 1.0f, 1.0f,   1.0f, 0.0f,
     -0.5f,  0.5f, -0.5f,   1.0f, 1.0f, 1.0f,   0.0f, 0.0f,
 
-    -0.5f, -0.5f,  0.5f,   1.0f, 0.0f, 0.0f,   0.0f, 1.0f, // Back face
-     0.5f, -0.5f,  0.5f,   0.0f, 1.0f, 0.0f,   1.0f, 1.0f,
-     0.5f,  0.5f,  0.5f,   0.0f, 0.0f, 1.0f,   1.0f, 0.0f,
+    -0.5f, -0.5f,  0.5f,   1.0f, 1.0f, 1.0f,   0.0f, 1.0f, // Back face
+     0.5f, -0.5f,  0.5f,   1.0f, 1.0f, 1.0f,   1.0f, 1.0f,
+     0.5f,  0.5f,  0.5f,   1.0f, 1.0f, 1.0f,   1.0f, 0.0f,
     -0.5f,  0.5f,  0.5f,   1.0f, 1.0f, 1.0f,   0.0f, 0.0f,
 
     -0.5f,  0.5f,  0.5f,   1.0f, 1.0f, 1.0f,   1.0f, 0.0f, // Top face
-    -0.5f,  0.5f, -0.5f,   1.0f, 1.0f, 0.0f,   1.0f, 1.0f,
-     0.5f,  0.5f, -0.5f,   0.0f, 1.0f, 1.0f,   0.0f, 1.0f,
-     0.5f,  0.5f,  0.5f,   1.0f, 0.0f, 1.0f,   0.0f, 0.0f,
+    -0.5f,  0.5f, -0.5f,   1.0f, 1.0f, 1.0f,   1.0f, 1.0f,
+     0.5f,  0.5f, -0.5f,   1.0f, 1.0f, 1.0f,   0.0f, 1.0f,
+     0.5f,  0.5f,  0.5f,   1.0f, 1.0f, 1.0f,   0.0f, 0.0f,
 
-    -0.5f, -0.5f,  0.5f,   1.0f, 0.0f, 0.0f,   1.0f, 0.0f, // Bottom face
-    -0.5f, -0.5f, -0.5f,   0.0f, 1.0f, 0.0f,   1.0f, 1.0f,
-     0.5f, -0.5f, -0.5f,   0.0f, 0.0f, 1.0f,   0.0f, 1.0f,
+    -0.5f, -0.5f,  0.5f,   1.0f, 1.0f, 1.0f,   1.0f, 0.0f, // Bottom face
+    -0.5f, -0.5f, -0.5f,   1.0f, 1.0f, 1.0f,   1.0f, 1.0f,
+     0.5f, -0.5f, -0.5f,   1.0f, 1.0f, 1.0f,   0.0f, 1.0f,
      0.5f, -0.5f,  0.5f,   1.0f, 1.0f, 1.0f,   0.0f, 0.0f,
 
-    -0.5f, -0.5f,  0.5f,   1.0f, 0.0f, 0.0f,   0.0f, 1.0f, // Left face
-    -0.5f,  0.5f,  0.5f,   0.0f, 1.0f, 0.0f,   1.0f, 1.0f,
-    -0.5f,  0.5f, -0.5f,   0.0f, 0.0f, 1.0f,   1.0f, 0.0f,
+    -0.5f, -0.5f,  0.5f,   1.0f, 1.0f, 1.0f,   0.0f, 1.0f, // Left face
+    -0.5f,  0.5f,  0.5f,   1.0f, 1.0f, 1.0f,   1.0f, 1.0f,
+    -0.5f,  0.5f, -0.5f,   1.0f, 1.0f, 1.0f,   1.0f, 0.0f,
     -0.5f, -0.5f, -0.5f,   1.0f, 1.0f, 1.0f,   0.0f, 0.0f,
 
-     0.5f, -0.5f, -0.5f,   1.0f, 0.0f, 0.0f,   0.0f, 1.0f, // Right face
-     0.5f,  0.5f, -0.5f,   0.0f, 1.0f, 0.0f,   1.0f, 1.0f,
-     0.5f,  0.5f,  0.5f,   0.0f, 0.0f, 1.0f,   1.0f, 0.0f,
+     0.5f, -0.5f, -0.5f,   1.0f, 1.0f, 1.0f,   0.0f, 1.0f, // Right face
+     0.5f,  0.5f, -0.5f,   1.0f, 1.0f, 1.0f,   1.0f, 1.0f,
+     0.5f,  0.5f,  0.5f,   1.0f, 1.0f, 1.0f,   1.0f, 0.0f,
      0.5f, -0.5f,  0.5f,   1.0f, 1.0f, 1.0f,   0.0f, 0.0f
 };
 
@@ -638,7 +708,15 @@ void main()
                 game.UpdateFrame += (FrameEventArgs args) =>
                 {
                     // add game logic, input handling
-                    _angle += 0.1f;
+                    if (bounceV)
+                        frameView += 0.01f;
+                    else
+                        frameView -= 0.01f;
+
+                    if (frameView < -0.5)
+                        bounceV = true;
+                    else if (frameView > 15.0f)
+                        bounceV = false;
                 };
 
                 game.RenderFrame += (FrameEventArgs args) =>
@@ -656,7 +734,7 @@ void main()
                     GL.Uniform1(textureLocation, 0);
 
                     // Set the model, view, and projection matrices
-                    Matrix4 view = Matrix4.LookAt(new Vector3(2.2f, 2.2f, 2.2f), Vector3.Zero, Vector3.UnitY);
+                    Matrix4 view = Matrix4.LookAt(new Vector3(34.2f, frameView, 34.2f), Vector3.Zero, Vector3.UnitY);
                     Matrix4 projection = Matrix4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(90.0f), game.Size.X / (float)game.Size.Y, 0.1f, 100.0f);
                                         
                     int viewLoc = GL.GetUniformLocation(_shaderprogram, "view");
@@ -667,16 +745,15 @@ void main()
 
                     GL.BindVertexArray(vao);  // Bind VAO
 
-                    for (int i = 0; i < 6; i++)
+                    for (int widthIterator = 0; widthIterator < mapdata.getMapWidth(); widthIterator++)
                     {
-                        Vector3 CubePos = new Vector3(i, 0, 0);
-                        Matrix4 model = Matrix4.CreateTranslation(CubePos) * Matrix4.CreateRotationY(MathHelper.DegreesToRadians(_angle)) * Matrix4.CreateRotationX(MathHelper.DegreesToRadians(_angle / 2)); ;
-
-                        int modelLoc = GL.GetUniformLocation(_shaderprogram, "model");
-                        GL.UniformMatrix4(modelLoc, false, ref model);
-
-                        GL.DrawElements(PrimitiveType.Triangles, 36, DrawElementsType.UnsignedInt, IntPtr.Zero);
-                    }                   
+                        for (int heightIterator = 0; heightIterator < mapdata.getMapHeight(); heightIterator++)
+                        {
+                            int tiledata = mapdata.getTileData(heightIterator, widthIterator);
+                            if (tiledata != 0)
+                                render3DTexturedCube(widthIterator, 0, heightIterator, tiledata, mapdata.isTileDoorAdjacent(heightIterator, widthIterator));
+                        }
+                    }
 
                     GL.BindVertexArray(0);  // Unbind VAO
 

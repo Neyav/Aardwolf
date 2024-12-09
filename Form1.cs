@@ -12,6 +12,9 @@ using OpenTK.Windowing.Common;
 using OpenTK.Mathematics;
 using AardwolfCore;
 using System.Drawing.Drawing2D;
+using OpenTK.Windowing.GraphicsLibraryFramework;
+using ErrorCode = OpenTK.Graphics.OpenGL.ErrorCode;
+
 
 
 namespace Aardwolf
@@ -22,6 +25,7 @@ namespace Aardwolf
         private int _shaderprogram;
         private int framebuffer, vao, vbo, ebo;
         int[] textures;
+        private Camera camera;
 
         maphandler mapdata;
 
@@ -532,7 +536,7 @@ void main()
                 switch (face)
                 {
                     case 4: // Front face (north)
-                        if ((_doorAdjacent & mapDirection.DIR_NORTH) == mapDirection.DIR_NORTH)
+                        if ((_doorAdjacent & mapDirection.DIR_SOUTH) == mapDirection.DIR_SOUTH)
                         {
                             textureToBind = 100;
                             break;
@@ -543,7 +547,7 @@ void main()
                             break;
                         }
                     case 5: // Back face (south)
-                        if ((_doorAdjacent & mapDirection.DIR_SOUTH) == mapDirection.DIR_SOUTH)
+                        if ((_doorAdjacent & mapDirection.DIR_NORTH) == mapDirection.DIR_NORTH)
                         {
                             textureToBind = 100;
                             break;
@@ -580,8 +584,8 @@ void main()
         private void button2_Click(object sender, EventArgs e)
         {
             textures = new int[dh.numberOfTextures()];
-            float frameView = 14.0f;
-            bool bounceV = false;
+            float frameView = 14.0f;            
+            Vector2 lastMousePosition = (0,0);
 
             var nativeWindowSettings = new NativeWindowSettings()
             {
@@ -594,6 +598,8 @@ void main()
             {
                 game.Load += () =>
                 {
+                    lastMousePosition = game.MousePosition;
+
                     GL.Enable(EnableCap.DepthTest);
 
                     // Shader program
@@ -697,6 +703,13 @@ void main()
 
                     CheckOpenGLError();
 
+                    // Initialize the camera
+                    Vector3 cameraPosition = new Vector3(0.0f, 0.0f, 3.0f);
+                    Vector3 worldUp = Vector3.UnitY;
+                    float yaw = -90.0f;
+                    float pitch = 0.0f;
+                    camera = new Camera(cameraPosition, worldUp, yaw, pitch);
+
                     game.VSync = VSyncMode.On;
                 };
 
@@ -707,16 +720,44 @@ void main()
 
                 game.UpdateFrame += (FrameEventArgs args) =>
                 {
-                    // add game logic, input handling
-                    if (bounceV)
-                        frameView += 0.01f;
-                    else
-                        frameView -= 0.01f;
+                    float deltaTime = (float)args.Time;
 
-                    if (frameView < -0.5)
-                        bounceV = true;
-                    else if (frameView > 15.0f)
-                        bounceV = false;
+                    // Process keyboard input for camera movement
+                    var keyboardState = game.KeyboardState;
+
+                    if (keyboardState.IsKeyDown(OpenTK.Windowing.GraphicsLibraryFramework.Keys.W))
+                        camera.ProcessKeyboard(Direction.Forward, deltaTime);
+                    if (keyboardState.IsKeyDown(OpenTK.Windowing.GraphicsLibraryFramework.Keys.S))
+                        camera.ProcessKeyboard(Direction.Backward, deltaTime);
+                    if (keyboardState.IsKeyDown(OpenTK.Windowing.GraphicsLibraryFramework.Keys.A))
+                        camera.ProcessKeyboard(Direction.Left, deltaTime);
+                    if (keyboardState.IsKeyDown(OpenTK.Windowing.GraphicsLibraryFramework.Keys.D))
+                        camera.ProcessKeyboard(Direction.Right, deltaTime);
+                    if (keyboardState.IsKeyDown(OpenTK.Windowing.GraphicsLibraryFramework.Keys.Escape))
+                        game.CursorState = CursorState.Normal;
+
+                    // Process mouse movement for camera rotation
+                    var mouseState = game.MouseState;
+                    Vector2 mousePosition = mouseState.Position;
+                    float xOffset = mousePosition.X - lastMousePosition.X;
+                    float yOffset = lastMousePosition.Y - mousePosition.Y; // Reversed since y-coordinates range from bottom to top
+                    lastMousePosition = mousePosition;
+
+                    camera.ProcessMouseMovement(xOffset, yOffset);
+                };
+
+                game.MouseWheel += (MouseWheelEventArgs args) =>
+                {
+                    float yOffset = args.OffsetY;
+                    camera.ProcessMouseScroll(yOffset);
+                };
+
+                game.MouseDown += (MouseButtonEventArgs args) =>
+                {
+                    if (args.Button == MouseButton.Left)
+                    {
+                        game.CursorState = CursorState.Grabbed;
+                    }
                 };
 
                 game.RenderFrame += (FrameEventArgs args) =>
@@ -734,9 +775,9 @@ void main()
                     GL.Uniform1(textureLocation, 0);
 
                     // Set the model, view, and projection matrices
-                    Matrix4 view = Matrix4.LookAt(new Vector3(34.2f, frameView, 34.2f), Vector3.Zero, Vector3.UnitY);
-                    Matrix4 projection = Matrix4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(90.0f), game.Size.X / (float)game.Size.Y, 0.1f, 100.0f);
-                                        
+                    Matrix4 view = camera.GetViewMatrix(); 
+                    Matrix4 projection = Matrix4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(camera.Zoom), game.Size.X / (float)game.Size.Y, 0.1f, 100.0f);
+
                     int viewLoc = GL.GetUniformLocation(_shaderprogram, "view");
                     int projectionLoc = GL.GetUniformLocation(_shaderprogram, "projection");
 
@@ -790,7 +831,7 @@ void main()
 
         private void button3_Click(object sender, EventArgs e)
         {
-            using (Image fullSizeImage = this.rendercurrentLevel(4096, 4096))
+            using (System.Drawing.Image fullSizeImage = this.rendercurrentLevel(4096, 4096))
             {
                 fullSizeImage.Save("level.png");
             }

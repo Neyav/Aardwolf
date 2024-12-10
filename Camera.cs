@@ -21,7 +21,7 @@ namespace Aardwolf
 
         public float MovementSpeed { get; set; } = 2.5f;
         public float MouseSensitivity { get; set; } = 0.1f;
-        public float Zoom { get; set; } = 45.0f;
+        public float Zoom { get; set; } = 70.0f;
 
         public Camera(Vector3 position, Vector3 up, float yaw, float pitch)
         {
@@ -72,12 +72,12 @@ namespace Aardwolf
 
         public void ProcessMouseScroll(float yOffset)
         {
-            if (Zoom >= 1.0f && Zoom <= 45.0f)
+            if (Zoom >= 1.0f && Zoom <= 140.0f)
                 Zoom -= yOffset;
             if (Zoom <= 1.0f)
                 Zoom = 1.0f;
-            if (Zoom >= 45.0f)
-                Zoom = 45.0f;
+            if (Zoom >= 140.0f)
+                Zoom = 140.0f;
         }
 
         private void UpdateCameraVectors()

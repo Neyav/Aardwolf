@@ -5,7 +5,7 @@ VisualStudioVersion = 17.7.34221.43
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Aardwolf", "Aardwolf.csproj", "{31FCAAB1-1093-429B-B086-FC5308BF6210}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AardwolfCore", "..\AardwolfDependiences\AardwolfCore.csproj", "{80E68D8A-C2FC-4D83-A425-0047BC75C21B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AardwolfCore", "..\AardwolfCore\AardwolfCore.csproj", "{FB926026-CCC4-4F43-AB00-6A2DE544E362}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -17,10 +17,10 @@ Global
 		{31FCAAB1-1093-429B-B086-FC5308BF6210}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{31FCAAB1-1093-429B-B086-FC5308BF6210}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{31FCAAB1-1093-429B-B086-FC5308BF6210}.Release|Any CPU.Build.0 = Release|Any CPU
-		{80E68D8A-C2FC-4D83-A425-0047BC75C21B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{80E68D8A-C2FC-4D83-A425-0047BC75C21B}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{80E68D8A-C2FC-4D83-A425-0047BC75C21B}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{80E68D8A-C2FC-4D83-A425-0047BC75C21B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FB926026-CCC4-4F43-AB00-6A2DE544E362}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FB926026-CCC4-4F43-AB00-6A2DE544E362}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FB926026-CCC4-4F43-AB00-6A2DE544E362}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FB926026-CCC4-4F43-AB00-6A2DE544E362}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

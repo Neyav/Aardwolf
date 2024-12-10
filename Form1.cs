@@ -24,8 +24,9 @@ namespace Aardwolf
         dataHandler dh = new dataHandler();
         private int _shaderprogram;
         private int framebuffer, vao, vbo, ebo;
-        int[] textures;
+        private int[] textures;
         private Camera camera;
+        private int DoorTexture;
 
         maphandler mapdata;
 
@@ -536,9 +537,9 @@ void main()
                 switch (face)
                 {
                     case 4: // Front face (north)
-                        if ((_doorAdjacent & mapDirection.DIR_SOUTH) == mapDirection.DIR_SOUTH)
+                        if ((_doorAdjacent & mapDirection.DIR_WEST) == mapDirection.DIR_WEST)
                         {
-                            textureToBind = 100;
+                            textureToBind = DoorTexture + 3;
                             break;
                         }
                         else
@@ -547,9 +548,9 @@ void main()
                             break;
                         }
                     case 5: // Back face (south)
-                        if ((_doorAdjacent & mapDirection.DIR_NORTH) == mapDirection.DIR_NORTH)
+                        if ((_doorAdjacent & mapDirection.DIR_EAST) == mapDirection.DIR_EAST)
                         {
-                            textureToBind = 100;
+                            textureToBind = DoorTexture + 3;
                             break;
                         }
                         else
@@ -584,6 +585,7 @@ void main()
         private void button2_Click(object sender, EventArgs e)
         {
             textures = new int[dh.numberOfTextures()];
+            DoorTexture = dh.getDoorTextureNumber();
             float frameView = 14.0f;            
             Vector2 lastMousePosition = (0,0);
 
@@ -640,25 +642,25 @@ void main()
      0.5f,  0.5f,  0.5f,   1.0f, 1.0f, 1.0f,   1.0f, 0.0f,
     -0.5f,  0.5f,  0.5f,   1.0f, 1.0f, 1.0f,   0.0f, 0.0f,
 
-    -0.5f,  0.5f,  0.5f,   1.0f, 1.0f, 1.0f,   1.0f, 0.0f, // Top face
+    -0.5f,  0.5f,  0.5f,   1.0f, 1.0f, 1.0f,   0.0f, 1.0f, // Top face
     -0.5f,  0.5f, -0.5f,   1.0f, 1.0f, 1.0f,   1.0f, 1.0f,
-     0.5f,  0.5f, -0.5f,   1.0f, 1.0f, 1.0f,   0.0f, 1.0f,
+     0.5f,  0.5f, -0.5f,   1.0f, 1.0f, 1.0f,   1.0f, 0.0f,
      0.5f,  0.5f,  0.5f,   1.0f, 1.0f, 1.0f,   0.0f, 0.0f,
 
-    -0.5f, -0.5f,  0.5f,   1.0f, 1.0f, 1.0f,   1.0f, 0.0f, // Bottom face
+    -0.5f, -0.5f,  0.5f,   1.0f, 1.0f, 1.0f,   0.0f, 1.0f, // Bottom face
     -0.5f, -0.5f, -0.5f,   1.0f, 1.0f, 1.0f,   1.0f, 1.0f,
-     0.5f, -0.5f, -0.5f,   1.0f, 1.0f, 1.0f,   0.0f, 1.0f,
+     0.5f, -0.5f, -0.5f,   1.0f, 1.0f, 1.0f,   1.0f, 0.0f,
      0.5f, -0.5f,  0.5f,   1.0f, 1.0f, 1.0f,   0.0f, 0.0f,
 
     -0.5f, -0.5f,  0.5f,   1.0f, 1.0f, 1.0f,   0.0f, 1.0f, // Left face
-    -0.5f,  0.5f,  0.5f,   1.0f, 1.0f, 1.0f,   1.0f, 1.0f,
+    -0.5f,  0.5f,  0.5f,   1.0f, 1.0f, 1.0f,   0.0f, 0.0f,
     -0.5f,  0.5f, -0.5f,   1.0f, 1.0f, 1.0f,   1.0f, 0.0f,
-    -0.5f, -0.5f, -0.5f,   1.0f, 1.0f, 1.0f,   0.0f, 0.0f,
+    -0.5f, -0.5f, -0.5f,   1.0f, 1.0f, 1.0f,   1.0f, 1.0f,
 
      0.5f, -0.5f, -0.5f,   1.0f, 1.0f, 1.0f,   0.0f, 1.0f, // Right face
-     0.5f,  0.5f, -0.5f,   1.0f, 1.0f, 1.0f,   1.0f, 1.0f,
+     0.5f,  0.5f, -0.5f,   1.0f, 1.0f, 1.0f,   0.0f, 0.0f,
      0.5f,  0.5f,  0.5f,   1.0f, 1.0f, 1.0f,   1.0f, 0.0f,
-     0.5f, -0.5f,  0.5f,   1.0f, 1.0f, 1.0f,   0.0f, 0.0f
+     0.5f, -0.5f,  0.5f,   1.0f, 1.0f, 1.0f,   1.0f, 1.0f
 };
 
                     uint[] indices = {

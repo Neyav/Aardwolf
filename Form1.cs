@@ -517,7 +517,7 @@ void main()
             return texture;
         }
 
-        void render3DTexturedCube(float _x, float _y, float _z, int _tiletexture, mapDirection _doorAdjacent)
+        void render3DTexturedCube(float _x, float _y, float _z, int _tiletexture, mapDirection _doorAdjacent, mapDirection _wallAdjacent)
         {
             Vector3 CubePos = new Vector3(_x, _y, _z);
             Matrix4 model = Matrix4.CreateTranslation(CubePos);
@@ -525,18 +525,20 @@ void main()
             int modelLoc = GL.GetUniformLocation(_shaderprogram, "model");
             GL.UniformMatrix4(modelLoc, false, ref model);
 
-            int _textureNorthSouth = _tiletexture * 2 - 1;
-            int _textureEastWest = _tiletexture * 2 - 2;
+            int _textureEastWest = _tiletexture * 2 - 1;
+            int _textureNorthSouth = _tiletexture * 2 - 2;
 
             // Draw each face with its respective texture
             for (int face = 0; face < 6; ++face)
             {
-                int textureToBind;
+                int textureToBind = -1;
 
                 // Determine the texture to bind based on the face index
                 switch (face)
                 {
-                    case 4: // Front face (north)
+                    case 4: // West face
+                        if ((_wallAdjacent & mapDirection.DIR_WEST) == mapDirection.DIR_WEST)
+                            break;
                         if ((_doorAdjacent & mapDirection.DIR_WEST) == mapDirection.DIR_WEST)
                         {
                             textureToBind = DoorTexture + 3;
@@ -544,10 +546,12 @@ void main()
                         }
                         else
                         {
-                            textureToBind = _textureNorthSouth;
+                            textureToBind = _textureEastWest;
                             break;
                         }
-                    case 5: // Back face (south)
+                    case 5: // East Face
+                        if ((_wallAdjacent & mapDirection.DIR_EAST) == mapDirection.DIR_EAST)
+                            break;
                         if ((_doorAdjacent & mapDirection.DIR_EAST) == mapDirection.DIR_EAST)
                         {
                             textureToBind = DoorTexture + 3;
@@ -555,29 +559,56 @@ void main()
                         }
                         else
                         {
-                            textureToBind = _textureNorthSouth;
+                            textureToBind = _textureEastWest;
                             break;
                         }
                         break;
-                    case 0: // Left face (east)
-                    case 1: // Right face (west)
-                        textureToBind = _textureEastWest;
-                        break;                    
+                    case 0: // North Face
+                        if ((_wallAdjacent & mapDirection.DIR_NORTH) == mapDirection.DIR_NORTH)
+                            break;
+                        if ((_doorAdjacent & mapDirection.DIR_NORTH) == mapDirection.DIR_NORTH)
+                        {
+                            textureToBind = DoorTexture + 2;
+                            break;
+                        }
+                        else
+                        {
+                            textureToBind = _textureNorthSouth;
+                            break;
+                        }                        
+                    case 1: // South Face
+                        if ((_wallAdjacent & mapDirection.DIR_SOUTH) == mapDirection.DIR_SOUTH)
+                            break;
+                        if ((_doorAdjacent & mapDirection.DIR_SOUTH) == mapDirection.DIR_SOUTH)
+                        {
+                            textureToBind = DoorTexture + 2;
+                            break;
+                        }
+                        else
+                        {
+                            textureToBind = _textureNorthSouth;
+                            break;
+                        }
                     default:
+                        textureToBind = -1;
+                        break;
                         textureToBind = _textureNorthSouth; // Use the base texture for top and bottom
                         break;
                 }
 
-                // Bind the texture
-                GL.ActiveTexture(TextureUnit.Texture0);
-                GL.BindTexture(TextureTarget.Texture2D, textures[textureToBind]);
+                if (textureToBind >= 0)
+                {
+                    // Bind the texture
+                    GL.ActiveTexture(TextureUnit.Texture0);
+                    GL.BindTexture(TextureTarget.Texture2D, textures[textureToBind]);
 
-                // Set the texture uniform
-                int texLocation = GL.GetUniformLocation(_shaderprogram, "ourTexture");
-                GL.Uniform1(texLocation, 0);
+                    // Set the texture uniform
+                    int texLocation = GL.GetUniformLocation(_shaderprogram, "ourTexture");
+                    GL.Uniform1(texLocation, 0);
 
-                // Draw the face
-                GL.DrawElements(PrimitiveType.Triangles, 6, DrawElementsType.UnsignedInt, new IntPtr(face * 6 * sizeof(uint)));
+                    // Draw the face
+                    GL.DrawElements(PrimitiveType.Triangles, 6, DrawElementsType.UnsignedInt, new IntPtr(face * 6 * sizeof(uint)));
+                }
             }
         }
 
@@ -603,6 +634,8 @@ void main()
                     lastMousePosition = game.MousePosition;
 
                     GL.Enable(EnableCap.DepthTest);
+                    //GL.Enable(EnableCap.CullFace);
+                    //GL.FrontFace(FrontFaceDirection.Ccw); // Counter-clockwise defined as front
 
                     // Shader program
                     _shaderprogram = CreateShaderProgram();
@@ -642,15 +675,15 @@ void main()
      0.5f,  0.5f,  0.5f,   1.0f, 1.0f, 1.0f,   1.0f, 0.0f,
     -0.5f,  0.5f,  0.5f,   1.0f, 1.0f, 1.0f,   0.0f, 0.0f,
 
-    -0.5f,  0.5f,  0.5f,   1.0f, 1.0f, 1.0f,   0.0f, 1.0f, // Top face
-    -0.5f,  0.5f, -0.5f,   1.0f, 1.0f, 1.0f,   1.0f, 1.0f,
-     0.5f,  0.5f, -0.5f,   1.0f, 1.0f, 1.0f,   1.0f, 0.0f,
-     0.5f,  0.5f,  0.5f,   1.0f, 1.0f, 1.0f,   0.0f, 0.0f,
+    -0.5f,  0.5f, -0.5f,   1.0f, 1.0f, 1.0f,   0.0f, 1.0f, // Top face
+     0.5f,  0.5f, -0.5f,   1.0f, 1.0f, 1.0f,   1.0f, 1.0f,
+     0.5f,  0.5f,  0.5f,   1.0f, 1.0f, 1.0f,   1.0f, 0.0f,
+    -0.5f,  0.5f,  0.5f,   1.0f, 1.0f, 1.0f,   0.0f, 0.0f,
 
-    -0.5f, -0.5f,  0.5f,   1.0f, 1.0f, 1.0f,   0.0f, 1.0f, // Bottom face
-    -0.5f, -0.5f, -0.5f,   1.0f, 1.0f, 1.0f,   1.0f, 1.0f,
-     0.5f, -0.5f, -0.5f,   1.0f, 1.0f, 1.0f,   1.0f, 0.0f,
-     0.5f, -0.5f,  0.5f,   1.0f, 1.0f, 1.0f,   0.0f, 0.0f,
+    -0.5f, -0.5f, -0.5f,   1.0f, 1.0f, 1.0f,   0.0f, 1.0f, // Bottom face
+     0.5f, -0.5f, -0.5f,   1.0f, 1.0f, 1.0f,   1.0f, 1.0f,
+     0.5f, -0.5f,  0.5f,   1.0f, 1.0f, 1.0f,   1.0f, 0.0f,
+    -0.5f, -0.5f,  0.5f,   1.0f, 1.0f, 1.0f,   0.0f, 0.0f,
 
     -0.5f, -0.5f,  0.5f,   1.0f, 1.0f, 1.0f,   0.0f, 1.0f, // Left face
     -0.5f,  0.5f,  0.5f,   1.0f, 1.0f, 1.0f,   0.0f, 0.0f,
@@ -794,7 +827,9 @@ void main()
                         {
                             int tiledata = mapdata.getTileData(heightIterator, widthIterator);
                             if (tiledata != 0)
-                                render3DTexturedCube(widthIterator, 0, heightIterator, tiledata, mapdata.isTileDoorAdjacent(heightIterator, widthIterator));
+                                render3DTexturedCube(widthIterator, 0, heightIterator, tiledata,
+                                    mapdata.isTileDoorAdjacent(heightIterator, widthIterator),
+                                    mapdata.adjacentBlockingTiles(heightIterator, widthIterator));
                         }
                     }
 

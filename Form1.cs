@@ -26,6 +26,7 @@ namespace Aardwolf
         private int cubevao, cubevbo, cubeebo;
         private int quadvao, quadvbo, quadebo;
         private int[] textures;
+        private int[] sprites;
         private Camera camera;
         private int DoorTexture;
 
@@ -448,7 +449,13 @@ void main()
     else
     {
         // Render using the texture
-        FragColor = texture(ourTexture, TexCoord) * vec4(ourColor, 1.0);
+        FragColor = texture(ourTexture, TexCoord);
+    }
+
+    // Optionally discard fully transparent fragments
+    if (FragColor.a == 0.0) 
+    { 
+        discard;
     }
 }";
 
@@ -504,29 +511,35 @@ void main()
                 Console.WriteLine("OpenGL Error: " + err);
             }
         }
-        private int LoadTexture(Bitmap bitmap)
+        int LoadTexture(Bitmap bitmap)
         {
-            int texture = GL.GenTexture();
+            int textureID = GL.GenTexture();
+            GL.BindTexture(TextureTarget.Texture2D, textureID);
 
-            GL.BindTexture(TextureTarget.Texture2D, texture);
+            // Load the bitmap data into the texture
+            System.Drawing.Imaging.BitmapData data = bitmap.LockBits(
+                new Rectangle(0, 0, bitmap.Width, bitmap.Height),
+                System.Drawing.Imaging.ImageLockMode.ReadOnly,
+                System.Drawing.Imaging.PixelFormat.Format32bppArgb);
 
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat);
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat);
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear);
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
-
-            var data = bitmap.LockBits(new System.Drawing.Rectangle(0, 0, bitmap.Width, bitmap.Height),
-                                       System.Drawing.Imaging.ImageLockMode.ReadOnly, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
-
-            GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, bitmap.Width, bitmap.Height, 0,
-                          PixelFormat.Bgra, PixelType.UnsignedByte, data.Scan0);
+            GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, data.Width, data.Height, 0,
+                PixelFormat.Bgra, PixelType.UnsignedByte, data.Scan0);
 
             bitmap.UnlockBits(data);
 
-            GL.GenerateMipmap(GenerateMipmapTarget.Texture2D);
+            // Set texture filtering to nearest neighbor
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Nearest);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest);
 
-            return texture;
+            // Set texture wrapping to clamp to edge to prevent texture bleeding
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)TextureWrapMode.ClampToEdge);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)TextureWrapMode.ClampToEdge);
+
+            GL.BindTexture(TextureTarget.Texture2D, 0); // Unbind the texture
+
+            return textureID;
         }
+
 
         void renderTileSurface(float _x, float _y, float _z, RGBA _tileColour)
         {
@@ -551,9 +564,53 @@ void main()
             GL.BindVertexArray(quadvao);
 
             GL.DrawElements(PrimitiveType.Triangles, 6, DrawElementsType.UnsignedInt, 0);
-        }    
+        }
 
-    void render3DTexturedCube(float _x, float _y, float _z, int _tiletexture, mapDirection _doorAdjacent, mapDirection _wallAdjacent)
+        void renderSprite(float _x, float _y, float _z, int _spritetexture, Camera camera)
+        {
+            GL.BindVertexArray(quadvao);
+
+            Vector3 spritePosition = new Vector3(_x, _y, _z);
+
+            // Calculate the direction from the sprite to the camera
+            Vector3 direction = camera.Position - spritePosition;
+
+            // Calculate the yaw angle based on the direction vector
+            float spriteYaw = MathF.Atan2(direction.X, direction.Z);
+
+            // Adjust the yaw to face away from the camera
+            spriteYaw += MathF.PI;
+
+            // Correct any off-axis issues if necessary (comment out or adjust as needed)
+            // spriteYaw += 90.0f;
+
+            // Create the rotation matrix using the calculated yaw angle
+            Matrix4 rotation = Matrix4.CreateRotationY(spriteYaw);
+
+            // Combine the rotation and translation matrices to create the model matrix
+            Matrix4 model = rotation * Matrix4.CreateTranslation(spritePosition);
+
+            int modelLoc = GL.GetUniformLocation(_shaderprogram, "model");
+            GL.UniformMatrix4(modelLoc, false, ref model);
+
+            int useSolidColorLoc = GL.GetUniformLocation(_shaderprogram, "useSolidColor");
+
+            // Disable solid color rendering
+            bool useSolidColor = false;
+            GL.Uniform1(useSolidColorLoc, useSolidColor ? 1 : 0);
+
+            // Bind the texture
+            GL.ActiveTexture(TextureUnit.Texture0);
+            GL.BindTexture(TextureTarget.Texture2D, sprites[_spritetexture]);
+
+            // Set the texture uniform
+            int texLocation = GL.GetUniformLocation(_shaderprogram, "ourTexture");
+            GL.Uniform1(texLocation, 0);
+
+            GL.DrawElements(PrimitiveType.Triangles, 6, DrawElementsType.UnsignedInt, 0);
+        }
+
+        void render3DTexturedCube(float _x, float _y, float _z, int _tiletexture, mapDirection _doorAdjacent, mapDirection _wallAdjacent)
         {
             Vector3 CubePos = new Vector3(_x, _y, _z);
             Matrix4 model = Matrix4.CreateTranslation(CubePos);
@@ -660,10 +717,10 @@ void main()
         {
             float[] vertices = {
     // Positions        // Colors         // Texture Coords
-     0.5f,  0.5f, 0.0f,  1.0f, 1.0f, 1.0f,  1.0f, 1.0f, // Top-right
-     0.5f, -0.5f, 0.0f,  1.0f, 1.0f, 1.0f,  1.0f, 0.0f, // Bottom-right
-    -0.5f, -0.5f, 0.0f,  1.0f, 1.0f, 1.0f,  0.0f, 0.0f, // Bottom-left
-    -0.5f,  0.5f, 0.0f,  1.0f, 1.0f, 1.0f,  0.0f, 1.0f  // Top-left
+     0.5f,  0.5f, 0.0f,  1.0f, 1.0f, 1.0f,  0.0f, 0.0f, // Top-right
+     0.5f, -0.5f, 0.0f,  1.0f, 1.0f, 1.0f,  0.0f, 1.0f, // Bottom-right
+    -0.5f, -0.5f, 0.0f,  1.0f, 1.0f, 1.0f,  1.0f, 1.0f, // Bottom-left
+    -0.5f,  0.5f, 0.0f,  1.0f, 1.0f, 1.0f,  1.0f, 0.0f  // Top-left
 };
 
             uint[] indices = {
@@ -767,8 +824,9 @@ void main()
         private void button2_Click(object sender, EventArgs e)
         {
             textures = new int[dh.numberOfTextures()];
+            sprites = new int[dh.numberOfSprites()];
             DoorTexture = dh.getDoorTextureNumber();
-            float frameView = 14.0f;            
+                        
             Vector2 lastMousePosition = (0,0);
 
             var nativeWindowSettings = new NativeWindowSettings()
@@ -789,6 +847,9 @@ void main()
                     GL.Enable(EnableCap.DepthTest);
                     //GL.Enable(EnableCap.CullFace);
                     //GL.FrontFace(FrontFaceDirection.Ccw); // Counter-clockwise defined as front
+                    // Enable blending
+                    GL.Enable(EnableCap.Blend); 
+                    GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
 
                     // Shader program
                     _shaderprogram = CreateShaderProgram();
@@ -800,6 +861,11 @@ void main()
                     for (int i = 0; i < dh.numberOfTextures(); i++)
                     {
                         textures[i] = LoadTexture(dh.getTexture(i));
+                    }
+
+                    for (int i = 0; i < dh.numberOfSprites(); i++)
+                    {
+                        sprites[i] = LoadTexture(dh.getSprite(i));
                     }
 
                     int texture = GL.GenTexture();
@@ -819,12 +885,7 @@ void main()
                     generateCube();
                     generateQuad();
 
-                    GL.BindVertexArray(0); // Unbind VAO
-
-                    using (var bitmap = dh.getTexture(10))
-                    {
-                        LoadTexture(bitmap); // Load texture from in-memory Bitmap
-                    }
+                    GL.BindVertexArray(0); // Unbind VAO                    
 
                     CheckOpenGLError();
 
@@ -887,7 +948,6 @@ void main()
 
                 game.RenderFrame += (FrameEventArgs args) =>
                 {
-                    //GL.ClearColor(Color.CornflowerBlue);
                     GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
                     GL.UseProgram(_shaderprogram);
 
@@ -919,8 +979,16 @@ void main()
                                     mapdata.isTileDoorAdjacent(heightIterator, widthIterator),
                                     mapdata.adjacentBlockingTiles(heightIterator, widthIterator));
                             else
-                            {                                
+                            {                                   
                                 renderTileSurface(widthIterator, -0.5f, heightIterator, dh.returnVGAFloorColor());
+
+                                int staticObjID = mapdata.getStaticObjectID(heightIterator, widthIterator);
+
+                                if (staticObjID > 0)
+                                {
+                                    renderSprite(widthIterator, 0, heightIterator, staticObjID - 21, camera);
+                                }
+                                
                             }
                         }
                     }

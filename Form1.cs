@@ -427,19 +427,29 @@ void main()
     TexCoord = aTexCoord;
 }";
 
-            string fragmentShaderSource = @"
-    #version 330 core
-
-out vec4 FragColor;
+            string fragmentShaderSource = @"#version 330 core
 
 in vec3 ourColor;
 in vec2 TexCoord;
 
+out vec4 FragColor;
+
 uniform sampler2D ourTexture;
+uniform vec3 solidColor;
+uniform bool useSolidColor;
 
 void main()
 {
-    FragColor = texture(ourTexture, TexCoord) * vec4(ourColor, 1.0);
+    if (useSolidColor)
+    {
+        // Render using the RGB color
+        FragColor = vec4(solidColor, 1.0);
+    }
+    else
+    {
+        // Render using the texture
+        FragColor = texture(ourTexture, TexCoord) * vec4(ourColor, 1.0);
+    }
 }";
 
             int vertexShader = GL.CreateShader(ShaderType.VertexShader);
@@ -518,7 +528,32 @@ void main()
             return texture;
         }
 
-        void render3DTexturedCube(float _x, float _y, float _z, int _tiletexture, mapDirection _doorAdjacent, mapDirection _wallAdjacent)
+        void renderTileSurface(float _x, float _y, float _z, RGBA _tileColour)
+        {
+            GL.BindVertexArray(quadvao);
+
+            Vector3 tilePosition = new Vector3(_x, _y, _z);
+            Matrix4 model = Matrix4.CreateRotationX(MathHelper.DegreesToRadians(-90.0f)) * Matrix4.CreateTranslation(tilePosition);
+
+            int modelLoc = GL.GetUniformLocation(_shaderprogram, "model");
+            GL.UniformMatrix4(modelLoc, false, ref model);
+
+            int solidColorLoc = GL.GetUniformLocation(_shaderprogram, "solidColor");
+            int useSolidColorLoc = GL.GetUniformLocation(_shaderprogram, "useSolidColor");
+
+            // Set the solid color
+            GL.Uniform3(solidColorLoc, new Vector3(_tileColour.r / 255.0f, _tileColour.g / 255.0f, _tileColour.b / 255.0f));
+
+            // Enable solid color rendering
+            bool useSolidColor = true; 
+            GL.Uniform1(useSolidColorLoc, useSolidColor ? 1 : 0);
+
+            GL.BindVertexArray(quadvao);
+
+            GL.DrawElements(PrimitiveType.Triangles, 6, DrawElementsType.UnsignedInt, 0);
+        }    
+
+    void render3DTexturedCube(float _x, float _y, float _z, int _tiletexture, mapDirection _doorAdjacent, mapDirection _wallAdjacent)
         {
             Vector3 CubePos = new Vector3(_x, _y, _z);
             Matrix4 model = Matrix4.CreateTranslation(CubePos);
@@ -609,12 +644,57 @@ void main()
                     int texLocation = GL.GetUniformLocation(_shaderprogram, "ourTexture");
                     GL.Uniform1(texLocation, 0);
 
+                    int useSolidColorLoc = GL.GetUniformLocation(_shaderprogram, "useSolidColor");
+
+                    // Disable solid color rendering
+                    bool useSolidColor = false;
+                    GL.Uniform1(useSolidColorLoc, useSolidColor ? 1 : 0);
+
                     // Draw the face
                     GL.DrawElements(PrimitiveType.Triangles, 6, DrawElementsType.UnsignedInt, new IntPtr(face * 6 * sizeof(uint)));
                 }
             }
         }
 
+        private void generateQuad()
+        {
+            float[] vertices = {
+    // Positions        // Colors         // Texture Coords
+     0.5f,  0.5f, 0.0f,  1.0f, 1.0f, 1.0f,  1.0f, 1.0f, // Top-right
+     0.5f, -0.5f, 0.0f,  1.0f, 1.0f, 1.0f,  1.0f, 0.0f, // Bottom-right
+    -0.5f, -0.5f, 0.0f,  1.0f, 1.0f, 1.0f,  0.0f, 0.0f, // Bottom-left
+    -0.5f,  0.5f, 0.0f,  1.0f, 1.0f, 1.0f,  0.0f, 1.0f  // Top-left
+};
+
+            uint[] indices = {
+    0, 1, 3, // First triangle
+    1, 2, 3  // Second triangle
+};
+
+            quadvao = GL.GenVertexArray();
+            GL.BindVertexArray(quadvao);
+
+            quadvbo = GL.GenBuffer();
+            GL.BindBuffer(BufferTarget.ArrayBuffer, quadvbo);
+            GL.BufferData(BufferTarget.ArrayBuffer, vertices.Length * sizeof(float), vertices, BufferUsageHint.StaticDraw);
+
+            quadebo = GL.GenBuffer();
+            GL.BindBuffer(BufferTarget.ElementArrayBuffer, quadebo);
+            GL.BufferData(BufferTarget.ElementArrayBuffer, indices.Length * sizeof(uint), indices, BufferUsageHint.StaticDraw);
+
+            // Position attribute
+            GL.EnableVertexAttribArray(0);
+            GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 8 * sizeof(float), 0);
+
+            // Color attribute
+            GL.EnableVertexAttribArray(1);
+            GL.VertexAttribPointer(1, 3, VertexAttribPointerType.Float, false, 8 * sizeof(float), 3 * sizeof(float));
+
+            // Texture coord attribute
+            GL.EnableVertexAttribArray(2);
+            GL.VertexAttribPointer(2, 2, VertexAttribPointerType.Float, false, 8 * sizeof(float), 6 * sizeof(float));
+
+        }
         private void generateCube()
         {
             float[] vertices = {
@@ -737,6 +817,7 @@ void main()
                     GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
 
                     generateCube();
+                    generateQuad();
 
                     GL.BindVertexArray(0); // Unbind VAO
 
@@ -837,6 +918,10 @@ void main()
                                 render3DTexturedCube(widthIterator, 0, heightIterator, tiledata,
                                     mapdata.isTileDoorAdjacent(heightIterator, widthIterator),
                                     mapdata.adjacentBlockingTiles(heightIterator, widthIterator));
+                            else
+                            {                                
+                                renderTileSurface(widthIterator, -0.5f, heightIterator, dh.returnVGAFloorColor());
+                            }
                         }
                     }
 

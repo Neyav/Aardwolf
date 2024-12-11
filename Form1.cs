@@ -23,7 +23,8 @@ namespace Aardwolf
     {
         dataHandler dh = new dataHandler();
         private int _shaderprogram;
-        private int framebuffer, vao, vbo, ebo;
+        private int cubevao, cubevbo, cubeebo;
+        private int quadvao, quadvbo, quadebo;
         private int[] textures;
         private Camera camera;
         private int DoorTexture;
@@ -528,6 +529,8 @@ void main()
             int _textureEastWest = _tiletexture * 2 - 1;
             int _textureNorthSouth = _tiletexture * 2 - 2;
 
+            GL.BindVertexArray(cubevao);  // Bind VAO
+
             // Draw each face with its respective texture
             for (int face = 0; face < 6; ++face)
             {
@@ -612,58 +615,9 @@ void main()
             }
         }
 
-
-        private void button2_Click(object sender, EventArgs e)
+        private void generateCube()
         {
-            textures = new int[dh.numberOfTextures()];
-            DoorTexture = dh.getDoorTextureNumber();
-            float frameView = 14.0f;            
-            Vector2 lastMousePosition = (0,0);
-
-            var nativeWindowSettings = new NativeWindowSettings()
-            {
-                Size = new OpenTK.Mathematics.Vector2i(800, 600),
-                Title = "OpenTK Window"
-            };           
-
-            // Usage in your Load event
-            using (var game = new GameWindow(GameWindowSettings.Default, nativeWindowSettings))
-            {
-                game.Load += () =>
-                {
-                    lastMousePosition = game.MousePosition;
-
-                    GL.Enable(EnableCap.DepthTest);
-                    //GL.Enable(EnableCap.CullFace);
-                    //GL.FrontFace(FrontFaceDirection.Ccw); // Counter-clockwise defined as front
-
-                    // Shader program
-                    _shaderprogram = CreateShaderProgram();
-
-                    // Framebuffer setup
-                    framebuffer = GL.GenFramebuffer();
-                    GL.BindFramebuffer(FramebufferTarget.Framebuffer, framebuffer);
-
-                    for (int i = 0; i < dh.numberOfTextures(); i++)
-                    {
-                        textures[i] = LoadTexture(dh.getTexture(i));
-                    }
-
-                    int texture = GL.GenTexture();
-                    GL.BindTexture(TextureTarget.Texture2D, texture);
-                    GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, 800, 600, 0, PixelFormat.Rgba, PixelType.UnsignedByte, IntPtr.Zero);
-                    GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear);
-                    GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
-                    GL.FramebufferTexture2D(FramebufferTarget.Framebuffer, FramebufferAttachment.ColorAttachment0, TextureTarget.Texture2D, texture, 0);
-
-                    if (GL.CheckFramebufferStatus(FramebufferTarget.Framebuffer) != FramebufferErrorCode.FramebufferComplete)
-                    {
-                        throw new Exception("Framebuffer is not complete!");
-                    }
-
-                    GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
-
-                    float[] vertices = {
+            float[] vertices = {
     // Positions          // Colors          // Texture Coords
     -0.5f, -0.5f, -0.5f,   1.0f, 1.0f, 1.0f,   0.0f, 1.0f, // Front face
      0.5f, -0.5f, -0.5f,   1.0f, 1.0f, 1.0f,   1.0f, 1.0f,
@@ -696,7 +650,7 @@ void main()
      0.5f, -0.5f,  0.5f,   1.0f, 1.0f, 1.0f,   1.0f, 1.0f
 };
 
-                    uint[] indices = {
+            uint[] indices = {
     0,  1,  2,  2,  3,  0, // Front face
     4,  5,  6,  6,  7,  4, // Back face
     8,  9, 10, 10, 11,  8, // Top face
@@ -706,28 +660,83 @@ void main()
 };
 
 
-                    vao = GL.GenVertexArray();
-                    GL.BindVertexArray(vao);
+            cubevao = GL.GenVertexArray();
+            GL.BindVertexArray(cubevao);
 
-                    vbo = GL.GenBuffer();
-                    GL.BindBuffer(BufferTarget.ArrayBuffer, vbo);
-                    GL.BufferData(BufferTarget.ArrayBuffer, vertices.Length * sizeof(float), vertices, BufferUsageHint.StaticDraw);
+            cubevbo = GL.GenBuffer();
+            GL.BindBuffer(BufferTarget.ArrayBuffer, cubevbo);
+            GL.BufferData(BufferTarget.ArrayBuffer, vertices.Length * sizeof(float), vertices, BufferUsageHint.StaticDraw);
 
-                    ebo = GL.GenBuffer();
-                    GL.BindBuffer(BufferTarget.ElementArrayBuffer, ebo);
-                    GL.BufferData(BufferTarget.ElementArrayBuffer, indices.Length * sizeof(uint), indices, BufferUsageHint.StaticDraw);
+            cubeebo = GL.GenBuffer();
+            GL.BindBuffer(BufferTarget.ElementArrayBuffer, cubeebo);
+            GL.BufferData(BufferTarget.ElementArrayBuffer, indices.Length * sizeof(uint), indices, BufferUsageHint.StaticDraw);
 
-                    // Position attribute
-                    GL.EnableVertexAttribArray(0);
-                    GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 8 * sizeof(float), 0);
+            // Position attribute
+            GL.EnableVertexAttribArray(0);
+            GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 8 * sizeof(float), 0);
 
-                    // Color attribute
-                    GL.EnableVertexAttribArray(1);
-                    GL.VertexAttribPointer(1, 3, VertexAttribPointerType.Float, false, 8 * sizeof(float), 3 * sizeof(float));
+            // Color attribute
+            GL.EnableVertexAttribArray(1);
+            GL.VertexAttribPointer(1, 3, VertexAttribPointerType.Float, false, 8 * sizeof(float), 3 * sizeof(float));
 
-                    // Texture coord attribute
-                    GL.EnableVertexAttribArray(2);
-                    GL.VertexAttribPointer(2, 2, VertexAttribPointerType.Float, false, 8 * sizeof(float), 6 * sizeof(float));
+            // Texture coord attribute
+            GL.EnableVertexAttribArray(2);
+            GL.VertexAttribPointer(2, 2, VertexAttribPointerType.Float, false, 8 * sizeof(float), 6 * sizeof(float));
+        }
+
+        private void button2_Click(object sender, EventArgs e)
+        {
+            textures = new int[dh.numberOfTextures()];
+            DoorTexture = dh.getDoorTextureNumber();
+            float frameView = 14.0f;            
+            Vector2 lastMousePosition = (0,0);
+
+            var nativeWindowSettings = new NativeWindowSettings()
+            {
+                Size = new OpenTK.Mathematics.Vector2i(800, 600),
+                Title = "OpenTK Window"
+            };           
+
+            // Usage in your Load event
+            using (var game = new GameWindow(GameWindowSettings.Default, nativeWindowSettings))
+            {
+                game.Load += () =>
+                {
+                    int framebuffer;
+
+                    lastMousePosition = game.MousePosition;
+
+                    GL.Enable(EnableCap.DepthTest);
+                    //GL.Enable(EnableCap.CullFace);
+                    //GL.FrontFace(FrontFaceDirection.Ccw); // Counter-clockwise defined as front
+
+                    // Shader program
+                    _shaderprogram = CreateShaderProgram();
+
+                    // Framebuffer setup
+                    framebuffer = GL.GenFramebuffer();
+                    GL.BindFramebuffer(FramebufferTarget.Framebuffer, framebuffer);
+
+                    for (int i = 0; i < dh.numberOfTextures(); i++)
+                    {
+                        textures[i] = LoadTexture(dh.getTexture(i));
+                    }
+
+                    int texture = GL.GenTexture();
+                    GL.BindTexture(TextureTarget.Texture2D, texture);
+                    GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, 800, 600, 0, PixelFormat.Rgba, PixelType.UnsignedByte, IntPtr.Zero);
+                    GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear);
+                    GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
+                    GL.FramebufferTexture2D(FramebufferTarget.Framebuffer, FramebufferAttachment.ColorAttachment0, TextureTarget.Texture2D, texture, 0);
+
+                    if (GL.CheckFramebufferStatus(FramebufferTarget.Framebuffer) != FramebufferErrorCode.FramebufferComplete)
+                    {
+                        throw new Exception("Framebuffer is not complete!");
+                    }
+
+                    GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
+
+                    generateCube();
 
                     GL.BindVertexArray(0); // Unbind VAO
 
@@ -818,8 +827,6 @@ void main()
 
                     GL.UniformMatrix4(viewLoc, false, ref view);
                     GL.UniformMatrix4(projectionLoc, false, ref projection);
-
-                    GL.BindVertexArray(vao);  // Bind VAO
 
                     for (int widthIterator = 0; widthIterator < mapdata.getMapWidth(); widthIterator++)
                     {

@@ -566,6 +566,40 @@ void main()
             GL.DrawElements(PrimitiveType.Triangles, 6, DrawElementsType.UnsignedInt, 0);
         }
 
+        void renderDoorTile(dynamicMapObject doorObject)
+        {
+            if (doorObject.type != mapObjectTypes.MAPOBJECT_DOOR)
+                return;
+
+            Vector3 doorTilePosition = new Vector3(doorObject.poswidth, 0, doorObject.posheight);
+            Matrix4 model;
+            Matrix4 rotation = Matrix4.CreateRotationY(MathHelper.DegreesToRadians(90));
+            
+            if (doorObject.activatedDirection == mapDirection.DIR_EAST)
+                model = Matrix4.CreateTranslation(doorTilePosition);
+            else
+                model = rotation * Matrix4.CreateTranslation(doorTilePosition);
+
+            int modelLoc = GL.GetUniformLocation(_shaderprogram, "model");
+            GL.UniformMatrix4(modelLoc, false, ref model);
+
+            int useSolidColorLoc = GL.GetUniformLocation(_shaderprogram, "useSolidColor");
+
+            // Disable solid color rendering
+            bool useSolidColor = false;
+            GL.Uniform1(useSolidColorLoc, useSolidColor ? 1 : 0);
+
+            // Bind the texture
+            GL.ActiveTexture(TextureUnit.Texture0);
+            GL.BindTexture(TextureTarget.Texture2D, textures[DoorTexture]);
+
+            // Set the texture uniform
+            int texLocation = GL.GetUniformLocation(_shaderprogram, "ourTexture");
+            GL.Uniform1(texLocation, 0);
+
+            GL.DrawElements(PrimitiveType.Triangles, 6, DrawElementsType.UnsignedInt, 0);
+        }
+
         void renderSprite(float _x, float _y, float _z, int _spritetexture, Camera camera)
         {
             GL.BindVertexArray(quadvao);
@@ -978,10 +1012,15 @@ void main()
                                 renderTileSurface(widthIterator, -0.5f, heightIterator, dh.returnVGAFloorColor());
 
                                 int staticObjID = mapdata.getStaticObjectID(heightIterator, widthIterator);
+                                dynamicMapObject dynamicObject = mapdata.getDoorObject(heightIterator, widthIterator);
 
                                 if (staticObjID > 0)
                                 {
                                     renderSprite(widthIterator, 0, heightIterator, staticObjID - 21, camera);
+                                }
+                                else if (dynamicObject.type == mapObjectTypes.MAPOBJECT_DOOR)
+                                {
+                                    renderDoorTile(dynamicObject);
                                 }
                                 
                             }

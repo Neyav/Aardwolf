@@ -572,17 +572,11 @@ void main()
 
             Vector3 spritePosition = new Vector3(_x, _y, _z);
 
-            // Calculate the direction from the sprite to the camera
-            Vector3 direction = camera.Position - spritePosition;
+            // Use the camera's forward vector to calculate the yaw angle
+            Vector3 forward = camera.Front; 
 
-            // Calculate the yaw angle based on the direction vector
-            float spriteYaw = MathF.Atan2(direction.X, direction.Z);
-
-            // Adjust the yaw to face away from the camera
-            spriteYaw += MathF.PI;
-
-            // Correct any off-axis issues if necessary (comment out or adjust as needed)
-            // spriteYaw += 90.0f;
+            // Calculate the yaw angle based on the forward vector
+            float spriteYaw = MathF.Atan2(forward.X, forward.Z);
 
             // Create the rotation matrix using the calculated yaw angle
             Matrix4 rotation = Matrix4.CreateRotationY(spriteYaw);
@@ -609,6 +603,7 @@ void main()
 
             GL.DrawElements(PrimitiveType.Triangles, 6, DrawElementsType.UnsignedInt, 0);
         }
+
 
         void render3DTexturedCube(float _x, float _y, float _z, int _tiletexture, mapDirection _doorAdjacent, mapDirection _wallAdjacent)
         {

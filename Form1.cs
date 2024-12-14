@@ -14,6 +14,7 @@ using AardwolfCore;
 using System.Drawing.Drawing2D;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 using ErrorCode = OpenTK.Graphics.OpenGL.ErrorCode;
+using Aardwolf.Render;
 
 
 
@@ -23,8 +24,9 @@ namespace Aardwolf
     {
         dataHandler dh = new dataHandler();
         private int _shaderprogram;
-        private int cubevao, cubevbo, cubeebo;
-        private int quadvao, quadvbo, quadebo;
+        private VAO cubevao, quadvao;
+        private VBO cubevbo, quadvbo;
+        private EBO cubeebo, quadebo;
         private int[] textures;
         private int[] sprites;
         private Camera camera;
@@ -543,7 +545,9 @@ void main()
 
         void renderTileSurface(float _x, float _y, float _z, RGBA _tileColour)
         {
-            GL.BindVertexArray(quadvao);
+            quadvao.Bind();
+            quadvbo.Bind();
+            quadebo.Bind();
 
             Vector3 tilePosition = new Vector3(_x, _y, _z);
             Matrix4 model = Matrix4.CreateRotationX(MathHelper.DegreesToRadians(-90.0f)) * Matrix4.CreateTranslation(tilePosition);
@@ -559,9 +563,7 @@ void main()
 
             // Enable solid color rendering
             bool useSolidColor = true; 
-            GL.Uniform1(useSolidColorLoc, useSolidColor ? 1 : 0);
-
-            GL.BindVertexArray(quadvao);
+            GL.Uniform1(useSolidColorLoc, useSolidColor ? 1 : 0);            
 
             GL.DrawElements(PrimitiveType.Triangles, 6, DrawElementsType.UnsignedInt, 0);
         }
@@ -602,7 +604,9 @@ void main()
 
         void renderSprite(float _x, float _y, float _z, int _spritetexture, Camera camera)
         {
-            GL.BindVertexArray(quadvao);
+            quadvao.Bind();
+            quadvbo.Bind();
+            quadebo.Bind();
 
             Vector3 spritePosition = new Vector3(_x, _y, _z);
 
@@ -650,7 +654,9 @@ void main()
             int _textureEastWest = _tiletexture * 2 - 1;
             int _textureNorthSouth = _tiletexture * 2 - 2;
 
-            GL.BindVertexArray(cubevao);  // Bind VAO
+            cubevao.Bind();  // Bind VAO
+            cubevbo.Bind();
+            cubeebo.Bind();
 
             // Draw each face with its respective texture
             for (int face = 0; face < 6; ++face)
@@ -757,28 +763,17 @@ void main()
     1, 2, 3  // Second triangle
 };
 
-            quadvao = GL.GenVertexArray();
-            GL.BindVertexArray(quadvao);
+            quadvao = new VAO();
+            
+            quadvbo = new VBO();
+            quadvbo.Bind(BufferTarget.ArrayBuffer);
+            quadvbo.SetData(vertices, BufferUsageHint.StaticDraw);
 
-            quadvbo = GL.GenBuffer();
-            GL.BindBuffer(BufferTarget.ArrayBuffer, quadvbo);
-            GL.BufferData(BufferTarget.ArrayBuffer, vertices.Length * sizeof(float), vertices, BufferUsageHint.StaticDraw);
 
-            quadebo = GL.GenBuffer();
-            GL.BindBuffer(BufferTarget.ElementArrayBuffer, quadebo);
-            GL.BufferData(BufferTarget.ElementArrayBuffer, indices.Length * sizeof(uint), indices, BufferUsageHint.StaticDraw);
+            quadebo = new EBO();
+            quadebo.SetData(indices, BufferUsageHint.StaticDraw);
 
-            // Position attribute
-            GL.EnableVertexAttribArray(0);
-            GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 8 * sizeof(float), 0);
-
-            // Color attribute
-            GL.EnableVertexAttribArray(1);
-            GL.VertexAttribPointer(1, 3, VertexAttribPointerType.Float, false, 8 * sizeof(float), 3 * sizeof(float));
-
-            // Texture coord attribute
-            GL.EnableVertexAttribArray(2);
-            GL.VertexAttribPointer(2, 2, VertexAttribPointerType.Float, false, 8 * sizeof(float), 6 * sizeof(float));
+            quadvao.SetAttributes();
 
         }
         private void generateCube()
@@ -826,28 +821,17 @@ void main()
 };
 
 
-            cubevao = GL.GenVertexArray();
-            GL.BindVertexArray(cubevao);
+            cubevao = new VAO();
 
-            cubevbo = GL.GenBuffer();
-            GL.BindBuffer(BufferTarget.ArrayBuffer, cubevbo);
-            GL.BufferData(BufferTarget.ArrayBuffer, vertices.Length * sizeof(float), vertices, BufferUsageHint.StaticDraw);
+            cubevbo = new VBO();
+            cubevbo.Bind(BufferTarget.ArrayBuffer);
+            cubevbo.SetData(vertices, BufferUsageHint.StaticDraw);
 
-            cubeebo = GL.GenBuffer();
-            GL.BindBuffer(BufferTarget.ElementArrayBuffer, cubeebo);
-            GL.BufferData(BufferTarget.ElementArrayBuffer, indices.Length * sizeof(uint), indices, BufferUsageHint.StaticDraw);
 
-            // Position attribute
-            GL.EnableVertexAttribArray(0);
-            GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 8 * sizeof(float), 0);
+            cubeebo = new EBO();
+            cubeebo.SetData(indices, BufferUsageHint.StaticDraw);
 
-            // Color attribute
-            GL.EnableVertexAttribArray(1);
-            GL.VertexAttribPointer(1, 3, VertexAttribPointerType.Float, false, 8 * sizeof(float), 3 * sizeof(float));
-
-            // Texture coord attribute
-            GL.EnableVertexAttribArray(2);
-            GL.VertexAttribPointer(2, 2, VertexAttribPointerType.Float, false, 8 * sizeof(float), 6 * sizeof(float));
+            cubevao.SetAttributes();
         }
 
         private void button2_Click(object sender, EventArgs e)

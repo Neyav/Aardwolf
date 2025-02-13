@@ -608,6 +608,13 @@ void main()
             quadvbo.Bind();
             quadebo.Bind();
 
+            SpriteFrame spriteFrame = new SpriteFrame();
+
+            // TODO: SPRITE WORK IN PROGRESS
+            //spriteFrame.setFrames(50, 51, 52, 53, 54, 55, 56, 57);
+
+            //_spritetexture = spriteFrame.getFrame(0, camera.Yaw);
+
             Vector3 spritePosition = new Vector3(_x, _y, _z);
 
             // Use the camera's forward vector to calculate the yaw angle

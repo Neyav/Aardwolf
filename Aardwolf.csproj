@@ -15,7 +15,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\AardwolfCore\AardwolfCore.csproj" />
-    <ProjectReference Include="..\AardwolfDependiences\AardwolfCore.csproj" />
   </ItemGroup>
 
   <ItemGroup>

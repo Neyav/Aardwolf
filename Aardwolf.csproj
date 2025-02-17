@@ -10,7 +10,7 @@
 
   <ItemGroup>
     <PackageReference Include="ADLMidi.NET" Version="1.0.19" />
-    <PackageReference Include="OpenTK" Version="4.9.1" />
+    <PackageReference Include="OpenTK" Version="4.9.3" />
   </ItemGroup>
 
   <ItemGroup>

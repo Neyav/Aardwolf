@@ -746,8 +746,7 @@ void main()
                     int useSolidColorLoc = GL.GetUniformLocation(_shaderprogram, "useSolidColor");
 
                     // Disable solid color rendering
-                    bool useSolidColor = false;
-                    GL.Uniform1(useSolidColorLoc, useSolidColor ? 1 : 0);
+                    GL.Uniform1(useSolidColorLoc, 0);
 
                     // Draw the face
                     GL.DrawElements(PrimitiveType.Triangles, 6, DrawElementsType.UnsignedInt, new IntPtr(face * 6 * sizeof(uint)));

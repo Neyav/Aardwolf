@@ -15,6 +15,7 @@ using System.Drawing.Drawing2D;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 using ErrorCode = OpenTK.Graphics.OpenGL.ErrorCode;
 using Aardwolf.Render;
+using System.Security.Cryptography.X509Certificates;
 
 
 
@@ -22,7 +23,7 @@ namespace Aardwolf
 {
     public partial class Form1 : Form
     {
-        dataHandler dh = new dataHandler();
+        private gamesession _gamesession;
         private int _shaderprogram;
         private VAO cubevao, quadvao;
         private VBO cubevbo, quadvbo;
@@ -45,28 +46,16 @@ namespace Aardwolf
             comboBox2.Items.Clear();
             button3.Enabled = false;
 
-            dh = new dataHandler();
+            _gamesession = new gamesession(radioButton2.Checked);
 
-            if (radioButton1.Checked)
-            {
-                dh.loadAllData(false);
-            }
-            else
-            {
-                dh.loadAllData(true);
-            }
-
-            dh.parseLevelData();
-            dh.prepareVSWAP();
-
-            int levels = dh.getLevels();
+            int levels = _gamesession.getLevels();
 
             for (int i = 0; i < levels; i++)
             {
-                comboBox1.Items.Add(dh.getLevelName(i));
+                comboBox1.Items.Add(_gamesession.getLevelName(i));
             }
 
-            VSWAPHeader VSWAPH = dh.getVSWAPHeader;
+            VSWAPHeader VSWAPH = _gamesession.TEST_getVSWAPHeader();
 
             for (int i = 0; i < VSWAPH.spriteStart; i++)
             {
@@ -80,6 +69,7 @@ namespace Aardwolf
 
         private Bitmap rendercurrentLevel(int sizeWidth, int sizeHeight)
         {
+            dataHandler dh = _gamesession.TEST_getDataHandler();
             int selectedLevel = comboBox1.SelectedIndex;
             bool _isSOD = false;
             int playerSpawnHeight = 0;
@@ -203,7 +193,7 @@ namespace Aardwolf
                 }
             }
 
-            if (checkBox1.Checked || checkBox4.Checked )
+            if (checkBox1.Checked || checkBox4.Checked)
             {
                 pathfinder finder = new pathfinder(ref mapdata);
 
@@ -273,14 +263,14 @@ namespace Aardwolf
                         int tileWidth = (int)((float)sizeWidth / mapdata.getMapWidth());
                         int tileHeight = (int)((float)sizeHeight / mapdata.getMapHeight());
                         int drawX = node.widthPosition * tileWidth + (tileWidth / 2);
-                        int drawY = node.heightPosition * tileHeight + (tileHeight / 2);                        
+                        int drawY = node.heightPosition * tileHeight + (tileHeight / 2);
 
                         using (Graphics g = Graphics.FromImage(bitmap))
                         {
                             g.FillEllipse(new SolidBrush(Color.FromArgb(100, 255, 0, 0)), drawX - 15, drawY - 15, 30, 30);
 
                             if (node.endPoint)
-                                completed = true;                            
+                                completed = true;
 
                             // Get the connected nodes for this node.
                             List<pathNode> connectedNodes = finder.returnConnectedNodes(node.heightPosition, node.widthPosition);
@@ -384,6 +374,8 @@ namespace Aardwolf
 
         private void comboBox2_SelectedIndexChanged(object sender, EventArgs e)
         {
+            dataHandler dh = _gamesession.TEST_getDataHandler();
+
 
             if (comboBox2.SelectedIndex >= dh.getVSWAPHeader.spriteStart)
             {
@@ -562,8 +554,8 @@ void main()
             GL.Uniform3(solidColorLoc, new Vector3(_tileColour.r / 255.0f, _tileColour.g / 255.0f, _tileColour.b / 255.0f));
 
             // Enable solid color rendering
-            bool useSolidColor = true; 
-            GL.Uniform1(useSolidColorLoc, useSolidColor ? 1 : 0);            
+            bool useSolidColor = true;
+            GL.Uniform1(useSolidColorLoc, useSolidColor ? 1 : 0);
 
             GL.DrawElements(PrimitiveType.Triangles, 6, DrawElementsType.UnsignedInt, 0);
         }
@@ -576,7 +568,7 @@ void main()
             Vector3 doorTilePosition = new Vector3(doorObject.poswidth, 0, doorObject.posheight);
             Matrix4 model;
             Matrix4 rotation = Matrix4.CreateRotationY(MathHelper.DegreesToRadians(90));
-            
+
             if (doorObject.activatedDirection == mapDirection.DIR_EAST)
                 model = Matrix4.CreateTranslation(doorTilePosition);
             else
@@ -618,7 +610,7 @@ void main()
             Vector3 spritePosition = new Vector3(_x, _y, _z);
 
             // Use the camera's forward vector to calculate the yaw angle
-            Vector3 forward = camera.Front; 
+            Vector3 forward = camera.Front;
 
             // Calculate the yaw angle based on the forward vector
             float spriteYaw = MathF.Atan2(forward.X, forward.Z);
@@ -712,7 +704,7 @@ void main()
                         {
                             textureToBind = _textureNorthSouth;
                             break;
-                        }                        
+                        }
                     case 1: // South Face
                         if ((_wallAdjacent & mapDirection.DIR_SOUTH) == mapDirection.DIR_SOUTH)
                             break;
@@ -770,7 +762,7 @@ void main()
 };
 
             quadvao = new VAO();
-            
+
             quadvbo = new VBO();
             quadvbo.Bind(BufferTarget.ArrayBuffer);
             quadvbo.SetData(vertices, BufferUsageHint.StaticDraw);
@@ -842,17 +834,19 @@ void main()
 
         private void button2_Click(object sender, EventArgs e)
         {
+            dataHandler dh = _gamesession.TEST_getDataHandler();
+
             textures = new int[dh.numberOfTextures()];
             sprites = new int[dh.numberOfSprites()];
             DoorTexture = dh.getDoorTextureNumber();
-                        
-            Vector2 lastMousePosition = (0,0);
+
+            Vector2 lastMousePosition = (0, 0);
 
             var nativeWindowSettings = new NativeWindowSettings()
             {
                 Size = new OpenTK.Mathematics.Vector2i(800, 600),
                 Title = "OpenTK Window"
-            };           
+            };
 
             // Usage in your Load event
             using (var game = new GameWindow(GameWindowSettings.Default, nativeWindowSettings))
@@ -867,7 +861,7 @@ void main()
                     //GL.Enable(EnableCap.CullFace);
                     //GL.FrontFace(FrontFaceDirection.Ccw); // Counter-clockwise defined as front
                     // Enable blending
-                    GL.Enable(EnableCap.Blend); 
+                    GL.Enable(EnableCap.Blend);
                     GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
 
                     // Shader program
@@ -979,7 +973,7 @@ void main()
                     GL.Uniform1(textureLocation, 0);
 
                     // Set the model, view, and projection matrices
-                    Matrix4 view = camera.GetViewMatrix(); 
+                    Matrix4 view = camera.GetViewMatrix();
                     Matrix4 projection = Matrix4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(camera.Zoom), game.Size.X / (float)game.Size.Y, 0.1f, 100.0f);
 
                     int viewLoc = GL.GetUniformLocation(_shaderprogram, "view");
@@ -998,7 +992,7 @@ void main()
                                     mapdata.isTileDoorAdjacent(heightIterator, widthIterator),
                                     mapdata.adjacentBlockingTiles(heightIterator, widthIterator));
                             else
-                            {                                   
+                            {
                                 renderTileSurface(widthIterator, -0.5f, heightIterator, dh.returnVGAFloorColor());
 
                                 int staticObjID = mapdata.getStaticObjectID(heightIterator, widthIterator);
@@ -1012,7 +1006,7 @@ void main()
                                 {
                                     renderDoorTile(dynamicObject);
                                 }
-                                
+
                             }
                         }
                     }
@@ -1074,6 +1068,11 @@ void main()
                 checkBox5.Enabled = false;
                 checkBox5.Checked = false;
             }
+        }
+
+        private void radioButton1_CheckedChanged(object sender, EventArgs e)
+        {
+
         }
     }
 }

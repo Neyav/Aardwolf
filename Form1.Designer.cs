@@ -39,13 +39,13 @@
             pictureBox2 = new PictureBox();
             button2 = new Button();
             groupBox1 = new GroupBox();
+            checkBox5 = new CheckBox();
             checkBox4 = new CheckBox();
             checkBox3 = new CheckBox();
             button3 = new Button();
             checkBox2 = new CheckBox();
             checkBox1 = new CheckBox();
             progressBar1 = new ProgressBar();
-            checkBox5 = new CheckBox();
             ((System.ComponentModel.ISupportInitialize)pictureBox1).BeginInit();
             ((System.ComponentModel.ISupportInitialize)pictureBox2).BeginInit();
             groupBox1.SuspendLayout();
@@ -90,6 +90,7 @@
             radioButton1.TabStop = true;
             radioButton1.Text = "Wolfenstein 3D";
             radioButton1.UseVisualStyleBackColor = true;
+            radioButton1.CheckedChanged += radioButton1_CheckedChanged;
             // 
             // radioButton2
             // 
@@ -167,6 +168,17 @@
             groupBox1.TabStop = false;
             groupBox1.Text = "Map View Controls";
             // 
+            // checkBox5
+            // 
+            checkBox5.AutoSize = true;
+            checkBox5.Enabled = false;
+            checkBox5.Location = new Point(178, 43);
+            checkBox5.Name = "checkBox5";
+            checkBox5.Size = new Size(134, 19);
+            checkBox5.TabIndex = 5;
+            checkBox5.Text = "Validate Node Graph";
+            checkBox5.UseVisualStyleBackColor = true;
+            // 
             // checkBox4
             // 
             checkBox4.AutoSize = true;
@@ -230,17 +242,6 @@
             progressBar1.Name = "progressBar1";
             progressBar1.Size = new Size(533, 41);
             progressBar1.TabIndex = 11;
-            // 
-            // checkBox5
-            // 
-            checkBox5.AutoSize = true;
-            checkBox5.Enabled = false;
-            checkBox5.Location = new Point(178, 43);
-            checkBox5.Name = "checkBox5";
-            checkBox5.Size = new Size(134, 19);
-            checkBox5.TabIndex = 5;
-            checkBox5.Text = "Validate Node Graph";
-            checkBox5.UseVisualStyleBackColor = true;
             // 
             // Form1
             // 

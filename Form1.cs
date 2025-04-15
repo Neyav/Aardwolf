@@ -444,6 +444,11 @@ void main()
     {
         // Render using the texture
         FragColor = texture(ourTexture, TexCoord);
+
+        //if (!gl_FrontFacing) 
+        //{
+        //    FragColor.a *= 0.3;
+        //}
     }
 
     // Optionally discard fully transparent fragments

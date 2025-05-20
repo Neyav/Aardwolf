@@ -38,7 +38,7 @@ namespace Aardwolf
             SpriteTexture = new int[8];
         }
     }
-    internal class SpriteTextures
+    internal class SpriteTexture
     {
        
     }

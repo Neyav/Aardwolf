@@ -221,7 +221,7 @@ namespace Aardwolf
                     {
                         for (int y = 0; y < mapdata.getMapHeight(); y++)
                         {
-                            if (finder.returnNode(y, x) != null)
+                            /*if (finder.returnNode(y, x) != null)
                             {
                                 int tileWidth = (int)((float)sizeWidth / mapdata.getMapWidth());
                                 int tileHeight = (int)((float)sizeHeight / mapdata.getMapHeight());
@@ -246,7 +246,7 @@ namespace Aardwolf
                                         g.DrawLine(new Pen(Color.FromArgb(50, 0, 255, 0)), drawX + (tileWidth / 2), drawY + (tileHeight / 2), drawX2, drawY2);
                                     }
                                 }
-                            }
+                            }*/
 
                         }
                     }
@@ -254,7 +254,7 @@ namespace Aardwolf
 
                 if (checkBox5.Checked)
                 {
-                    List<pathNode> traversableNodes = finder.returnTraversableNodes();
+                    /*List<pathNode> traversableNodes = finder.returnTraversableNodes();
                     bool completed = false;
 
                     // For each Node draw a red circle at the center of the tile.
@@ -284,9 +284,9 @@ namespace Aardwolf
                                 g.DrawLine(new Pen(Color.FromArgb(100, 255, 0, 0), 2), drawX, drawY, drawX2, drawY2);
                             }
                         }
-                    }
+                    }*/
 
-                    if (completed)
+                    /*if (completed)
                     {
                         // Write confirmed in all black on the top left of the image.
                         using (Graphics g = Graphics.FromImage(bitmap))
@@ -294,11 +294,11 @@ namespace Aardwolf
                             g.DrawString("Confirmed", new Font("Arial", 24), new SolidBrush(Color.Yellow), 0, 0);
                         }
 
-                    }
+                    }*/
                 }
 
                 // Draw the pathfinder solution.
-                List<pathNode> shortestRoute = finder.returnRoute();
+                /*List<pathNode> shortestRoute = finder.returnRoute();
 
                 Debug.WriteLine("Shortest route length: " + shortestRoute.Count);
 
@@ -317,45 +317,10 @@ namespace Aardwolf
                     {
                         g.DrawLine(new Pen(Color.FromArgb(100, 0, 0), 5), drawX, drawY, drawX2, drawY2);
                     }
-                }
-
-                /*pathfinder finder = new pathfinder(ref mapdata);
-
-                if (checkBox2.Checked)
-                    finder.ignorePushWalls = true;
-                else
-                    finder.ignorePushWalls = false;
-
-                if (checkBox3.Checked)
-                    finder.allSecrets = true;
-                else
-                    finder.allSecrets = false;
-
-                finder.prepareBaseFloor();
-                finder.setStart(playerSpawnHeight, playerSpawnWidth);
-                finder.solveMaze();
-
-                // Draw the pathfinder solution.
-                for (int x = 0; x < mapdata.getMapWidth(); x++)
-                {
-                    for (int y = 0; y < mapdata.getMapHeight(); y++)
-                    {
-                        if (finder.isTileOnPath(y, x))
-                        {
-                            int tileWidth = (int)((float)sizeWidth / mapdata.getMapWidth());
-                            int tileHeight = (int)((float)sizeHeight / mapdata.getMapHeight());
-                            int drawX = x * tileWidth;
-                            int drawY = y * tileHeight;
-
-                            using (Graphics g = Graphics.FromImage(bitmap))
-                            {
-                                g.FillRectangle(new SolidBrush(Color.FromArgb(60, 0, 255, 0)), drawX, drawY, tileWidth, tileHeight);
-                            }
-                        }
-                    }
                 }*/
-            }
 
+                
+            }
 
             return bitmap;
         }

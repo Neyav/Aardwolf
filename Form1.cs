@@ -33,6 +33,7 @@ namespace Aardwolf
         private int[] sprites;
         private Camera camera;
         private int DoorTexture;
+        List<AIAnimatedActor> AIActorList = new List<AIAnimatedActor>();
 
         maphandler mapdata;
 
@@ -83,6 +84,8 @@ namespace Aardwolf
 
             mapdata = new maphandler(_isSOD);
             mapdata.importMapData(dh.getLevelData(selectedLevel), dh.levelHeight(selectedLevel), dh.levelWidth(selectedLevel));
+
+            AIActorList.Clear();
 
             Bitmap bitmap = new Bitmap(sizeWidth, sizeHeight);
 
@@ -168,8 +171,27 @@ namespace Aardwolf
                             renderSprite = tileActor - 21;
                         }
 
-                        if ((tileActor >= 108 && tileActor <= 111) || (tileActor >= 144 && tileActor <= 147) || (tileActor >= 180 && tileActor <= 183))
-                            renderSprite = 50; // Standing Guard.
+                        actorMapObject AImapObject = mapdata.getAIactorObject(y, x);
+
+                        if (AImapObject.actorType == "GuardStandHard")
+                        {
+                            renderSprite = 50; // Guard Stand Hard sprite.
+                            AIAnimatedActor guardActor = new AIGuard(AImapObject.poswidth, AImapObject.posheight, AImapObject.angle);
+                            AIActorList.Add(guardActor);
+                        }
+                        else if (AImapObject.actorType == "GuardStandMedium")
+                        {
+                            renderSprite = 50;
+                            AIAnimatedActor guardActor = new AIGuard(AImapObject.poswidth, AImapObject.posheight, AImapObject.angle);
+                            AIActorList.Add(guardActor);
+                        }
+                        else if (AImapObject.actorType == "GuardStandEasy")
+                        {
+                            renderSprite = 50;
+                            AIAnimatedActor guardActor = new AIGuard(AImapObject.poswidth, AImapObject.posheight, AImapObject.angle);
+                            AIActorList.Add(guardActor);
+                        }
+
 
                         if (renderSprite >= 0) // We have a sprite to render.
                         {
@@ -809,7 +831,6 @@ void main()
         private void button2_Click(object sender, EventArgs e)
         {
             dataHandler dh = _gamesession.TEST_getDataHandler();
-            List<AIAnimatedActor> AIActorList = new List<AIAnimatedActor>();
 
             AIActorList.Add(new AIGuard(0.5f, 0.5f, 0));
 

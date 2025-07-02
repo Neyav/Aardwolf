@@ -58,6 +58,11 @@ namespace Aardwolf
             // Determine the frame index based on the relative angle
             int viewFrame = (int)(relativeAngle / 45) % 8;
 
+            if (viewFrame < 0)
+                viewFrame = 0;
+            else if (viewFrame > 7)
+                viewFrame = 8;
+
             return _SpriteTexture[viewFrame];            
         }
         public bool calculateNextFrame(int timeDelta)

@@ -15,6 +15,7 @@ using System.Drawing.Drawing2D;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 using ErrorCode = OpenTK.Graphics.OpenGL.ErrorCode;
 using Aardwolf.Render;
+using Aardwolf.AIActors;
 using System.Security.Cryptography.X509Certificates;
 
 
@@ -805,6 +806,9 @@ void main()
         private void button2_Click(object sender, EventArgs e)
         {
             dataHandler dh = _gamesession.TEST_getDataHandler();
+            List<AIAnimatedActor> AIActorList = new List<AIAnimatedActor>();
+
+            AIActorList.Add(new AIGuard(0.5f, 0.5f));
 
             textures = new int[dh.numberOfTextures()];
             sprites = new int[dh.numberOfSprites()];
@@ -979,6 +983,13 @@ void main()
 
                             }
                         }
+                    }
+
+                    foreach (AIAnimatedActor actor in AIActorList)
+                    {
+                        // Render the AI actor
+                        renderSprite(actor.WidthPosition, 0, actor.HeightPosition, actor.SpriteFrame.getFrame(0, camera.Yaw), camera);
+                        
                     }
 
                     GL.BindVertexArray(0);  // Unbind VAO

@@ -808,7 +808,7 @@ void main()
             dataHandler dh = _gamesession.TEST_getDataHandler();
             List<AIAnimatedActor> AIActorList = new List<AIAnimatedActor>();
 
-            AIActorList.Add(new AIGuard(0.5f, 0.5f));
+            AIActorList.Add(new AIGuard(0.5f, 0.5f, 0));
 
             textures = new int[dh.numberOfTextures()];
             sprites = new int[dh.numberOfSprites()];
@@ -988,7 +988,7 @@ void main()
                     foreach (AIAnimatedActor actor in AIActorList)
                     {
                         // Render the AI actor
-                        renderSprite(actor.WidthPosition, 0, actor.HeightPosition, actor.SpriteFrame.getFrame(0, camera.Yaw), camera);
+                        renderSprite(actor.WidthPosition, 0, actor.HeightPosition, actor.getAnimationFrame(camera, args.Time), camera);
                         
                     }
 

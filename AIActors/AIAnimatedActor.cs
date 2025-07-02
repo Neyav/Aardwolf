@@ -9,6 +9,17 @@ namespace Aardwolf.AIActors
 {
     internal class AIAnimatedActor : AIActor
     {
-        public SpriteFrame SpriteFrame { get; set; }
+        public SpriteAnimation _spriteAnimation { get; set; }
+
+        public int getAnimationFrame(Camera camera, double timeDelta)
+        {
+            // Get the current frame from the sprite animation
+            return _spriteAnimation.getFrame(camera, Angle, timeDelta);
+        }
+
+        public AIAnimatedActor()
+        {
+            _spriteAnimation = new SpriteAnimation();
+        }
     }
 }

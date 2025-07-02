@@ -168,6 +168,9 @@ namespace Aardwolf
                             renderSprite = tileActor - 21;
                         }
 
+                        if ((tileActor >= 108 && tileActor <= 111) || (tileActor >= 144 && tileActor <= 147) || (tileActor >= 180 && tileActor <= 183))
+                            renderSprite = 50; // Standing Guard.
+
                         if (renderSprite >= 0) // We have a sprite to render.
                         {
                             Bitmap sprite = dh.getSprite(renderSprite);

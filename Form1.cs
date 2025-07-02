@@ -832,7 +832,7 @@ void main()
         {
             dataHandler dh = _gamesession.TEST_getDataHandler();
 
-            AIActorList.Add(new AIGuard(0.5f, 0.5f, 0));
+            RGBA CeilingColor = dh.returnVGACeilingColor(comboBox1.SelectedIndex);
 
             textures = new int[dh.numberOfTextures()];
             sprites = new int[dh.numberOfSprites()];
@@ -901,7 +901,7 @@ void main()
                     CheckOpenGLError();
 
                     // Initialize the camera
-                    Vector3 cameraPosition = new Vector3(0.0f, 0.0f, 3.0f);
+                    Vector3 cameraPosition = new Vector3(mapdata.playerSpawnWidth, 0.0f, mapdata.playerSpawnHeight);
                     Vector3 worldUp = Vector3.UnitY;
                     float yaw = -90.0f;
                     float pitch = 0.0f;
@@ -992,6 +992,7 @@ void main()
                             else
                             {
                                 renderTileSurface(widthIterator, -0.5f, heightIterator, dh.returnVGAFloorColor());
+                                renderTileSurface(widthIterator, 0.5f, heightIterator, CeilingColor);
 
                                 int staticObjID = mapdata.getStaticObjectID(heightIterator, widthIterator);
                                 dynamicMapObject dynamicObject = mapdata.getDoorObject(heightIterator, widthIterator);

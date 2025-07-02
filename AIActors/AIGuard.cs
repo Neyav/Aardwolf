@@ -27,7 +27,7 @@ namespace Aardwolf.AIActors
             _spriteAnimation.addFrame("s_grdpath3s", true, 74, 75, 76, 77, 78, 79, 80, 81, 5, "s_grdpath4");
             _spriteAnimation.addFrame("s_grdpath4", true, 82, 83, 84, 85, 86, 87, 88, 89, 15, "s_grdpath1");
 
-            _spriteAnimation.setCurrentFrame("s_grdpath1");
+            _spriteAnimation.setCurrentFrame("s_grdstand");
         }
     }
 }

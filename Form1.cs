@@ -191,6 +191,32 @@ namespace Aardwolf
                             AIAnimatedActor guardActor = new AIGuard(AImapObject.poswidth, AImapObject.posheight, AImapObject.angle);
                             AIActorList.Add(guardActor);
                         }
+                        else if (AImapObject.actorType == "GuardPathHard")
+                        {
+                            renderSprite = 58; // Guard Path Hard sprite.
+                            AIAnimatedActor guardActor = new AIGuard(AImapObject.poswidth, AImapObject.posheight, AImapObject.angle);
+                            guardActor.forceAnimationFrame("s_grdpath1");
+                            AIActorList.Add(guardActor);
+                        }
+                        else if (AImapObject.actorType == "GuardPathMedium")
+                        {
+                            renderSprite = 58; // Guard Path Medium sprite.
+                            AIAnimatedActor guardActor = new AIGuard(AImapObject.poswidth, AImapObject.posheight, AImapObject.angle);
+                            guardActor.forceAnimationFrame("s_grdpath1");
+                            AIActorList.Add(guardActor);
+                        }
+                        else if (AImapObject.actorType == "GuardPathEasy")
+                        {
+                            renderSprite = 58; // Guard Path Easy sprite.
+                            AIAnimatedActor guardActor = new AIGuard(AImapObject.poswidth, AImapObject.posheight, AImapObject.angle);
+                            guardActor.forceAnimationFrame("s_grdpath1");
+                            AIActorList.Add(guardActor);
+                        }
+                        else if (AImapObject.actorType == "GuardDead")
+                        {
+                            renderSprite = 95;
+                            // Animation frames aren't in yet.
+                        }
 
 
                         if (renderSprite >= 0) // We have a sprite to render.

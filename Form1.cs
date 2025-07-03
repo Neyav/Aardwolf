@@ -215,7 +215,9 @@ namespace Aardwolf
                         else if (AImapObject.actorType == "GuardDead")
                         {
                             renderSprite = 95;
-                            // Animation frames aren't in yet.
+                            AIAnimatedActor guardActor = new AIGuard(AImapObject.poswidth, AImapObject.posheight, AImapObject.angle);
+                            guardActor.forceAnimationFrame("s_grddie4");
+                            AIActorList.Add(guardActor);
                         }
 
 
@@ -1018,7 +1020,9 @@ void main()
                             else
                             {
                                 renderTileSurface(widthIterator, -0.5f, heightIterator, dh.returnVGAFloorColor());
-                                renderTileSurface(widthIterator, 0.5f, heightIterator, CeilingColor);
+                                // Render the ceiling but only if the camera isn't above the ceiling height.
+                                if (camera.Position.Y < 0.5f)
+                                    renderTileSurface(widthIterator, 0.5f, heightIterator, CeilingColor);
 
                                 int staticObjID = mapdata.getStaticObjectID(heightIterator, widthIterator);
                                 dynamicMapObject dynamicObject = mapdata.getDoorObject(heightIterator, widthIterator);

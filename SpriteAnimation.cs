@@ -11,12 +11,18 @@ namespace Aardwolf
         Dictionary<string, SpriteFrame> _spriteFrames;
         string _CurrentFrame;
 
-        public void addFrame (string frameName, bool rotate, int front, int frontLeft, int left, int backLeft, int back, int backRight, int right, int frontRight, int spriteTime, string nextSprite)
+        public void addFrame (string frameName, int front, int frontLeft, int left, int backLeft, int back, int backRight, int right, int frontRight, int spriteTime, string nextSprite)
         {
             SpriteFrame frame = new SpriteFrame();
             frame.setFrames(front, frontLeft, left, backLeft, back, backRight, right, frontRight, 
                 (int)(1000f / 70f * spriteTime), nextSprite); // Convert spriteTime from 70hz to milliseconds
             _spriteFrames.Add(frameName, frame);
+        }
+        public void addFrame (string frameName, int front, int spriteTime, string nextSprite)
+        {
+            SpriteFrame frame = new SpriteFrame();
+            frame.setFrames(front, (int)(1000f / 70f * spriteTime), nextSprite);
+            _spriteFrames.Add (frameName, frame);
         }
 
         public void setCurrentFrame(string frameName)

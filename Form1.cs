@@ -11,11 +11,13 @@ using OpenTK.Windowing.Desktop;
 using OpenTK.Windowing.Common;
 using OpenTK.Mathematics;
 using AardwolfCore;
+using AardwolfCore.Actors;
+using AardwolfCore.Actors.Enemies;
+using AardwolfCore.Animation;
 using System.Drawing.Drawing2D;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 using ErrorCode = OpenTK.Graphics.OpenGL.ErrorCode;
 using Aardwolf.Render;
-using Aardwolf.AIActors;
 using System.Security.Cryptography.X509Certificates;
 
 
@@ -33,7 +35,7 @@ namespace Aardwolf
         private int[] sprites;
         private Camera camera;
         private int DoorTexture;
-        List<AIAnimatedActor> AIActorList = new List<AIAnimatedActor>();
+        List<AnimatedActor> AIActorList = new List<AnimatedActor>();
 
         maphandler mapdata;
 
@@ -176,46 +178,46 @@ namespace Aardwolf
                         if (AImapObject.actorType == "GuardStandHard")
                         {
                             renderSprite = 50; // Guard Stand Hard sprite.
-                            AIAnimatedActor guardActor = new AIGuard(AImapObject.poswidth, AImapObject.posheight, AImapObject.angle);
+                            AnimatedActor guardActor = new AIGuard(AImapObject.poswidth, AImapObject.posheight, AImapObject.angle);
                             AIActorList.Add(guardActor);
                         }
                         else if (AImapObject.actorType == "GuardStandMedium")
                         {
                             renderSprite = 50;
-                            AIAnimatedActor guardActor = new AIGuard(AImapObject.poswidth, AImapObject.posheight, AImapObject.angle);
+                            AnimatedActor guardActor = new AIGuard(AImapObject.poswidth, AImapObject.posheight, AImapObject.angle);
                             AIActorList.Add(guardActor);
                         }
                         else if (AImapObject.actorType == "GuardStandEasy")
                         {
                             renderSprite = 50;
-                            AIAnimatedActor guardActor = new AIGuard(AImapObject.poswidth, AImapObject.posheight, AImapObject.angle);
+                            AnimatedActor guardActor = new AIGuard(AImapObject.poswidth, AImapObject.posheight, AImapObject.angle);
                             AIActorList.Add(guardActor);
                         }
                         else if (AImapObject.actorType == "GuardPathHard")
                         {
                             renderSprite = 58; // Guard Path Hard sprite.
-                            AIAnimatedActor guardActor = new AIGuard(AImapObject.poswidth, AImapObject.posheight, AImapObject.angle);
+                            AnimatedActor guardActor = new AIGuard(AImapObject.poswidth, AImapObject.posheight, AImapObject.angle);
                             guardActor.forceAnimationFrame("s_grdpath1");
                             AIActorList.Add(guardActor);
                         }
                         else if (AImapObject.actorType == "GuardPathMedium")
                         {
                             renderSprite = 58; // Guard Path Medium sprite.
-                            AIAnimatedActor guardActor = new AIGuard(AImapObject.poswidth, AImapObject.posheight, AImapObject.angle);
+                            AnimatedActor guardActor = new AIGuard(AImapObject.poswidth, AImapObject.posheight, AImapObject.angle);
                             guardActor.forceAnimationFrame("s_grdpath1");
                             AIActorList.Add(guardActor);
                         }
                         else if (AImapObject.actorType == "GuardPathEasy")
                         {
                             renderSprite = 58; // Guard Path Easy sprite.
-                            AIAnimatedActor guardActor = new AIGuard(AImapObject.poswidth, AImapObject.posheight, AImapObject.angle);
+                            AnimatedActor guardActor = new AIGuard(AImapObject.poswidth, AImapObject.posheight, AImapObject.angle);
                             guardActor.forceAnimationFrame("s_grdpath1");
                             AIActorList.Add(guardActor);
                         }
                         else if (AImapObject.actorType == "GuardDead")
                         {
                             renderSprite = 95;
-                            AIAnimatedActor guardActor = new AIGuard(AImapObject.poswidth, AImapObject.posheight, AImapObject.angle);
+                            AnimatedActor guardActor = new AIGuard(AImapObject.poswidth, AImapObject.posheight, AImapObject.angle);
                             guardActor.forceAnimationFrame("s_grddie4");
                             AIActorList.Add(guardActor);
                         }
@@ -623,13 +625,6 @@ void main()
             quadvao.Bind();
             quadvbo.Bind();
             quadebo.Bind();
-
-            SpriteFrame spriteFrame = new SpriteFrame();
-
-            // TODO: SPRITE WORK IN PROGRESS
-            //spriteFrame.setFrames(50, 51, 52, 53, 54, 55, 56, 57);
-
-            //_spritetexture = spriteFrame.getFrame(0, camera.Yaw);
 
             Vector3 spritePosition = new Vector3(_x, _y, _z);
 
@@ -1040,10 +1035,10 @@ void main()
                         }
                     }
 
-                    foreach (AIAnimatedActor actor in AIActorList)
+                    foreach (AnimatedActor actor in AIActorList)
                     {
                         // Render the AI actor
-                        renderSprite(actor.WidthPosition, 0, actor.HeightPosition, actor.getAnimationFrame(camera, args.Time), camera);
+                        renderSprite(actor.WidthPosition, 0, actor.HeightPosition, actor.getAnimationFrame(camera.Yaw, args.Time), camera);
                         
                     }
 

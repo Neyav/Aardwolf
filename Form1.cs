@@ -36,6 +36,7 @@ namespace Aardwolf
         private Camera camera;
         private int DoorTexture;
         List<AnimatedActor> AIActorList = new List<AnimatedActor>();
+        SystemActor systemActor = new SystemActor(false);
 
         maphandler mapdata;
 
@@ -84,6 +85,7 @@ namespace Aardwolf
             if (radioButton2.Checked)
                 _isSOD = true;
 
+            systemActor = new SystemActor(_isSOD);
             mapdata = new maphandler(_isSOD);
             mapdata.importMapData(dh.getLevelData(selectedLevel), dh.levelHeight(selectedLevel), dh.levelWidth(selectedLevel));
 
@@ -375,7 +377,7 @@ namespace Aardwolf
                     }
                 }*/
 
-                
+
             }
 
             return bitmap;
@@ -1039,7 +1041,7 @@ void main()
                     {
                         // Render the AI actor
                         renderSprite(actor.WidthPosition, 0, actor.HeightPosition, actor.getAnimationFrame(camera.Yaw, args.Time), camera);
-                        
+
                     }
 
                     GL.BindVertexArray(0);  // Unbind VAO
@@ -1102,6 +1104,11 @@ void main()
         }
 
         private void radioButton1_CheckedChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void radioButton2_CheckedChanged(object sender, EventArgs e)
         {
 
         }

@@ -101,6 +101,7 @@
             radioButton2.TabIndex = 4;
             radioButton2.Text = "Spear of Destiny";
             radioButton2.UseVisualStyleBackColor = true;
+            radioButton2.CheckedChanged += radioButton2_CheckedChanged;
             // 
             // label1
             // 

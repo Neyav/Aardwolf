@@ -628,7 +628,10 @@ void main()
             quadvbo.Bind();
             quadebo.Bind();
 
-            Vector3 spritePosition = new Vector3(_x, _y, _z);
+            // The renderer considers _x, _z to be dead center as an integer.
+            // The game engine considers _x, _z to start at the corner of the tile, and proceed to the other corner.
+            // Transfer it to the appropriate position for rendering.
+            Vector3 spritePosition = new Vector3(_x - 0.5f, _y, _z - 0.5f);
 
             // Use the camera's forward vector to calculate the yaw angle
             Vector3 forward = camera.Front;
@@ -1026,7 +1029,7 @@ void main()
 
                                 if (staticObjID > 0)
                                 {
-                                    renderSprite(widthIterator, 0, heightIterator, staticObjID - 21, camera);
+                                    renderSprite(widthIterator + 0.5f, 0, heightIterator + 0.5f, staticObjID - 21, camera);
                                 }
                                 else if (dynamicObject.type == mapObjectTypes.MAPOBJECT_DOOR)
                                 {

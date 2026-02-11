@@ -155,37 +155,13 @@ namespace Aardwolf
                             renderSprite = tileActor - 21;
                         }
 
-                        actorMapObject AImapObject = mapdata.getAIactorObject(y, x);
+                        AnimatedActor animatedActor = mapdata.getActorAtPosition(y, x);
 
-                        if (AImapObject.actorType == "GuardStandHard")
+                        if (animatedActor != null)
                         {
-                            renderSprite = 50; // Guard Stand Hard sprite.
+                            Console.WriteLine("Animated actor found at position: " + y + ", " + x);
+                            renderSprite = animatedActor.getAnimationFrame(270, 0);
                         }
-                        else if (AImapObject.actorType == "GuardStandMedium")
-                        {
-                            renderSprite = 50;
-                        }
-                        else if (AImapObject.actorType == "GuardStandEasy")
-                        {
-                            renderSprite = 50;
-                        }
-                        else if (AImapObject.actorType == "GuardPathHard")
-                        {
-                            renderSprite = 58; // Guard Path Hard sprite.
-                        }
-                        else if (AImapObject.actorType == "GuardPathMedium")
-                        {
-                            renderSprite = 58; // Guard Path Medium sprite.
-                        }
-                        else if (AImapObject.actorType == "GuardPathEasy")
-                        {
-                            renderSprite = 58; // Guard Path Easy sprite.
-                        }
-                        else if (AImapObject.actorType == "GuardDead")
-                        {
-                            renderSprite = 95;
-                        }
-
 
                         if (renderSprite >= 0) // We have a sprite to render.
                         {
@@ -392,7 +368,6 @@ namespace Aardwolf
 
             if (renderEngine.initalizeLevel(dh, comboBox1.SelectedIndex))
             {
-                renderEngine.generateAIActors();
                 renderEngine.startRenderLoop();
             }
         }

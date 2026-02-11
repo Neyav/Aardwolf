@@ -31,7 +31,6 @@ namespace Aardwolf.Render
         private EBO cubeebo, quadebo;
         private Camera camera;
         private int DoorTexture;
-        List<AnimatedActor> AIActorList = new List<AnimatedActor>();
         SystemActor systemActor = new SystemActor(false);
         private int[] textures;
         private int[] sprites;
@@ -506,63 +505,9 @@ void main()
             DoorTexture = gameData.getDoorTextureNumber();
             _gameData = gameData;
 
-            return true;
-        }
-
-        public void generateAIActors()
-        {
-            if (!mapdata.isMapLoaded())
-                return;
-
-            for (int x = 0; x < mapdata.getMapWidth(); x++)
-            {
-                for (int y = 0; y < mapdata.getMapHeight(); y++)
-                {
-                    actorMapObject AImapObject = mapdata.getAIactorObject(y, x);
-
-                    if (AImapObject.actorType == "GuardStandHard")
-                    {
-                        AnimatedActor guardActor = new AIGuard(AImapObject.poswidth, AImapObject.posheight, AImapObject.angle);
-                        AIActorList.Add(guardActor);
-                    }
-                    else if (AImapObject.actorType == "GuardStandMedium")
-                    {
-                        AnimatedActor guardActor = new AIGuard(AImapObject.poswidth, AImapObject.posheight, AImapObject.angle);
-                        AIActorList.Add(guardActor);
-                    }
-                    else if (AImapObject.actorType == "GuardStandEasy")
-                    {
-                        AnimatedActor guardActor = new AIGuard(AImapObject.poswidth, AImapObject.posheight, AImapObject.angle);
-                        AIActorList.Add(guardActor);
-                    }
-                    else if (AImapObject.actorType == "GuardPathHard")
-                    {
-                        AnimatedActor guardActor = new AIGuard(AImapObject.poswidth, AImapObject.posheight, AImapObject.angle);
-                        guardActor.forceAnimationFrame("s_grdpath1");
-                        AIActorList.Add(guardActor);
-                    }
-                    else if (AImapObject.actorType == "GuardPathMedium")
-                    {
-                        AnimatedActor guardActor = new AIGuard(AImapObject.poswidth, AImapObject.posheight, AImapObject.angle);
-                        guardActor.forceAnimationFrame("s_grdpath1");
-                        AIActorList.Add(guardActor);
-                    }
-                    else if (AImapObject.actorType == "GuardPathEasy")
-                    {
-                        AnimatedActor guardActor = new AIGuard(AImapObject.poswidth, AImapObject.posheight, AImapObject.angle);
-                        guardActor.forceAnimationFrame("s_grdpath1");
-                        AIActorList.Add(guardActor);
-                    }
-                    else if (AImapObject.actorType == "GuardDead")
-                    {
-                        AnimatedActor guardActor = new AIGuard(AImapObject.poswidth, AImapObject.posheight, AImapObject.angle);
-                        guardActor.forceAnimationFrame("s_grddie4");
-                        AIActorList.Add(guardActor);
-                    }
-                }
-            }
-
             readyToRender = true;
+
+            return true;
         }
 
         public void startRenderLoop()
@@ -741,15 +686,15 @@ void main()
                                     renderDoorTile(dynamicObject);
                                 }
 
+                                AnimatedActor tileActor = mapdata.getActorAtPosition(heightIterator, widthIterator);
+                                if (tileActor != null)
+                                {
+                                    // Render the animated actor
+                                    renderSprite(widthIterator + 0.5f, 0, heightIterator + 0.5f, tileActor.getAnimationFrame(camera.Yaw, args.Time), camera);
+
+                                }
                             }
                         }
-                    }
-
-                    foreach (AnimatedActor actor in AIActorList)
-                    {
-                        // Render the AI actor
-                        renderSprite(actor.WidthPosition, 0, actor.HeightPosition, actor.getAnimationFrame(camera.Yaw, args.Time), camera);
-
                     }
 
                     GL.BindVertexArray(0);  // Unbind VAO

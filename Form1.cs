@@ -159,7 +159,6 @@ namespace Aardwolf
 
                         if (animatedActor != null)
                         {
-                            Console.WriteLine("Animated actor found at position: " + y + ", " + x);
                             renderSprite = animatedActor.getAnimationFrame(270, 0);
                         }
 

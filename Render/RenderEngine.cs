@@ -31,7 +31,7 @@ namespace Aardwolf.Render
         private EBO cubeebo, quadebo;
         private Camera camera;
         private int DoorTexture;
-        SystemActor systemActor = new SystemActor(false);
+        SystemActor systemActor = new SystemActor(gameDataType.Wolf3D);
         private int[] textures;
         private int[] sprites;
         maphandler mapdata;
@@ -478,7 +478,7 @@ void main()
         {
             readyToRender = false;
 
-            mapdata = new maphandler(gameData.isSpearOfDestinyData());
+            mapdata = new maphandler(gameData.returnGameDataType());
             mapdata.importMapData(gameData.getLevelData(levelNumber), gameData.levelHeight(levelNumber), gameData.levelWidth(levelNumber));
 
             if (!mapdata.isMapLoaded())

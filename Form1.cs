@@ -10,6 +10,7 @@ using AardwolfCore.Animation;
 using System.Drawing.Drawing2D;
 using Aardwolf.Render;
 using System.Security.Cryptography.X509Certificates;
+using System.Runtime.CompilerServices;
 
 
 
@@ -28,13 +29,27 @@ namespace Aardwolf
             InitializeComponent();
         }
 
+        private gameDataType checkGameType()
+        {
+            gameDataType gameDataType = gameDataType.Wolf3D;
+            if (radioButton1.Checked)
+            {
+                gameDataType = gameDataType.Wolf3D;
+            }
+            else if (radioButton2.Checked)
+            {
+                gameDataType = gameDataType.SpearOfDestiny;
+            }
+            return gameDataType;
+        }
+
         private void button1_Click(object sender, EventArgs e)
         {
             comboBox1.Items.Clear();
             comboBox2.Items.Clear();
             button3.Enabled = false;
 
-            _gamesession = new gamesession(radioButton2.Checked);
+            _gamesession = new gamesession(checkGameType());
 
             int levels = _gamesession.getLevels();
 
@@ -59,16 +74,12 @@ namespace Aardwolf
         {
             dataHandler dh = _gamesession.TEST_getDataHandler();
             int selectedLevel = comboBox1.SelectedIndex;
-            bool _isSOD = false;
             int playerSpawnHeight = 0;
             int playerSpawnWidth = 0;
             VSWAPHeader VSWAPHead = dh.getVSWAPHeader;
             byte doorWall = (byte)(VSWAPHead.spriteStart - 8);
 
-            if (radioButton2.Checked)
-                _isSOD = true;
-
-            mapdata = new maphandler(_isSOD);
+            mapdata = new maphandler(checkGameType());
             mapdata.importMapData(dh.getLevelData(selectedLevel), dh.levelHeight(selectedLevel), dh.levelWidth(selectedLevel));
 
             Bitmap bitmap = new Bitmap(sizeWidth, sizeHeight);
@@ -143,7 +154,7 @@ namespace Aardwolf
                         // Draw the actor on top of the tile.
                         if (tileActor >= 19 && tileActor <= 22) // Player Start
                         {
-                            if (_isSOD)
+                            if (checkGameType() == gameDataType.SpearOfDestiny)
                                 renderSprite = 0;   // SOD doesn't have a player start sprite. Use the demo sprite.
                             else
                                 renderSprite = 409;

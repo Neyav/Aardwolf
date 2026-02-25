@@ -40,6 +40,10 @@ namespace Aardwolf
             {
                 gameDataType = gameDataType.SpearOfDestiny;
             }
+            else if (radioButton3.Checked)
+            {
+                gameDataType = gameDataType.BlakeStone;
+            }
             return gameDataType;
         }
 
@@ -435,6 +439,11 @@ namespace Aardwolf
         }
 
         private void radioButton2_CheckedChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void radioButton3_CheckedChanged(object sender, EventArgs e)
         {
 
         }

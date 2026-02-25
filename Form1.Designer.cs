@@ -46,6 +46,7 @@
             checkBox2 = new CheckBox();
             checkBox1 = new CheckBox();
             progressBar1 = new ProgressBar();
+            radioButton3 = new RadioButton();
             ((System.ComponentModel.ISupportInitialize)pictureBox1).BeginInit();
             ((System.ComponentModel.ISupportInitialize)pictureBox2).BeginInit();
             groupBox1.SuspendLayout();
@@ -73,7 +74,7 @@
             // comboBox1
             // 
             comboBox1.FormattingEnabled = true;
-            comboBox1.Location = new Point(12, 120);
+            comboBox1.Location = new Point(11, 172);
             comboBox1.Name = "comboBox1";
             comboBox1.Size = new Size(151, 23);
             comboBox1.TabIndex = 2;
@@ -107,7 +108,7 @@
             // 
             label1.AutoSize = true;
             label1.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
-            label1.Location = new Point(11, 102);
+            label1.Location = new Point(12, 154);
             label1.Name = "label1";
             label1.Size = new Size(92, 15);
             label1.TabIndex = 5;
@@ -117,7 +118,7 @@
             // 
             label2.AutoSize = true;
             label2.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
-            label2.Location = new Point(11, 146);
+            label2.Location = new Point(11, 198);
             label2.Name = "label2";
             label2.Size = new Size(106, 15);
             label2.TabIndex = 6;
@@ -126,7 +127,7 @@
             // comboBox2
             // 
             comboBox2.FormattingEnabled = true;
-            comboBox2.Location = new Point(12, 164);
+            comboBox2.Location = new Point(11, 216);
             comboBox2.Name = "comboBox2";
             comboBox2.Size = new Size(151, 23);
             comboBox2.TabIndex = 7;
@@ -136,7 +137,7 @@
             // 
             pictureBox2.BackColor = Color.Black;
             pictureBox2.BorderStyle = BorderStyle.Fixed3D;
-            pictureBox2.Location = new Point(11, 193);
+            pictureBox2.Location = new Point(11, 242);
             pictureBox2.Margin = new Padding(0);
             pictureBox2.Name = "pictureBox2";
             pictureBox2.Size = new Size(512, 512);
@@ -164,7 +165,7 @@
             groupBox1.Controls.Add(checkBox1);
             groupBox1.Location = new Point(169, 55);
             groupBox1.Name = "groupBox1";
-            groupBox1.Size = new Size(354, 132);
+            groupBox1.Size = new Size(354, 184);
             groupBox1.TabIndex = 10;
             groupBox1.TabStop = false;
             groupBox1.Text = "Map View Controls";
@@ -206,7 +207,7 @@
             // button3
             // 
             button3.Enabled = false;
-            button3.Location = new Point(6, 91);
+            button3.Location = new Point(6, 143);
             button3.Name = "button3";
             button3.Size = new Size(164, 35);
             button3.TabIndex = 2;
@@ -244,11 +245,24 @@
             progressBar1.Size = new Size(533, 41);
             progressBar1.TabIndex = 11;
             // 
+            // radioButton3
+            // 
+            radioButton3.AutoSize = true;
+            radioButton3.Location = new Point(12, 105);
+            radioButton3.Name = "radioButton3";
+            radioButton3.Size = new Size(86, 19);
+            radioButton3.TabIndex = 12;
+            radioButton3.TabStop = true;
+            radioButton3.Text = "Blake Stone";
+            radioButton3.UseVisualStyleBackColor = true;
+            radioButton3.CheckedChanged += radioButton3_CheckedChanged;
+            // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(1513, 975);
+            Controls.Add(radioButton3);
             Controls.Add(progressBar1);
             Controls.Add(groupBox1);
             Controls.Add(button2);
@@ -293,5 +307,6 @@
         private CheckBox checkBox3;
         private CheckBox checkBox4;
         private CheckBox checkBox5;
+        private RadioButton radioButton3;
     }
 }
